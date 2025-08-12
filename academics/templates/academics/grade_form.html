@@ -1,0 +1,68 @@
+<!-- academics/templates/academics/grade_form.html -->
+{% extends 'base.html' %}
+{% load static %}
+{% load bootstrap5 %}
+
+{% block title %}{% if grade %}Modifier{% else %}Créer{% endif %} une note{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">{% if grade %}Modifier{% else %}Créer{% endif %} une note</h5>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="student" class="form-label">Élève</label>
+                                <select class="form-select" id="student" name="student" required>
+                                    <option value="">Sélectionner un élève</option>
+                                    {% for student in students %}
+                                    <option value="{{ student.pk }}" {% if grade and grade.student.pk == student.pk %}selected{% endif %}>{{ student.get_full_name|default:student.username }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="assignment" class="form-label">Devoir</label>
+                                <select class="form-select" id="assignment" name="assignment" required>
+                                    <option value="">Sélectionner un devoir</option>
+                                    {% for assignment in assignments %}
+                                    <option value="{{ assignment.pk }}" {% if grade and grade.assignment.pk == assignment.pk %}selected{% endif %}>{{ assignment.title }} ({{ assignment.subject.name }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="points_earned" class="form-label">Note obtenue</label>
+                                <input type="number" class="form-control" id="points_earned" name="points_earned" value="{% if grade %}{{ grade.points_earned }}{% endif %}" min="0" step="0.01" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="total_points" class="form-label">Note totale</label>
+                                <input type="number" class="form-control" id="total_points" name="total_points" value="{% if grade %}{{ grade.assignment.total_points }}{% else %}100{% endif %}" min="1" readonly>
+                                <div class="form-text">La note totale est déterminée par le devoir sélectionné.</div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="comments" class="form-label">Commentaire</label>
+                            <textarea class="form-control" id="comments" name="comments" rows="3">{% if grade %}{{ grade.comments }}{% endif %}</textarea>
+                        </div>
+                        
+                        <div class="d-flex justify-content-end">
+                            <a href="{% url 'academics:grade_list' %}" class="btn btn-secondary me-2">Annuler</a>
+                            <button type="submit" class="btn btn-danger">Enregistrer</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,61 @@
+<!-- school/templates/school/holiday_list.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Vacances{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Vacances</h5>
+                    <a href="{% url 'school:holiday_create' %}" class="btn btn-danger">
+                        <i class="fas fa-plus me-2"></i>Ajouter une période de vacances
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Nom</th>
+                                    <th>Année scolaire</th>
+                                    <th>Date de début</th>
+                                    <th>Date de fin</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for holiday in holidays %}
+                                <tr>
+                                    <td>{{ holiday.name }}</td>
+                                    <td>{{ holiday.school_year.name }}</td>
+                                    <td>{{ holiday.start_date|date:"d/m/Y" }}</td>
+                                    <td>{{ holiday.end_date|date:"d/m/Y" }}</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{% url 'school:holiday_edit' holiday.pk %}" class="btn btn-sm btn-outline-info" title="Modifier">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{% url 'school:holiday_delete' holiday.pk %}" class="btn btn-sm btn-outline-danger" title="Supprimer">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center">Aucune période de vacances trouvée</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

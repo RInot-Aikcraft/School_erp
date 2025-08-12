@@ -1,0 +1,66 @@
+<!-- academics/templates/academics/class_list.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Classes{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Classes</h5>
+                    <a href="{% url 'academics:class_create' %}" class="btn btn-danger">
+                        <i class="fas fa-plus me-2"></i>Ajouter une classe
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Nom</th>
+                                    <th>Niveau</th>
+                                    <th>Année scolaire</th>
+                                    <th>Professeur principal</th>
+                                    <th>Élèves inscrits</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for class_obj in classes %}
+                                <tr>
+                                    <td>{{ class_obj.name }}</td>
+                                    <td>{{ class_obj.level.name }}</td>
+                                    <td>{{ class_obj.school_year.name }}</td>
+                                    <td>{{ class_obj.main_teacher.get_full_name|default:"Non assigné" }}</td>
+                                    <td>{{ class_obj.enrollments.count }}/{{ class_obj.max_students }}</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{% url 'academics:class_detail' class_obj.pk %}" class="btn btn-sm btn-outline-primary" title="Voir">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{% url 'academics:class_edit' class_obj.pk %}" class="btn btn-sm btn-outline-info" title="Modifier">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{% url 'academics:class_delete' class_obj.pk %}" class="btn btn-sm btn-outline-danger" title="Supprimer">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center">Aucune classe trouvée</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,241 @@
+<!-- auth_app/templates/auth_app/dashboard.html -->
+{% extends 'base.html' %}
+{% load bootstrap5 %}
+{% load static %}
+
+{% block title %}Dashboard - Gestion d'École{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="icon-box bg-primary bg-opacity-10 text-primary rounded-circle p-3">
+                                <i class="fas fa-tachometer-alt fa-2x"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-4">
+                            <h2 class="mb-1">Tableau de bord</h2>
+                            <p class="text-muted mb-0">Bienvenue, {{ user.get_full_name|default:user.username }}!</p>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <span class="badge bg-primary fs-6">{{ user.date_joined|date:"d/m/Y" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100 card-hover">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center">
+                        <div class="icon-box bg-danger bg-opacity-10 text-danger rounded-circle p-3 me-3">
+                            <i class="fas fa-user-graduate fa-lg"></i>
+                        </div>
+                        <div>
+                            <h6 class="text-muted mb-1">Étudiants</h6>
+                            <h3 class="mb-0">1,250</h3>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <a href="#" class="btn btn-sm btn-outline-danger">Voir tous</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100 card-hover">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center">
+                        <div class="icon-box bg-primary bg-opacity-10 text-primary rounded-circle p-3 me-3">
+                            <i class="fas fa-chalkboard-teacher fa-lg"></i>
+                        </div>
+                        <div>
+                            <h6 class="text-muted mb-1">Professeurs</h6>
+                            <h3 class="mb-0">85</h3>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <a href="#" class="btn btn-sm btn-outline-primary">Voir tous</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100 card-hover">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center">
+                        <div class="icon-box bg-info bg-opacity-10 text-info rounded-circle p-3 me-3">
+                            <i class="fas fa-door-open fa-lg"></i>
+                        </div>
+                        <div>
+                            <h6 class="text-muted mb-1">Classes</h6>
+                            <h3 class="mb-0">42</h3>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <a href="#" class="btn btn-sm btn-outline-info">Voir toutes</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100 card-hover">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center">
+                        <div class="icon-box bg-warning bg-opacity-10 text-warning rounded-circle p-3 me-3">
+                            <i class="fas fa-book fa-lg"></i>
+                        </div>
+                        <div>
+                            <h6 class="text-muted mb-1">Cours</h6>
+                            <h3 class="mb-0">128</h3>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <a href="#" class="btn btn-sm btn-outline-warning">Voir tous</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-xl-8 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">Activités récentes</h5>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-point timeline-point-danger"></div>
+                            <div class="timeline-content">
+                                <div class="d-flex justify-content-between">
+                                    <h6 class="mb-1">Nouvel étudiant inscrit</h6>
+                                    <small class="text-muted">Il y a 10 minutes</small>
+                                </div>
+                                <p class="text-muted mb-0">Jean Dupont a été inscrit en classe de 3ème A</p>
+                            </div>
+                        </div>
+                        
+                        <div class="timeline-item">
+                            <div class="timeline-point timeline-point-primary"></div>
+                            <div class="timeline-content">
+                                <div class="d-flex justify-content-between">
+                                    <h6 class="mb-1">Nouveau professeur</h6>
+                                    <small class="text-muted">Il y a 2 heures</small>
+                                </div>
+                                <p class="text-muted mb-0">Marie Martin a rejoint l'équipe pédagogique</p>
+                            </div>
+                        </div>
+                        
+                        <div class="timeline-item">
+                            <div class="timeline-point timeline-point-info"></div>
+                            <div class="timeline-content">
+                                <div class="d-flex justify-content-between">
+                                    <h6 class="mb-1">Examen programmé</h6>
+                                    <small class="text-muted">Hier</small>
+                                </div>
+                                <p class="text-muted mb-0">Examen de mathématiques pour la classe de 2nde B</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-4 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">Calendrier</h5>
+                </div>
+                <div class="card-body">
+                    <div id="calendar" class="calendar-container">
+                        <div class="calendar-header d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="mb-0">Novembre 2023</h6>
+                            <div>
+                                <button class="btn btn-sm btn-light"><i class="fas fa-chevron-left"></i></button>
+                                <button class="btn btn-sm btn-light"><i class="fas fa-chevron-right"></i></button>
+                            </div>
+                        </div>
+                        <div class="calendar-grid">
+                            <div class="calendar-day text-muted text-center">Dim</div>
+                            <div class="calendar-day text-muted text-center">Lun</div>
+                            <div class="calendar-day text-muted text-center">Mar</div>
+                            <div class="calendar-day text-muted text-center">Mer</div>
+                            <div class="calendar-day text-muted text-center">Jeu</div>
+                            <div class="calendar-day text-muted text-center">Ven</div>
+                            <div class="calendar-day text-muted text-center">Sam</div>
+                            
+                            <!-- Exemple de jours -->
+                            <div class="calendar-date text-center">29</div>
+                            <div class="calendar-date text-center">30</div>
+                            <div class="calendar-date text-center">31</div>
+                            <div class="calendar-date text-center">1</div>
+                            <div class="calendar-date text-center">2</div>
+                            <div class="calendar-date text-center">3</div>
+                            <div class="calendar-date text-center">4</div>
+                            <div class="calendar-date text-center">5</div>
+                            <div class="calendar-date text-center">6</div>
+                            <div class="calendar-date text-center">7</div>
+                            <div class="calendar-date text-center">8</div>
+                            <div class="calendar-date text-center">9</div>
+                            <div class="calendar-date text-center">10</div>
+                            <div class="calendar-date text-center">11</div>
+                            <div class="calendar-date text-center">12</div>
+                            <div class="calendar-date text-center">13</div>
+                            <div class="calendar-date text-center">14</div>
+                            <div class="calendar-date text-center bg-danger bg-opacity-10 text-danger rounded-circle">15</div>
+                            <div class="calendar-date text-center">16</div>
+                            <div class="calendar-date text-center">17</div>
+                            <div class="calendar-date text-center">18</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <h6 class="mb-3">Événements à venir</h6>
+                        <div class="event-item mb-2 pb-2 border-bottom">
+                            <div class="d-flex">
+                                <div class="event-date bg-danger bg-opacity-10 text-danger rounded p-2 me-3">
+                                    <div class="text-center">
+                                        <div class="fw-bold">15</div>
+                                        <div class="small">Nov</div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0">Réunion des parents</h6>
+                                    <p class="text-muted small mb-0">15:00 - 17:00</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="event-item">
+                            <div class="d-flex">
+                                <div class="event-date bg-primary bg-opacity-10 text-primary rounded p-2 me-3">
+                                    <div class="text-center">
+                                        <div class="fw-bold">22</div>
+                                        <div class="small">Nov</div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0">Journée sportive</h6>
+                                    <p class="text-muted small mb-0">09:00 - 16:00</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

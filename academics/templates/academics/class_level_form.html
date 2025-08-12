@@ -1,0 +1,41 @@
+<!-- academics/templates/academics/class_level_form.html -->
+{% extends 'base.html' %}
+{% load static %}
+{% load bootstrap5 %}
+
+{% block title %}{% if level %}Modifier{% else %}Créer{% endif %} un niveau{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-lg-6 mx-auto">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">{% if level %}Modifier{% else %}Créer{% endif %} un niveau</h5>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Nom</label>
+                            <input type="text" class="form-control" id="name" name="name" value="{% if level %}{{ level.name }}{% endif %}" required>
+                            <div class="form-text">Ex: 6ème, 5ème, etc.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="3">{% if level %}{{ level.description }}{% endif %}</textarea>
+                        </div>
+                        
+                        <div class="d-flex justify-content-end">
+                            <a href="{% url 'academics:class_level_list' %}" class="btn btn-secondary me-2">Annuler</a>
+                            <button type="submit" class="btn btn-danger">Enregistrer</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

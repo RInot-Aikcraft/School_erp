@@ -1,0 +1,120 @@
+<!-- academics/templates/academics/class_detail.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Détails de la classe{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Détails de la classe</h5>
+                    <div>
+                        <a href="{% url 'academics:class_edit' class_obj.pk %}" class="btn btn-sm btn-outline-info me-2">
+                            <i class="fas fa-edit me-1"></i>Modifier
+                        </a>
+                        <a href="{% url 'academics:class_list' %}" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Retour
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card border-0 shadow-sm h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">Informations générales</h5>
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">Nom:</div>
+                                        <div class="col-sm-8">{{ class_obj.name }}</div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">Niveau:</div>
+                                        <div class="col-sm-8">{{ class_obj.level.name }}</div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">Année scolaire:</div>
+                                        <div class="col-sm-8">{{ class_obj.school_year.name }}</div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">Professeur principal:</div>
+                                        <div class="col-sm-8">{{ class_obj.main_teacher.get_full_name|default:"Non assigné" }}</div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">Capacité:</div>
+                                        <div class="col-sm-8">{{ class_obj.enrollments.count }}/{{ class_obj.max_students }} élèves</div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">Date de création:</div>
+                                        <div class="col-sm-8">{{ class_obj.created_at|date:"d/m/Y H:i" }}</div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">Dernière mise à jour:</div>
+                                        <div class="col-sm-8">{{ class_obj.updated_at|date:"d/m/Y H:i" }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card border-0 shadow-sm h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">Élèves inscrits</h5>
+                                    
+                                    {% if enrollments %}
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>Nom</th>
+                                                    <th>Date d'inscription</th>
+                                                    <th>Statut</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for enrollment in enrollments %}
+                                                <tr>
+                                                    <td>{{ enrollment.student.get_full_name|default:enrollment.student.username }}</td>
+                                                    <td>{{ enrollment.enrollment_date|date:"d/m/Y" }}</td>
+                                                    <td>
+                                                        {% if enrollment.is_active %}
+                                                        <span class="badge bg-success">Actif</span>
+                                                        {% else %}
+                                                        <span class="badge bg-secondary">Inactif</span>
+                                                        {% endif %}
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    {% else %}
+                                    <p class="text-muted">Aucun élève inscrit dans cette classe.</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-end">
+                        <a href="{% url 'academics:class_edit' class_obj.pk %}" class="btn btn-info me-2">
+                            <i class="fas fa-edit me-1"></i>Modifier
+                        </a>
+                        <a href="{% url 'academics:class_delete' class_obj.pk %}" class="btn btn-danger">
+                            <i class="fas fa-trash me-1"></i>Supprimer
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

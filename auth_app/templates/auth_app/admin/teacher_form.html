@@ -1,0 +1,289 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load bootstrap5 %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-lg-10 mx-auto">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">{{ title }}</h5>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        {% if form %}
+                        <!-- Formulaire pour la création -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                {% bootstrap_field form.username %}
+                            </div>
+                            <div class="col-md-6">
+                                {% bootstrap_field form.email %}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                {% bootstrap_field form.first_name %}
+                            </div>
+                            <div class="col-md-6">
+                                {% bootstrap_field form.last_name %}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                {% bootstrap_field form.password1 %}
+                            </div>
+                            <div class="col-md-6">
+                                {% bootstrap_field form.password2 %}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                {% bootstrap_field form.phone %}
+                            </div>
+                            <div class="col-md-6">
+                                {% bootstrap_field form.date_of_birth %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            {% bootstrap_field form.address %}
+                        </div>
+                        {% else %}
+                        <!-- Champs pour la modification -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="username" class="form-label">Nom d'utilisateur</label>
+                                <input type="text" class="form-control" id="username" name="username" value="{{ teacher.username }}" readonly>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email" name="email" value="{{ teacher.email }}">
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="first_name" class="form-label">Prénom</label>
+                                <input type="text" class="form-control" id="first_name" name="first_name" value="{{ teacher.first_name }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="last_name" class="form-label">Nom</label>
+                                <input type="text" class="form-control" id="last_name" name="last_name" value="{{ teacher.last_name }}">
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="phone" class="form-label">Téléphone</label>
+                                <input type="text" class="form-control" id="phone" name="phone" value="{{ profile.phone }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="date_of_birth" class="form-label">Date de naissance</label>
+                                <input type="date" class="form-control" id="date_of_birth" name="date_of_birth" value="{{ profile.date_of_birth|date:'Y-m-d' }}">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="address" class="form-label">Adresse</label>
+                            <textarea class="form-control" id="address" name="address" rows="3">{{ profile.address }}</textarea>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Photo de profil -->
+                        <div class="mb-3">
+                            <label for="profile_picture" class="form-label">Photo de profil</label>
+                            <input type="file" class="form-control" id="profile_picture" name="profile_picture" accept="image/*">
+                            <div class="form-text">Formats acceptés: JPG, PNG, GIF. Taille maximale: 2MB.</div>
+                            {% if profile.profile_picture %}
+                            <div class="mt-2">
+                                <img src="{{ profile.profile_picture.url }}" alt="Photo actuelle" style="max-height: 100px;">
+                                <div class="form-text">Photo actuelle</div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Informations personnelles supplémentaires -->
+                        <h5 class="mt-4 mb-3">Informations personnelles</h5>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="gender" class="form-label">Sexe</label>
+                                <select class="form-select" id="gender" name="gender">
+                                    <option value="">Sélectionner</option>
+                                    {% for value, label in UserProfile.GENDER_CHOICES %}
+                                    <option value="{{ value }}" {% if profile.gender == value %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="civil_status" class="form-label">État civil</label>
+                                <select class="form-select" id="civil_status" name="civil_status">
+                                    <option value="">Sélectionner</option>
+                                    {% for value, label in UserProfile.CIVIL_STATUS_CHOICES %}
+                                    <option value="{{ value }}" {% if profile.civil_status == value %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="place_of_birth" class="form-label">Lieu de naissance</label>
+                                <input type="text" class="form-control" id="place_of_birth" name="place_of_birth" value="{{ profile.place_of_birth }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="nationality" class="form-label">Nationalité</label>
+                                <input type="text" class="form-control" id="nationality" name="nationality" value="{{ profile.nationality }}">
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="id_card_number" class="form-label">Numéro CIN / Carte d'identité</label>
+                                <input type="text" class="form-control" id="id_card_number" name="id_card_number" value="{{ profile.id_card_number }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="date_of_birth" class="form-label">Date de naissance</label>
+                                <input type="date" class="form-control" id="date_of_birth" name="date_of_birth" value="{{ profile.date_of_birth|date:'Y-m-d' }}">
+                            </div>
+                        </div>
+                        
+                        <h5 class="mt-4 mb-3">Contact d'urgence</h5>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="emergency_contact_name" class="form-label">Nom</label>
+                                <input type="text" class="form-control" id="emergency_contact_name" name="emergency_contact_name" value="{{ profile.emergency_contact_name }}">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="emergency_contact_relationship" class="form-label">Lien de parenté</label>
+                                <input type="text" class="form-control" id="emergency_contact_relationship" name="emergency_contact_relationship" value="{{ profile.emergency_contact_relationship }}">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="emergency_contact_phone" class="form-label">Téléphone</label>
+                                <input type="text" class="form-control" id="emergency_contact_phone" name="emergency_contact_phone" value="{{ profile.emergency_contact_phone }}">
+                            </div>
+                        </div>
+                        
+                        <!-- Informations professionnelles -->
+                        <h5 class="mt-4 mb-3">Informations professionnelles</h5>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="internal_id" class="form-label">Numéro matricule interne</label>
+                                <input type="text" class="form-control" id="internal_id" name="internal_id" value="{{ profile.internal_id }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="professional_id" class="form-label">Numéro d'identification professionnelle</label>
+                                <input type="text" class="form-control" id="professional_id" name="professional_id" value="{{ profile.professional_id }}">
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="position" class="form-label">Poste occupé</label>
+                                <input type="text" class="form-control" id="position" name="position" value="{{ profile.position }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="employment_status" class="form-label">Statut</label>
+                                <select class="form-select" id="employment_status" name="employment_status">
+                                    <option value="">Sélectionner</option>
+                                    {% for value, label in UserProfile.EMPLOYMENT_STATUS_CHOICES %}
+                                    <option value="{{ value }}" {% if profile.employment_status == value %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="hire_date" class="form-label">Date d'embauche</label>
+                                <input type="date" class="form-control" id="hire_date" name="hire_date" value="{{ profile.hire_date|date:'Y-m-d' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="experience_years" class="form-label">Expérience professionnelle (années)</label>
+                                <input type="number" class="form-control" id="experience_years" name="experience_years" value="{{ profile.experience_years }}" min="0">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="diplomas" class="form-label">Diplômes et formations</label>
+                            <textarea class="form-control" id="diplomas" name="diplomas" rows="3">{{ profile.diplomas }}</textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="previous_positions" class="form-label">Expérience professionnelle (postes précédents)</label>
+                            <textarea class="form-control" id="previous_positions" name="previous_positions" rows="3">{{ profile.previous_positions }}</textarea>
+                        </div>
+                        
+                        <!-- Matières enseignées -->
+                        <h5 class="mt-4 mb-3">Matières enseignées</h5>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Matières</label>
+                            <div class="form-control" style="height: auto; overflow-y: auto; max-height: 200px;">
+                                {% for subject in subjects %}
+                                <div class="form-check">
+                                    <input class="form-check-input subject-checkbox" type="checkbox" name="subjects" value="{{ subject.pk }}" id="subject_{{ subject.pk }}" 
+                                        {% if subject.pk in teacher_subject_ids %}checked{% endif %}
+                                        onchange="toggleLevels({{ subject.pk }})">
+                                    <label class="form-check-label" for="subject_{{ subject.pk }}">
+                                        {{ subject.name }}
+                                    </label>
+                                </div>
+                                    
+                                    <!-- Niveaux pour cette matière -->
+                                    <div id="levels-container-{{ subject.pk }}" class="ms-4 mb-2" style="display: {% if subject.pk in teacher_subject_ids %}block{% else %}none{% endif %};">
+                                        <label class="form-label text-muted small">Niveaux/classes:</label>
+                                        <div class="form-control" style="height: auto; max-height: 150px;">
+                                            {% for level in class_levels %}
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="levels_{{ subject.pk }}" value="{{ level.pk }}" id="level_{{ subject.pk }}_{{ level.pk }}"
+                                                    {% if subject.pk in subjects_levels and level.pk in subjects_levels|lookup:subject.pk %}checked{% endif %}>
+                                                <label class="form-check-label" for="level_{{ subject.pk }}_{{ level.pk }}">
+                                                    {{ level.name }}
+                                                </label>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-end">
+                            <a href="{% url 'auth_app:teacher_list' %}" class="btn btn-secondary me-2">Annuler</a>
+                            <button type="submit" class="btn btn-danger">Enregistrer</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleLevels(subjectId) {
+    const container = document.getElementById(`levels-container-${subjectId}`);
+    const checkbox = document.getElementById(`subject_${subjectId}`);
+    
+    if (checkbox.checked) {
+        container.style.display = 'block';
+    } else {
+        container.style.display = 'none';
+        // Décocher toutes les cases à l'intérieur
+        const levelCheckboxes = container.querySelectorAll('input[type="checkbox"]');
+        levelCheckboxes.forEach(cb => cb.checked = false);
+    }
+}
+</script>
+{% endblock %}

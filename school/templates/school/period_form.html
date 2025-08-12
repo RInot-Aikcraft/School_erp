@@ -1,0 +1,57 @@
+<!-- school/templates/school/period_form.html -->
+{% extends 'base.html' %}
+{% load static %}
+{% load bootstrap5 %}
+
+{% block title %}{% if period %}Modifier{% else %}Créer{% endif %} une période{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-lg-6 mx-auto">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">{% if period %}Modifier{% else %}Créer{% endif %} une période</h5>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Nom</label>
+                            <input type="text" class="form-control" id="name" name="name" value="{% if period %}{{ period.name }}{% endif %}" required>
+                            <div class="form-text">Ex: Premier trimestre</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="school_year" class="form-label">Année scolaire</label>
+                            <select class="form-select" id="school_year" name="school_year" required>
+                                <option value="">Sélectionner une année scolaire</option>
+                                {% for year in school_years %}
+                                <option value="{{ year.pk }}" {% if period and period.school_year.pk == year.pk %}selected{% endif %}>{{ year.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="start_date" class="form-label">Date de début</label>
+                                <input type="date" class="form-control" id="start_date" name="start_date" value="{% if period %}{{ period.start_date|date:'Y-m-d' }}{% endif %}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="end_date" class="form-label">Date de fin</label>
+                                <input type="date" class="form-control" id="end_date" name="end_date" value="{% if period %}{{ period.end_date|date:'Y-m-d' }}{% endif %}" required>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-end">
+                            <a href="{% url 'school:period_list' %}" class="btn btn-secondary me-2">Annuler</a>
+                            <button type="submit" class="btn btn-danger">Enregistrer</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

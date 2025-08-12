@@ -1,0 +1,113 @@
+<!-- academics/templates/academics/grade_detail.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Détails de la note{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Détails de la note</h5>
+                    <div>
+                        <a href="{% url 'academics:grade_edit' grade.pk %}" class="btn btn-sm btn-outline-info me-2">
+                            <i class="fas fa-edit me-1"></i>Modifier
+                        </a>
+                        <a href="{% url 'academics:grade_list' %}" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Retour
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card border-0 shadow-sm h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">Informations générales</h5>
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">Élève:</div>
+                                        <div class="col-sm-8">{{ grade.student.get_full_name|default:grade.student.username }}</div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">Devoir:</div>
+                                        <div class="col-sm-8">{{ grade.assignment.title }}</div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">Matière:</div>
+                                        <div class="col-sm-8">{{ grade.assignment.subject.name }}</div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">Note:</div>
+                                        <div class="col-sm-8">{{ grade.points_earned }}/{{ grade.assignment.total_points }}</div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">Pourcentage:</div>
+                                        <div class="col-sm-8">{{ grade.points_earned|div:grade.assignment.total_points|mul:100|floatformat:2 }}%</div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">Commentaire:</div>
+                                        <div class="col-sm-8">{{ grade.comments|default:"Aucun commentaire" }}</div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">Date:</div>
+                                        <div class="col-sm-8">{{ grade.graded_at|date:"d/m/Y H:i" }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card border-0 shadow-sm h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">Informations sur le devoir</h5>
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">Titre:</div>
+                                        <div class="col-sm-8">{{ grade.assignment.title }}</div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">Description:</div>
+                                        <div class="col-sm-8">{{ grade.assignment.description|default:"Aucune description" }}</div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">Enseignant:</div>
+                                        <div class="col-sm-8">{{ grade.assignment.teacher.get_full_name|default:grade.assignment.teacher.username }}</div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">Classe:</div>
+                                        <div class="col-sm-8">{{ grade.assignment.class_obj.name }}</div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">Date de remise:</div>
+                                        <div class="col-sm-8">{{ grade.assignment.due_date|date:"d/m/Y H:i" }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-end">
+                        <a href="{% url 'academics:grade_edit' grade.pk %}" class="btn btn-info me-2">
+                            <i class="fas fa-edit me-1"></i>Modifier
+                        </a>
+                        <a href="{% url 'academics:grade_delete' grade.pk %}" class="btn btn-danger">
+                            <i class="fas fa-trash me-1"></i>Supprimer
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

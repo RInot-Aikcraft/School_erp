@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Tableau de bord Élève{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="icon-box bg-info bg-opacity-10 text-info rounded-circle p-3">
+                                <i class="fas fa-user-graduate fa-2x"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-4">
+                            <h2 class="mb-1">Tableau de bord Élève</h2>
+                            <p class="text-muted mb-0">Bienvenue, {{ user.get_full_name|default:user.username }}!</p>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <span class="badge bg-info fs-6">Élève</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="mb-4">Fonctionnalités à venir</h5>
+                    <div class="row">
+                        <div class="col-md-3 mb-4">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-calendar-alt fa-3x text-primary mb-3"></i>
+                                    <h6>Emploi du temps</h6>
+                                    <p class="text-muted small">Consulter votre emploi du temps</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-4">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-tasks fa-3x text-warning mb-3"></i>
+                                    <h6>Devoirs</h6>
+                                    <p class="text-muted small">Voir et rendre vos devoirs</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-4">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-chart-bar fa-3x text-success mb-3"></i>
+                                    <h6>Notes</h6>
+                                    <p class="text-muted small">Consulter vos résultats</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-4">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-book fa-3x text-info mb-3"></i>
+                                    <h6>Cours</h6>
+                                    <p class="text-muted small">Accéder à vos cours</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

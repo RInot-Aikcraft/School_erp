@@ -1,0 +1,55 @@
+<!-- school/templates/school/school_year_form.html -->
+{% extends 'base.html' %}
+{% load static %}
+{% load bootstrap5 %}
+
+{% block title %}{% if school_year %}Modifier{% else %}Créer{% endif %} une année scolaire{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-lg-6 mx-auto">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">{% if school_year %}Modifier{% else %}Créer{% endif %} une année scolaire</h5>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Nom</label>
+                            <input type="text" class="form-control" id="name" name="name" value="{% if school_year %}{{ school_year.name }}{% endif %}" required>
+                            <div class="form-text">Ex: 2023-2024</div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="start_date" class="form-label">Date de début</label>
+                                <input type="date" class="form-control" id="start_date" name="start_date" value="{% if school_year %}{{ school_year.start_date|date:'Y-m-d' }}{% endif %}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="end_date" class="form-label">Date de fin</label>
+                                <input type="date" class="form-control" id="end_date" name="end_date" value="{% if school_year %}{{ school_year.end_date|date:'Y-m-d' }}{% endif %}" required>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="current" name="current" {% if school_year and school_year.current %}checked{% endif %}>
+                            <label class="form-check-label" for="current">
+                                Année scolaire actuelle
+                            </label>
+                            <div class="form-text">Si cette option est cochée, toutes les autres années seront marquées comme non actuelles.</div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-end">
+                            <a href="{% url 'school:school_year_list' %}" class="btn btn-secondary me-2">Annuler</a>
+                            <button type="submit" class="btn btn-danger">Enregistrer</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

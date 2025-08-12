@@ -1,0 +1,278 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Détails de l'enseignant{% endblock %}
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Détails de l'enseignant</h5>
+                    <div>
+                        <a href="{% url 'auth_app:teacher_edit' teacher.pk %}" class="btn btn-sm btn-outline-info me-2">
+                            <i class="fas fa-edit me-1"></i>Modifier
+                        </a>
+                        <a href="{% url 'auth_app:teacher_list' %}" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Retour
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-4 text-center">
+                            {% if teacher.userprofile.profile_picture %}
+                            <img src="{{ teacher.userprofile.profile_picture.url }}" class="rounded-circle img-thumbnail" alt="Photo de profil" style="width: 150px; height: 150px; object-fit: cover;">
+                            {% else %}
+                            <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center mx-auto" style="width: 150px; height: 150px;">
+                                <i class="fas fa-chalkboard-teacher fa-4x text-primary"></i>
+                            </div>
+                            {% endif %}
+                            
+                            <h5 class="mt-3">{{ teacher.get_full_name|default:teacher.username }}</h5>
+                            <span class="badge bg-primary fs-6">Enseignant</span>
+                        </div>
+                        
+                        <div class="col-md-8">
+                            <h5 class="mb-3">Informations de base</h5>
+                            <div class="row mb-3">
+                                <div class="col-sm-3 text-muted">Nom d'utilisateur:</div>
+                                <div class="col-sm-9">{{ teacher.username }}</div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-sm-3 text-muted">Email:</div>
+                                <div class="col-sm-9">{{ teacher.email }}</div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-sm-3 text-muted">Prénom:</div>
+                                <div class="col-sm-9">{{ teacher.first_name|default:"Non spécifié" }}</div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-sm-3 text-muted">Nom:</div>
+                                <div class="col-sm-9">{{ teacher.last_name|default:"Non spécifié" }}</div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-sm-3 text-muted">Téléphone:</div>
+                                <div class="col-sm-9">{{ teacher.userprofile.phone|default:"Non spécifié" }}</div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-sm-3 text-muted">Date de naissance:</div>
+                                <div class="col-sm-9">{{ teacher.userprofile.date_of_birth|date:"d/m/Y"|default:"Non spécifiée" }}</div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-sm-3 text-muted">Adresse:</div>
+                                <div class="col-sm-9">{{ teacher.userprofile.address|default:"Non spécifiée" }}</div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-sm-3 text-muted">Date d'inscription:</div>
+                                <div class="col-sm-9">{{ teacher.date_joined|date:"d/m/Y H:i" }}</div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-sm-3 text-muted">Dernière connexion:</div>
+                                <div class="col-sm-9">{{ teacher.last_login|date:"d/m/Y H:i"|default:"Jamais" }}</div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-sm-3 text-muted">Statut:</div>
+                                <div class="col-sm-9">
+                                    {% if teacher.is_active %}
+                                    <span class="badge bg-success">Actif</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Inactif</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Informations personnelles supplémentaires -->
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-white py-3">
+                            <h5 class="mb-0">Informations personnelles</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">Sexe:</div>
+                                        <div class="col-sm-8">
+                                            {% if teacher.userprofile.gender %}
+                                                {% for value, label in UserProfile.GENDER_CHOICES %}
+                                                    {% if teacher.userprofile.gender == value %}{{ label }}{% endif %}
+                                                {% endfor %}
+                                            {% else %}
+                                                Non spécifié
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">Lieu de naissance:</div>
+                                        <div class="col-sm-8">{{ teacher.userprofile.place_of_birth|default:"Non spécifié" }}</div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">Nationalité:</div>
+                                        <div class="col-sm-8">{{ teacher.userprofile.nationality|default:"Non spécifiée" }}</div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">Numéro CIN:</div>
+                                        <div class="col-sm-8">{{ teacher.userprofile.id_card_number|default:"Non spécifié" }}</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">État civil:</div>
+                                        <div class="col-sm-8">
+                                            {% if teacher.userprofile.civil_status %}
+                                                {% for value, label in UserProfile.CIVIL_STATUS_CHOICES %}
+                                                    {% if teacher.userprofile.civil_status == value %}{{ label }}{% endif %}
+                                                {% endfor %}
+                                            {% else %}
+                                                Non spécifié
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">Contact d'urgence:</div>
+                                        <div class="col-sm-8">
+                                            {% if teacher.userprofile.emergency_contact_name %}
+                                                {{ teacher.userprofile.emergency_contact_name }}
+                                                {% if teacher.userprofile.emergency_contact_phone %}
+                                                    ({{ teacher.userprofile.emergency_contact_phone }})
+                                                {% endif %}
+                                                {% if teacher.userprofile.emergency_contact_relationship %}
+                                                    - {{ teacher.userprofile.emergency_contact_relationship }}
+                                                {% endif %}
+                                            {% else %}
+                                                Non spécifié
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Informations professionnelles -->
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-white py-3">
+                            <h5 class="mb-0">Informations professionnelles</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">Matricule interne:</div>
+                                        <div class="col-sm-8">{{ teacher.userprofile.internal_id|default:"Non spécifié" }}</div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">ID professionnel:</div>
+                                        <div class="col-sm-8">{{ teacher.userprofile.professional_id|default:"Non spécifié" }}</div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">Poste:</div>
+                                        <div class="col-sm-8">{{ teacher.userprofile.position|default:"Non spécifié" }}</div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">Statut:</div>
+                                        <div class="col-sm-8">
+                                            {% if teacher.userprofile.employment_status %}
+                                                {% for value, label in UserProfile.EMPLOYMENT_STATUS_CHOICES %}
+                                                    {% if teacher.userprofile.employment_status == value %}{{ label }}{% endif %}
+                                                {% endfor %}
+                                            {% else %}
+                                                Non spécifié
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">Date d'embauche:</div>
+                                        <div class="col-sm-8">{{ teacher.userprofile.hire_date|date:"d/m/Y"|default:"Non spécifiée" }}</div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">Expérience:</div>
+                                        <div class="col-sm-8">
+                                            {% if teacher.userprofile.experience_years %}
+                                                {{ teacher.userprofile.experience_years }} an{{ teacher.userprofile.experience_years|pluralize }}
+                                            {% else %}
+                                                Non spécifiée
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-sm-2 text-muted">Diplômes:</div>
+                                <div class="col-sm-10">{{ teacher.userprofile.diplomas|default:"Non spécifiés"|linebreaksbr }}</div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-sm-2 text-muted">Expériences précédentes:</div>
+                                <div class="col-sm-10">{{ teacher.userprofile.previous_positions|default:"Non spécifiées"|linebreaksbr }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Matières enseignées -->
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-white py-3">
+                            <h5 class="mb-0">Matières enseignées</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if teacher_subjects %}
+                                <div class="row">
+                                    {% for teacher_subject in teacher_subjects %}
+                                    <div class="col-md-4 mb-3">
+                                        <div class="card border-0 shadow-sm h-100">
+                                            <div class="card-body">
+                                                <h6 class="card-title">{{ teacher_subject.subject.name }}</h6>
+                                                <p class="card-text text-muted">Niveaux:</p>
+                                                <div>
+                                                    {% for level in teacher_subject.levels.all %}
+                                                        <span class="badge bg-info me-1">{{ level.name }}</span>
+                                                    {% endfor %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <p class="text-muted">Aucune matière assignée à cet enseignant.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-end mt-4">
+                        <a href="{% url 'auth_app:teacher_edit' teacher.pk %}" class="btn btn-info me-2">
+                            <i class="fas fa-edit me-1"></i>Modifier
+                        </a>
+                        <a href="{% url 'auth_app:teacher_delete' teacher.pk %}" class="btn btn-danger">
+                            <i class="fas fa-trash me-1"></i>Supprimer
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

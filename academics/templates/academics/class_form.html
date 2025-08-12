@@ -1,0 +1,73 @@
+<!-- academics/templates/academics/class_form.html -->
+{% extends 'base.html' %}
+{% load static %}
+{% load bootstrap5 %}
+
+{% block title %}{% if class_obj %}Modifier{% else %}Créer{% endif %} une classe{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">{% if class_obj %}Modifier{% else %}Créer{% endif %} une classe</h5>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="name" class="form-label">Nom</label>
+                                <input type="text" class="form-control" id="name" name="name" value="{% if class_obj %}{{ class_obj.name }}{% endif %}" required>
+                                <div class="form-text">Ex: 6ème A</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="level" class="form-label">Niveau</label>
+                                <select class="form-select" id="level" name="level" required>
+                                    <option value="">Sélectionner un niveau</option>
+                                    {% for level in levels %}
+                                    <option value="{{ level.pk }}" {% if class_obj and class_obj.level.pk == level.pk %}selected{% endif %}>{{ level.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="school_year" class="form-label">Année scolaire</label>
+                                <select class="form-select" id="school_year" name="school_year" required>
+                                    <option value="">Sélectionner une année scolaire</option>
+                                    {% for year in school_years %}
+                                    <option value="{{ year.pk }}" {% if class_obj and class_obj.school_year.pk == year.pk %}selected{% endif %}>{{ year.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="main_teacher" class="form-label">Professeur principal</label>
+                                <select class="form-select" id="main_teacher" name="main_teacher">
+                                    <option value="">Aucun</option>
+                                    {% for teacher in teachers %}
+                                    <option value="{{ teacher.pk }}" {% if class_obj and class_obj.main_teacher and class_obj.main_teacher.pk == teacher.pk %}selected{% endif %}>{{ teacher.get_full_name|default:teacher.username }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="max_students" class="form-label">Nombre maximum d'élèves</label>
+                            <input type="number" class="form-control" id="max_students" name="max_students" value="{% if class_obj %}{{ class_obj.max_students }}{% else %}30{% endif %}" min="1" required>
+                        </div>
+                        
+                        <div class="d-flex justify-content-end">
+                            <a href="{% url 'academics:class_list' %}" class="btn btn-secondary me-2">Annuler</a>
+                            <button type="submit" class="btn btn-danger">Enregistrer</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

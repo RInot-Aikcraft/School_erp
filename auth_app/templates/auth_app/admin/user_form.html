@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load bootstrap5 %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">{{ title }}</h5>
+                </div>
+                <div class="card-body p-4">
+                    {% if form %}
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                {% bootstrap_field form.username %}
+                            </div>
+                            <div class="col-md-6">
+                                {% bootstrap_field form.email %}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                {% bootstrap_field form.first_name %}
+                            </div>
+                            <div class="col-md-6">
+                                {% bootstrap_field form.last_name %}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                {% bootstrap_field form.password1 %}
+                            </div>
+                            <div class="col-md-6">
+                                {% bootstrap_field form.password2 %}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                {% bootstrap_field form.user_type %}
+                            </div>
+                            <div class="col-md-6">
+                                {% bootstrap_field form.date_of_birth %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            {% bootstrap_field form.phone %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {% bootstrap_field form.address %}
+                        </div>
+                        
+                        <div class="d-flex justify-content-end">
+                            <a href="{% url 'auth_app:user_list' %}" class="btn btn-secondary me-2">Annuler</a>
+                            <button type="submit" class="btn btn-danger">Enregistrer</button>
+                        </div>
+                    </form>
+                    {% else %}
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="username" class="form-label">Nom d'utilisateur</label>
+                                <input type="text" class="form-control" id="username" name="username" value="{{ user.username }}" readonly>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}">
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="first_name" class="form-label">Prénom</label>
+                                <input type="text" class="form-control" id="first_name" name="first_name" value="{{ user.first_name }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="last_name" class="form-label">Nom</label>
+                                <input type="text" class="form-control" id="last_name" name="last_name" value="{{ user.last_name }}">
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="user_type" class="form-label">Type d'utilisateur</label>
+                                <select class="form-select" id="user_type" name="user_type">
+                                    {% for type, display in user_types %}
+                                    <option value="{{ type }}" {% if profile.user_type == type %}selected{% endif %}>{{ display }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="date_of_birth" class="form-label">Date de naissance</label>
+                                <input type="date" class="form-control" id="date_of_birth" name="date_of_birth" value="{{ profile.date_of_birth|date:'Y-m-d' }}">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="phone" class="form-label">Téléphone</label>
+                            <input type="text" class="form-control" id="phone" name="phone" value="{{ profile.phone }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="address" class="form-label">Adresse</label>
+                            <textarea class="form-control" id="address" name="address" rows="3">{{ profile.address }}</textarea>
+                        </div>
+                        
+                        <div class="d-flex justify-content-end">
+                            <a href="{% url 'auth_app:user_list' %}" class="btn btn-secondary me-2">Annuler</a>
+                            <button type="submit" class="btn btn-danger">Enregistrer</button>
+                        </div>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

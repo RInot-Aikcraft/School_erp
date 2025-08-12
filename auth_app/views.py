@@ -1,0 +1,335 @@
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth import login, authenticate, logout
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib import messages
+from django.contrib.auth.models import User
+from .models import UserProfile
+from .forms import CustomUserCreationForm
+from academics.models import Subject, TeacherSubject, TeacherSubjectLevel, ClassLevel
+
+def is_admin(user):
+    return user.is_authenticated and user.userprofile.user_type == 'admin'
+
+def is_teacher(user):
+    return user.is_authenticated and user.userprofile.user_type == 'teacher'
+
+def is_student(user):
+    return user.is_authenticated and user.userprofile.user_type == 'student'
+
+def is_parent(user):
+    return user.is_authenticated and user.userprofile.user_type == 'parent'
+
+# Ajoutez cette fonction
+def redirect_to_login(request):
+    if request.user.is_authenticated:
+        # Redirection en fonction du type d'utilisateur
+        if request.user.userprofile.user_type == 'admin':
+            return redirect('auth_app:admin_dashboard')
+        elif request.user.userprofile.user_type == 'teacher':
+            return redirect('auth_app:teacher_dashboard')
+        elif request.user.userprofile.user_type == 'student':
+            return redirect('auth_app:student_dashboard')
+        elif request.user.userprofile.user_type == 'parent':
+            return redirect('auth_app:parent_dashboard')
+    else:
+        return redirect('auth_app:login')
+
+@login_required
+@user_passes_test(is_admin)
+def admin_dashboard(request):
+    total_users = User.objects.count()
+    admin_count = UserProfile.objects.filter(user_type='admin').count()
+    teacher_count = UserProfile.objects.filter(user_type='teacher').count()
+    student_count = UserProfile.objects.filter(user_type='student').count()
+    parent_count = UserProfile.objects.filter(user_type='parent').count()
+    
+    context = {
+        'total_users': total_users,
+        'admin_count': admin_count,
+        'teacher_count': teacher_count,
+        'student_count': student_count,
+        'parent_count': parent_count,
+        'users': User.objects.all().order_by('-date_joined')[:5],  # Pour les utilisateurs récents
+    }
+    
+    return render(request, 'auth_app/admin/dashboard.html', context)
+
+@login_required
+@user_passes_test(is_admin)
+def user_list(request):
+    users = User.objects.all()
+    return render(request, 'auth_app/admin/user_list.html', {'users': users})
+
+@login_required
+@user_passes_test(is_admin)
+def user_create(request):
+    if request.method == 'POST':
+        form = CustomUserCreationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Utilisateur créé avec succès!')
+            return redirect('auth_app:user_list')
+        else:
+            # Afficher les erreurs du formulaire pour le débogage
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
+    else:
+        form = CustomUserCreationForm()
+    
+    return render(request, 'auth_app/admin/user_form.html', {'form': form, 'title': 'Créer un utilisateur'})
+
+@login_required
+@user_passes_test(is_admin)
+def user_update(request, pk):
+    user = get_object_or_404(User, pk=pk)
+    profile = user.userprofile
+    
+    if request.method == 'POST':
+        user.first_name = request.POST.get('first_name', '')
+        user.last_name = request.POST.get('last_name', '')
+        user.email = request.POST.get('email', '')
+        profile.user_type = request.POST.get('user_type', 'student')
+        profile.phone = request.POST.get('phone', '')
+        profile.address = request.POST.get('address', '')
+        
+        if request.POST.get('date_of_birth'):
+            profile.date_of_birth = request.POST.get('date_of_birth')
+        
+        user.save()
+        profile.save()
+        
+        messages.success(request, 'Utilisateur mis à jour avec succès!')
+        return redirect('auth_app:user_list')
+    
+    context = {
+        'user': user,
+        'profile': profile,
+        'title': 'Modifier un utilisateur',
+        'user_types': UserProfile.USER_TYPES
+    }
+    return render(request, 'auth_app/admin/user_form.html', context)
+
+@login_required
+@user_passes_test(is_admin)
+def user_delete(request, pk):
+    user = get_object_or_404(User, pk=pk)
+    if request.method == 'POST':
+        user.delete()
+        messages.success(request, 'Utilisateur supprimé avec succès!')
+        return redirect('auth_app:user_list')
+    return render(request, 'auth_app/admin/user_confirm_delete.html', {'user': user})
+
+@login_required
+@user_passes_test(is_admin)
+def user_detail(request, pk):
+    user = get_object_or_404(User, pk=pk)
+    return render(request, 'auth_app/admin/user_detail.html', {'user': user})
+
+# Vues pour les autres types d'utilisateurs (implémentation de base)
+@login_required
+@user_passes_test(is_teacher)
+def teacher_dashboard(request):
+    return render(request, 'auth_app/teacher/dashboard.html')
+
+@login_required
+@user_passes_test(is_student)
+def student_dashboard(request):
+    return render(request, 'auth_app/student/dashboard.html')
+
+@login_required
+@user_passes_test(is_parent)
+def parent_dashboard(request):
+    return render(request, 'auth_app/parent/dashboard.html')
+
+def custom_login(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        user = authenticate(request, username=username, password=password)
+        
+        if user is not None:
+            login(request, user)
+            
+            # Redirection en fonction du type d'utilisateur
+            if user.userprofile.user_type == 'admin':
+                return redirect('auth_app:admin_dashboard')
+            elif user.userprofile.user_type == 'teacher':
+                return redirect('auth_app:teacher_dashboard')
+            elif user.userprofile.user_type == 'student':
+                return redirect('auth_app:student_dashboard')
+            elif user.userprofile.user_type == 'parent':
+                return redirect('auth_app:parent_dashboard')
+        else:
+            messages.error(request, 'Nom d\'utilisateur ou mot de passe incorrect.')
+    
+    return render(request, 'auth_app/login.html')
+
+def custom_logout(request):
+    logout(request)
+    messages.success(request, 'Vous avez été déconnecté avec succès.')
+    return redirect('auth_app:login')
+
+# Vues pour la gestion des enseignants
+@login_required
+@user_passes_test(is_admin)
+def teacher_list(request):
+    teachers = User.objects.filter(userprofile__user_type='teacher')
+    return render(request, 'auth_app/admin/teacher_list.html', {'teachers': teachers})
+
+@login_required
+@user_passes_test(is_admin)
+def teacher_create(request):
+    if request.method == 'POST':
+        form = CustomUserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            
+            # Ajout des matières enseignées
+            subject_ids = request.POST.getlist('subjects')
+            for subject_id in subject_ids:
+                subject = get_object_or_404(Subject, pk=subject_id)
+                teacher_subject = TeacherSubject.objects.create(teacher=user, subject=subject)
+                
+                # Ajout des niveaux pour chaque matière
+                level_ids = request.POST.getlist(f'levels_{subject_id}')
+                for level_id in level_ids:
+                    class_level = get_object_or_404(ClassLevel, pk=level_id)
+                    TeacherSubjectLevel.objects.create(teacher_subject=teacher_subject, class_level=class_level)
+            
+            messages.success(request, 'Enseignant créé avec succès!')
+            return redirect('auth_app:teacher_list')
+        else:
+            # Afficher les erreurs du formulaire pour le débogage
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
+    else:
+        form = CustomUserCreationForm()
+    
+    subjects = Subject.objects.all()
+    class_levels = ClassLevel.objects.all()
+    
+    return render(request, 'auth_app/admin/teacher_form.html', {
+        'form': form, 
+        'title': 'Créer un enseignant',
+        'subjects': subjects,
+        'class_levels': class_levels,
+        'teacher_subject_ids': []
+    })
+
+@login_required
+@user_passes_test(is_admin)
+def teacher_edit(request, pk):
+    teacher = get_object_or_404(User, pk=pk)
+    profile = teacher.userprofile
+    
+    if request.method == 'POST':
+        # Mise à jour des informations de base
+        teacher.first_name = request.POST.get('first_name', '')
+        teacher.last_name = request.POST.get('last_name', '')
+        teacher.email = request.POST.get('email', '')
+        
+        # Mise à jour des informations du profil
+        profile.phone = request.POST.get('phone', '')
+        profile.address = request.POST.get('address', '')
+        
+        if request.POST.get('date_of_birth'):
+            profile.date_of_birth = request.POST.get('date_of_birth')
+            
+        # Informations personnelles supplémentaires
+        profile.gender = request.POST.get('gender', '')
+        profile.place_of_birth = request.POST.get('place_of_birth', '')
+        profile.nationality = request.POST.get('nationality', '')
+        profile.id_card_number = request.POST.get('id_card_number', '')
+        profile.civil_status = request.POST.get('civil_status', '')
+        profile.emergency_contact_name = request.POST.get('emergency_contact_name', '')
+        profile.emergency_contact_relationship = request.POST.get('emergency_contact_relationship', '')
+        profile.emergency_contact_phone = request.POST.get('emergency_contact_phone', '')
+        
+        # Informations professionnelles
+        profile.internal_id = request.POST.get('internal_id', '')
+        profile.professional_id = request.POST.get('professional_id', '')
+        profile.diplomas = request.POST.get('diplomas', '')
+        
+        if request.POST.get('hire_date'):
+            profile.hire_date = request.POST.get('hire_date')
+            
+        profile.position = request.POST.get('position', '')
+        profile.employment_status = request.POST.get('employment_status', '')
+        
+        if request.POST.get('experience_years'):
+            profile.experience_years = int(request.POST.get('experience_years'))
+            
+        profile.previous_positions = request.POST.get('previous_positions', '')
+        
+        # Sauvegarde
+        teacher.save()
+        profile.save()
+        
+        # Mise à jour des matières enseignées
+        TeacherSubject.objects.filter(teacher=teacher).delete()
+        subject_ids = request.POST.getlist('subjects')
+        
+        for subject_id in subject_ids:
+            subject = get_object_or_404(Subject, pk=subject_id)
+            teacher_subject = TeacherSubject.objects.create(teacher=teacher, subject=subject)
+            
+            # Ajout des niveaux pour chaque matière
+            level_ids = request.POST.getlist(f'levels_{subject_id}')
+            for level_id in level_ids:
+                class_level = get_object_or_404(ClassLevel, pk=level_id)
+                TeacherSubjectLevel.objects.create(teacher_subject=teacher_subject, class_level=class_level)
+        
+        # Gestion de la photo de profil
+        if 'profile_picture' in request.FILES:
+            profile.profile_picture = request.FILES['profile_picture']
+            profile.save()
+        
+        messages.success(request, 'Enseignant mis à jour avec succès!')
+        return redirect('auth_app:teacher_list')
+    
+    # Prétraitement des données pour le template
+    teacher_subjects = TeacherSubject.objects.filter(teacher=teacher)
+    teacher_subject_ids = [ts.subject.pk for ts in teacher_subjects]
+    
+    # Préparation des niveaux par matière
+    subjects_levels = {}
+    for teacher_subject in teacher_subjects:
+        levels = TeacherSubjectLevel.objects.filter(teacher_subject=teacher_subject)
+        subjects_levels[teacher_subject.subject.pk] = [level.class_level.pk for level in levels]
+    
+    subjects = Subject.objects.all()
+    class_levels = ClassLevel.objects.all()
+    
+    context = {
+        'teacher': teacher,
+        'profile': profile,
+        'title': 'Modifier un enseignant',
+        'teacher_subjects': teacher_subjects,
+        'teacher_subject_ids': teacher_subject_ids,
+        'subjects': subjects,
+        'class_levels': class_levels,
+        'subjects_levels': subjects_levels
+    }
+    return render(request, 'auth_app/admin/teacher_form.html', context)
+
+@login_required
+@user_passes_test(is_admin)
+def teacher_detail(request, pk):
+    teacher = get_object_or_404(User, pk=pk)
+    teacher_subjects = TeacherSubject.objects.filter(teacher=teacher).prefetch_related('levels')
+    return render(request, 'auth_app/admin/teacher_detail.html', {
+        'teacher': teacher,
+        'teacher_subjects': teacher_subjects
+    })
+
+@login_required
+@user_passes_test(is_admin)
+def teacher_delete(request, pk):
+    teacher = get_object_or_404(User, pk=pk)
+    if request.method == 'POST':
+        teacher.delete()
+        messages.success(request, 'Enseignant supprimé avec succès!')
+        return redirect('auth_app:teacher_list')
+    return render(request, 'auth_app/admin/teacher_confirm_delete.html', {'teacher': teacher})

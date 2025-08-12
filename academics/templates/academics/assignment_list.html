@@ -1,0 +1,66 @@
+<!-- academics/templates/academics/assignment_list.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Devoirs{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Devoirs</h5>
+                    <a href="{% url 'academics:assignment_create' %}" class="btn btn-danger">
+                        <i class="fas fa-plus me-2"></i>Ajouter un devoir
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Titre</th>
+                                    <th>Matière</th>
+                                    <th>Enseignant</th>
+                                    <th>Classe</th>
+                                    <th>Date de remise</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for assignment in assignments %}
+                                <tr>
+                                    <td>{{ assignment.title }}</td>
+                                    <td>{{ assignment.subject.name }}</td>
+                                    <td>{{ assignment.teacher.get_full_name|default:assignment.teacher.username }}</td>
+                                    <td>{{ assignment.class_obj.name }}</td>
+                                    <td>{{ assignment.due_date|date:"d/m/Y H:i" }}</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{% url 'academics:assignment_detail' assignment.pk %}" class="btn btn-sm btn-outline-primary" title="Voir">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{% url 'academics:assignment_edit' assignment.pk %}" class="btn btn-sm btn-outline-info" title="Modifier">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{% url 'academics:assignment_delete' assignment.pk %}" class="btn btn-sm btn-outline-danger" title="Supprimer">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center">Aucun devoir trouvé</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

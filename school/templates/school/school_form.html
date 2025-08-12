@@ -1,0 +1,69 @@
+<!-- school/templates/school/school_form.html -->
+{% extends 'base.html' %}
+{% load static %}
+{% load bootstrap5 %}
+
+{% block title %}Modifier les informations de l'établissement{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">Modifier les informations de l'établissement</h5>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="name" class="form-label">Nom de l'établissement</label>
+                                <input type="text" class="form-control" id="name" name="name" value="{{ school.name }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="principal_name" class="form-label">Nom du directeur</label>
+                                <input type="text" class="form-control" id="principal_name" name="principal_name" value="{{ school.principal_name }}" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="phone" class="form-label">Téléphone</label>
+                                <input type="text" class="form-control" id="phone" name="phone" value="{{ school.phone }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email" name="email" value="{{ school.email }}">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="address" class="form-label">Adresse</label>
+                            <textarea class="form-control" id="address" name="address" rows="3">{{ school.address }}</textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="logo" class="form-label">Logo</label>
+                            <input type="file" class="form-control" id="logo" name="logo" accept="image/*">
+                            <div class="form-text">Formats acceptés: JPG, PNG, GIF. Taille maximale: 2MB.</div>
+                            {% if school.logo %}
+                            <div class="mt-2">
+                                <img src="{{ school.logo.url }}" alt="Logo actuel" style="max-height: 100px;">
+                                <div class="form-text">Logo actuel</div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="d-flex justify-content-end">
+                            <a href="{% url 'school:school_detail' %}" class="btn btn-secondary me-2">Annuler</a>
+                            <button type="submit" class="btn btn-danger">Enregistrer</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

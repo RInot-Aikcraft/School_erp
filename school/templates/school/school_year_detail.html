@@ -1,0 +1,168 @@
+<!-- school/templates/school/school_year_detail.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Détails de l'année scolaire{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Détails de l'année scolaire</h5>
+                    <div>
+                        <a href="{% url 'school:school_year_edit' school_year.pk %}" class="btn btn-sm btn-outline-info me-2">
+                            <i class="fas fa-edit me-1"></i>Modifier
+                        </a>
+                        <a href="{% url 'school:school_year_list' %}" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Retour
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card border-0 shadow-sm h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">Informations générales</h5>
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">Nom:</div>
+                                        <div class="col-sm-8">{{ school_year.name }}</div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">Date de début:</div>
+                                        <div class="col-sm-8">{{ school_year.start_date|date:"d/m/Y" }}</div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">Date de fin:</div>
+                                        <div class="col-sm-8">{{ school_year.end_date|date:"d/m/Y" }}</div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">Statut:</div>
+                                        <div class="col-sm-8">
+                                            {% if school_year.current %}
+                                            <span class="badge bg-success">Actuelle</span>
+                                            {% else %}
+                                            <span class="badge bg-secondary">Passée</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card border-0 shadow-sm h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title d-flex justify-content-between align-items-center">
+                                        Périodes
+                                        <a href="{% url 'school:period_create' %}" class="btn btn-sm btn-danger">
+                                            <i class="fas fa-plus"></i>
+                                        </a>
+                                    </h5>
+                                    
+                                    {% if periods %}
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>Nom</th>
+                                                    <th>Début</th>
+                                                    <th>Fin</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for period in periods %}
+                                                <tr>
+                                                    <td>{{ period.name }}</td>
+                                                    <td>{{ period.start_date|date:"d/m/Y" }}</td>
+                                                    <td>{{ period.end_date|date:"d/m/Y" }}</td>
+                                                    <td>
+                                                        <div class="btn-group">
+                                                            <a href="{% url 'school:period_edit' period.pk %}" class="btn btn-sm btn-outline-info" title="Modifier">
+                                                                <i class="fas fa-edit"></i>
+                                                            </a>
+                                                            <a href="{% url 'school:period_delete' period.pk %}" class="btn btn-sm btn-outline-danger" title="Supprimer">
+                                                                <i class="fas fa-trash"></i>
+                                                            </a>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    {% else %}
+                                    <p class="text-muted">Aucune période définie pour cette année scolaire.</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title d-flex justify-content-between align-items-center">
+                                Vacances
+                                <a href="{% url 'school:holiday_create' %}" class="btn btn-sm btn-danger">
+                                    <i class="fas fa-plus"></i>
+                                </a>
+                            </h5>
+                            
+                            {% if holidays %}
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Nom</th>
+                                            <th>Début</th>
+                                            <th>Fin</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for holiday in holidays %}
+                                        <tr>
+                                            <td>{{ holiday.name }}</td>
+                                            <td>{{ holiday.start_date|date:"d/m/Y" }}</td>
+                                            <td>{{ holiday.end_date|date:"d/m/Y" }}</td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <a href="{% url 'school:holiday_edit' holiday.pk %}" class="btn btn-sm btn-outline-info" title="Modifier">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    <a href="{% url 'school:holiday_delete' holiday.pk %}" class="btn btn-sm btn-outline-danger" title="Supprimer">
+                                                        <i class="fas fa-trash"></i>
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <p class="text-muted">Aucune période de vacances définie pour cette année scolaire.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-end mt-4">
+                        <a href="{% url 'school:school_year_edit' school_year.pk %}" class="btn btn-info me-2">
+                            <i class="fas fa-edit me-1"></i>Modifier
+                        </a>
+                        <a href="{% url 'school:school_year_delete' school_year.pk %}" class="btn btn-danger">
+                            <i class="fas fa-trash me-1"></i>Supprimer
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

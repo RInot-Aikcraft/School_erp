@@ -1,0 +1,62 @@
+<!-- academics/templates/academics/class_level_list.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Niveaux{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Niveaux</h5>
+                    <a href="{% url 'academics:class_level_create' %}" class="btn btn-danger">
+                        <i class="fas fa-plus me-2"></i>Ajouter un niveau
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Nom</th>
+                                    <th>Description</th>
+                                    <th>Nombre de classes</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for level in levels %}
+                                <tr>
+                                    <td>{{ level.name }}</td>
+                                    <td>{{ level.description|truncatewords:10|default:"Aucune description" }}</td>
+                                    <td>{{ level.classes.count }}</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{% url 'academics:class_level_detail' level.pk %}" class="btn btn-sm btn-outline-primary" title="Voir">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{% url 'academics:class_level_edit' level.pk %}" class="btn btn-sm btn-outline-info" title="Modifier">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{% url 'academics:class_level_delete' level.pk %}" class="btn btn-sm btn-outline-danger" title="Supprimer">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center">Aucun niveau trouvé</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
