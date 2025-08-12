@@ -1,24 +1,29 @@
-<!-- auth_app/templates/auth_app/admin/dashboard.html -->
 {% extends 'base.html' %}
 {% load static %}
-
 {% block title %}Tableau de bord Administrateur{% endblock %}
-
 {% block content %}
 <div class="container-fluid py-4">
+    <!-- En-tête du tableau de bord -->
     <div class="row">
         <div class="col-12">
             <div class="card border-0 shadow-sm">
                 <div class="card-body p-4">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-shrink-0">
-                            <div class="icon-box bg-danger bg-opacity-10 text-danger rounded-circle p-3">
-                                <i class="fas fa-user-shield fa-2x"></i>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <div class="icon-box bg-danger bg-opacity-10 text-danger rounded-circle p-3">
+                                    <i class="fas fa-user-shield fa-2x"></i>
+                                </div>
                             </div>
-                        </div>
-                        <div class="flex-grow-1 ms-4">
-                            <h2 class="mb-1">Tableau de bord Administrateur</h2>
-                            <p class="text-muted mb-0">Bienvenue, {{ user.get_full_name|default:user.username }}!</p>
+                            <div class="flex-grow-1 ms-4">
+                                <h2 class="mb-1">Tableau de bord Administrateur</h2>
+                                <p class="text-muted mb-0">Bienvenue, {{ user.get_full_name|default:user.username }}!</p>
+                                {% if current_school_year %}
+                                <p class="text-muted"><small>Année scolaire en cours : <strong>{{ current_school_year.name }}</strong></small></p>
+                                {% else %}
+                                <p class="text-warning"><small><i class="fas fa-exclamation-triangle me-1"></i>Aucune année scolaire n'est définie comme "actuelle".</small></p>
+                                {% endif %}
+                            </div>
                         </div>
                         <div class="flex-shrink-0">
                             <span class="badge bg-danger fs-6">Administrateur</span>
@@ -29,6 +34,7 @@
         </div>
     </div>
 
+    <!-- Statistiques principales -->
     <div class="row mt-4">
         <div class="col-xl-3 col-md-6 mb-4">
             <div class="card border-0 shadow-sm h-100 card-hover">
@@ -62,7 +68,8 @@
                         </div>
                     </div>
                     <div class="mt-3">
-                        <a href="#" class="btn btn-sm btn-outline-primary">Voir tous</a>
+                        {# CORRECTION : Lien vers la liste des enseignants #}
+                        <a href="{% url 'auth_app:teacher_list' %}" class="btn btn-sm btn-outline-primary">Voir tous</a>
                     </div>
                 </div>
             </div>
@@ -81,6 +88,7 @@
                         </div>
                     </div>
                     <div class="mt-3">
+                        {# LIEN (à créer plus tard) #}
                         <a href="#" class="btn btn-sm btn-outline-info">Voir tous</a>
                     </div>
                 </div>
@@ -100,6 +108,7 @@
                         </div>
                     </div>
                     <div class="mt-3">
+                        {# LIEN (à créer plus tard) #}
                         <a href="#" class="btn btn-sm btn-outline-warning">Voir tous</a>
                     </div>
                 </div>
@@ -107,6 +116,70 @@
         </div>
     </div>
 
+    <!-- NOUVELLE SECTION : Statistiques Contextuelles -->
+    {% if current_school_year %}
+    <div class="row mt-2">
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100 card-hover">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center">
+                        <div class="icon-box bg-success bg-opacity-10 text-success rounded-circle p-3 me-3">
+                            <i class="fas fa-door-open fa-lg"></i>
+                        </div>
+                        <div>
+                            <h6 class="text-muted mb-1">Classes cette année</h6>
+                            <h3 class="mb-0">{{ class_count }}</h3>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <a href="{% url 'academics:class_list' %}" class="btn btn-sm btn-outline-success">Voir toutes</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100 card-hover">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center">
+                        <div class="icon-box bg-purple bg-opacity-10 text-purple rounded-circle p-3 me-3">
+                            <i class="fas fa-book-open fa-lg"></i>
+                        </div>
+                        <div>
+                            <h6 class="text-muted mb-1">Matières enseignées</h6>
+                            <h3 class="mb-0">{{ subject_count }}</h3>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <a href="{% url 'academics:subject_list' %}" class="btn btn-sm btn-outline-purple">Voir toutes</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100 card-hover">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center">
+                        <div class="icon-box bg-teal bg-opacity-10 text-teal rounded-circle p-3 me-3">
+                            <i class="fas fa-user-check fa-lg"></i>
+                        </div>
+                        <div>
+                            <h6 class="text-muted mb-1">Élèves inscrits</h6>
+                            <h3 class="mb-0">{{ enrollment_count }}</h3>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        {# LIEN (à créer plus tard) #}
+                        <a href="#" class="btn btn-sm btn-outline-teal">Voir toutes</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Actions rapides -->
     <div class="row mt-4">
         <div class="col-12">
             <div class="card border-0 shadow-sm">
@@ -122,21 +195,21 @@
                             </a>
                         </div>
                         <div class="col-md-3 mb-3">
-                            <a href="#" class="btn btn-primary w-100 h-100 d-flex flex-column align-items-center justify-content-center p-4">
-                                <i class="fas fa-user-cog fa-2x mb-2"></i>
-                                <span>Gérer les rôles</span>
+                            <a href="{% url 'auth_app:teacher_create' %}" class="btn btn-primary w-100 h-100 d-flex flex-column align-items-center justify-content-center p-4">
+                                <i class="fas fa-chalkboard-teacher fa-2x mb-2"></i>
+                                <span>Créer un enseignant</span>
                             </a>
                         </div>
                         <div class="col-md-3 mb-3">
-                            <a href="{% url 'academics:class_list' %}" class="btn btn-info w-100 h-100 d-flex flex-column align-items-center justify-content-center p-4">
-                                <i class="fas fa-school fa-2x mb-2"></i>
-                                <span>Gérer les classes</span>
+                            <a href="{% url 'academics:class_create' %}" class="btn btn-info w-100 h-100 d-flex flex-column align-items-center justify-content-center p-4">
+                                <i class="fas fa-door-open fa-2x mb-2"></i>
+                                <span>Créer une classe</span>
                             </a>
                         </div>
                         <div class="col-md-3 mb-3">
-                            <a href="#" class="btn btn-warning w-100 h-100 d-flex flex-column align-items-center justify-content-center p-4">
-                                <i class="fas fa-chart-bar fa-2x mb-2"></i>
-                                <span>Statistiques</span>
+                            <a href="{% url 'academics:subject_create' %}" class="btn btn-warning w-100 h-100 d-flex flex-column align-items-center justify-content-center p-4">
+                                <i class="fas fa-book-open fa-2x mb-2"></i>
+                                <span>Créer une matière</span>
                             </a>
                         </div>
                     </div>
@@ -146,6 +219,7 @@
     </div>
     
     <div class="row mt-4">
+        <!-- Utilisateurs récents -->
         <div class="col-xl-8 mb-4">
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
@@ -181,15 +255,17 @@
                                     <td>{{ user.email }}</td>
                                     <td>{{ user.date_joined|date:"d/m/Y" }}</td>
                                     <td>
-                                        <a href="{% url 'auth_app:user_detail' user.pk %}" class="btn btn-sm btn-outline-primary">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        <a href="{% url 'auth_app:user_update' user.pk %}" class="btn btn-sm btn-outline-info">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <a href="{% url 'auth_app:user_delete' user.pk %}" class="btn btn-sm btn-outline-danger">
-                                            <i class="fas fa-trash"></i>
-                                        </a>
+                                        <div class="btn-group" role="group">
+                                            <a href="{% url 'auth_app:user_detail' user.pk %}" class="btn btn-sm btn-outline-primary" title="Voir">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{% url 'auth_app:user_update' user.pk %}" class="btn btn-sm btn-outline-info" title="Modifier">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{% url 'auth_app:user_delete' user.pk %}" class="btn btn-sm btn-outline-danger" title="Supprimer">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
                                     </td>
                                 </tr>
                                 {% empty %}
@@ -204,19 +280,73 @@
             </div>
         </div>
         
+        <!-- NOUVELLE SECTION : Prochains devoirs -->
         <div class="col-xl-4 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Prochains devoirs</h5>
+                    <a href="{% url 'academics:assignment_list' %}" class="btn btn-sm btn-outline-primary">Voir tous</a>
+                </div>
+                <div class="card-body">
+                    {% if upcoming_assignments %}
+                    <ul class="list-group list-group-flush">
+                        {% for assignment in upcoming_assignments %}
+                        <li class="list-group-item px-0">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ assignment.title }}</h6>
+                                <small class="text-muted">{{ assignment.due_date|date:"d/m" }}</small>
+                            </div>
+                            <p class="mb-1 small text-muted">{{ assignment.subject.name }} - {{ assignment.class_obj.name }}</p>
+                            <small>par {{ assignment.teacher.get_full_name|default:assignment.teacher.username }}</small>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-muted text-center">Aucun devoir à venir.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Répartition des utilisateurs (Graphique) -->
+    <div class="row mt-4">
+        <div class="col-12">
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white py-3">
                     <h5 class="mb-0">Répartition des utilisateurs</h5>
                 </div>
                 <div class="card-body">
-                    <canvas id="userChart" width="400" height="300"></canvas>
+                    <div class="row">
+                        <div class="col-md-8">
+                            <canvas id="userChart" height="100"></canvas>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <span class="badge bg-danger me-2" style="width: 20px; height: 20px;"></span>
+                                <span>Admins ({{ admin_count }})</span>
+                            </div>
+                            <div class="d-flex align-items-center mb-3">
+                                <span class="badge bg-primary me-2" style="width: 20px; height: 20px;"></span>
+                                <span>Enseignants ({{ teacher_count }})</span>
+                            </div>
+                            <div class="d-flex align-items-center mb-3">
+                                <span class="badge bg-info me-2" style="width: 20px; height: 20px;"></span>
+                                <span>Élèves ({{ student_count }})</span>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-warning me-2" style="width: 20px; height: 20px;"></span>
+                                <span>Parents ({{ parent_count }})</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Scripts pour le graphique -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -228,10 +358,10 @@
                 datasets: [{
                     data: [{{ admin_count }}, {{ teacher_count }}, {{ student_count }}, {{ parent_count }}],
                     backgroundColor: [
-                        '#c62828',
-                        '#3949ab',
-                        '#039be5',
-                        '#fdd835'
+                        '#c62828', // Rouge danger
+                        '#3949ab', // Bleu primary
+                        '#039be5', // Bleu info
+                        '#fdd835'  // Jaune warning
                     ],
                     borderWidth: 0
                 }]
@@ -241,7 +371,19 @@
                 maintainAspectRatio: false,
                 plugins: {
                     legend: {
-                        position: 'bottom',
+                        display: false, // On cache la légende car on l'affiche à côté
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                label += context.parsed + ' utilisateur(s)';
+                                return label;
+                            }
+                        }
                     }
                 }
             }

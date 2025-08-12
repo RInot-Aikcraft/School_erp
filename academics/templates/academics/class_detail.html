@@ -1,120 +1,303 @@
-<!-- academics/templates/academics/class_detail.html -->
 {% extends 'base.html' %}
 {% load static %}
-
-{% block title %}Détails de la classe{% endblock %}
+{% block title %}Détails de la classe - {{ class_obj.name }}{% endblock %}
 
 {% block content %}
 <div class="container-fluid py-4">
-    <div class="row">
+    <!-- En-tête de la page -->
+    <div class="row mb-4">
         <div class="col-12">
             <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Détails de la classe</h5>
-                    <div>
-                        <a href="{% url 'academics:class_edit' class_obj.pk %}" class="btn btn-sm btn-outline-info me-2">
-                            <i class="fas fa-edit me-1"></i>Modifier
-                        </a>
-                        <a href="{% url 'academics:class_list' %}" class="btn btn-sm btn-outline-secondary">
-                            <i class="fas fa-arrow-left me-1"></i>Retour
-                        </a>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="row mb-4">
-                        <div class="col-md-6">
-                            <div class="card border-0 shadow-sm h-100">
-                                <div class="card-body">
-                                    <h5 class="card-title">Informations générales</h5>
-                                    <div class="row mb-3">
-                                        <div class="col-sm-4 text-muted">Nom:</div>
-                                        <div class="col-sm-8">{{ class_obj.name }}</div>
-                                    </div>
-                                    
-                                    <div class="row mb-3">
-                                        <div class="col-sm-4 text-muted">Niveau:</div>
-                                        <div class="col-sm-8">{{ class_obj.level.name }}</div>
-                                    </div>
-                                    
-                                    <div class="row mb-3">
-                                        <div class="col-sm-4 text-muted">Année scolaire:</div>
-                                        <div class="col-sm-8">{{ class_obj.school_year.name }}</div>
-                                    </div>
-                                    
-                                    <div class="row mb-3">
-                                        <div class="col-sm-4 text-muted">Professeur principal:</div>
-                                        <div class="col-sm-8">{{ class_obj.main_teacher.get_full_name|default:"Non assigné" }}</div>
-                                    </div>
-                                    
-                                    <div class="row mb-3">
-                                        <div class="col-sm-4 text-muted">Capacité:</div>
-                                        <div class="col-sm-8">{{ class_obj.enrollments.count }}/{{ class_obj.max_students }} élèves</div>
-                                    </div>
-                                    
-                                    <div class="row mb-3">
-                                        <div class="col-sm-4 text-muted">Date de création:</div>
-                                        <div class="col-sm-8">{{ class_obj.created_at|date:"d/m/Y H:i" }}</div>
-                                    </div>
-                                    
-                                    <div class="row mb-3">
-                                        <div class="col-sm-4 text-muted">Dernière mise à jour:</div>
-                                        <div class="col-sm-8">{{ class_obj.updated_at|date:"d/m/Y H:i" }}</div>
-                                    </div>
+                <div class="card-body bg-success bg-opacity-10 p-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <div class="icon-box bg-success bg-opacity-20 text-success rounded-circle p-3">
+                                    <i class="fas fa-door-open fa-2x"></i>
                                 </div>
                             </div>
-                        </div>
-                        
-                        <div class="col-md-6">
-                            <div class="card border-0 shadow-sm h-100">
-                                <div class="card-body">
-                                    <h5 class="card-title">Élèves inscrits</h5>
-                                    
-                                    {% if enrollments %}
-                                    <div class="table-responsive">
-                                        <table class="table table-sm">
-                                            <thead>
-                                                <tr>
-                                                    <th>Nom</th>
-                                                    <th>Date d'inscription</th>
-                                                    <th>Statut</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {% for enrollment in enrollments %}
-                                                <tr>
-                                                    <td>{{ enrollment.student.get_full_name|default:enrollment.student.username }}</td>
-                                                    <td>{{ enrollment.enrollment_date|date:"d/m/Y" }}</td>
-                                                    <td>
-                                                        {% if enrollment.is_active %}
-                                                        <span class="badge bg-success">Actif</span>
-                                                        {% else %}
-                                                        <span class="badge bg-secondary">Inactif</span>
-                                                        {% endif %}
-                                                    </td>
-                                                </tr>
-                                                {% endfor %}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                    {% else %}
-                                    <p class="text-muted">Aucun élève inscrit dans cette classe.</p>
-                                    {% endif %}
-                                </div>
+                            <div class="flex-grow-1 ms-4">
+                                <h2 class="mb-0">{{ class_obj.name }}</h2>
+                                <p class="text-muted mb-0">
+                                    Niveau: {{ class_obj.level.name }} | Année Scolaire: {{ class_obj.school_year.name }}
+                                </p>
                             </div>
                         </div>
-                    </div>
-                    
-                    <div class="d-flex justify-content-end">
-                        <a href="{% url 'academics:class_edit' class_obj.pk %}" class="btn btn-info me-2">
-                            <i class="fas fa-edit me-1"></i>Modifier
-                        </a>
-                        <a href="{% url 'academics:class_delete' class_obj.pk %}" class="btn btn-danger">
-                            <i class="fas fa-trash me-1"></i>Supprimer
-                        </a>
+                        <div class="flex-shrink-0">
+                            <a href="{% url 'academics:class_edit' class_obj.pk %}" class="btn btn-info me-2" title="Modifier la classe">
+                                <i class="fas fa-edit"></i> Modifier
+                            </a>
+                            <a href="{% url 'academics:class_list' %}" class="btn btn-outline-secondary" title="Retour à la liste">
+                                <i class="fas fa-arrow-left"></i> Retour
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Cartes d'information clés -->
+    <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+            <div class="card border-0 shadow-sm h-100 card-hover">
+                <div class="card-body text-center">
+                    <i class="fas fa-chalkboard-teacher fa-2x text-primary mb-3"></i>
+                    <h6 class="card-title">Professeur Principal</h6>
+                    <p class="card-text">{{ class_obj.main_teacher.get_full_name|default:"<span class='text-warning'>Non assigné</span>" }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card border-0 shadow-sm h-100 card-hover">
+                <div class="card-body text-center">
+                    <i class="fas fa-users fa-2x text-info mb-3"></i>
+                    <h6 class="card-title">Capacité</h6>
+                    <p class="card-text">{{ class_obj.max_students }} élèves</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card border-0 shadow-sm h-100 card-hover">
+                <div class="card-body text-center">
+                    <i class="fas fa-user-check fa-2x text-success mb-3"></i>
+                    <h6 class="card-title">Inscrits</h6>
+                    <p class="card-text">{{ enrolled_students_count }} élèves</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Section : Matières enseignées -->
+        <div class="col-lg-8 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-book me-2 text-primary"></i>Matières enseignées ({{ assigned_subjects|length }})</h5>
+                    <div>
+                        <a href="{% url 'academics:class_schedule' class_obj.pk %}" class="btn btn-sm btn-outline-primary me-2" title="Voir l'emploi du temps">
+                            <i class="fas fa-calendar-alt me-1"></i> Emploi du temps
+                        </a>
+                        <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addSubjectModal">
+                            <i class="fas fa-plus me-1"></i>Ajouter une matière
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if assigned_subjects %}
+                    <div class="row">
+                        {% for cs in assigned_subjects %}
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card border-0 shadow-sm h-100 card-hover">
+                                <div class="card-body d-flex flex-column">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-book-open text-primary me-2"></i>
+                                            <h6 class="card-title mb-0">{{ cs.subject.name }}</h6>
+                                        </div>
+                                        <span class="badge bg-secondary">Coeff: {{ cs.coefficient }}</span>
+                                    </div>
+                                    <p class="card-text text-muted small mt-1">
+                                        <i class="fas fa-user-tie me-1"></i>
+                                        {{ cs.teacher.get_full_name|default:cs.teacher.username }}
+                                    </p>
+                                    <div class="mt-auto">
+                                        <a href="#" class="btn btn-sm btn-outline-danger btn-delete-subject w-100" data-id="{{ cs.pk }}" title="Retirer cette matière">
+                                            <i class="fas fa-trash"></i> Retirer
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-book fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">Aucune matière assignée</h5>
+                        <p class="text-muted">Commencez par ajouter les matières enseignées dans cette classe.</p>
+                        <button class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#addSubjectModal">
+                            <i class="fas fa-plus me-1"></i> Ajouter la première matière
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Section : Élèves inscrits -->
+        <div class="col-lg-4 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-user-graduate me-2 text-warning"></i>Élèves inscrits ({{ enrolled_students_count }})</h5>
+                    <!-- Lien à créer plus tard pour l'inscription d'un élève -->
+                    <a href="#" class="btn btn-sm btn-warning" title="Inscrire un élève">
+                        <i class="fas fa-user-plus"></i>
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if enrollments %}
+                        <!-- Barre de progression -->
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="text-muted">Taux d'occupation</span>
+                                <span class="text-muted">{{ enrolled_students_count }} / {{ class_obj.max_students }}</span>
+                            </div>
+                            <div class="progress" style="height: 10px;">
+                                <div class="progress-bar bg-{{ occupancy_percentage|floatformat:0|yesno:'success,warning,danger' }}" role="progressbar" style="width: {{ occupancy_percentage|floatformat:0 }}%;" aria-valuenow="{{ occupancy_percentage|floatformat:0 }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        </div>
+
+                        <!-- Liste des élèves -->
+                        <div class="list-group list-group-flush" style="max-height: 300px; overflow-y: auto;">
+                            {% for enrollment in enrollments %}
+                            <div class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-user-circle fa-2x text-muted me-3"></i>
+                                    <div>
+                                        <h6 class="mb-0">{{ enrollment.student.get_full_name|default:enrollment.student.username }}</h6>
+                                        <small class="text-muted">{{ enrollment.student.email }}</small>
+                                    </div>
+                                </div>
+                                <div>
+                                    <a href="{% url 'auth_app:user_detail' enrollment.student.pk %}" class="btn btn-sm btn-outline-primary" title="Voir le profil">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-user-friends fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">Aucun élève inscrit</h5>
+                            <p class="text-muted">Il n'y a aucun élève dans cette classe pour le moment.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<!-- MODAL POUR AJOUTER UNE MATIÈRE -->
+<div class="modal fade" id="addSubjectModal" tabindex="-1" aria-labelledby="addSubjectModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="addSubjectForm" method="post" action="{% url 'academics:add_subject_to_class' class_obj.pk %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addSubjectModalLabel">Ajouter une matière à la classe</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="subject" class="form-label">Matière</label>
+                        <select class="form-select" id="subject" name="subject" required>
+                            <option value="">-- Sélectionner une matière --</option>
+                            {% for subject in all_subjects %}
+                            <option value="{{ subject.pk }}">{{ subject.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="teacher" class="form-label">Enseignant</label>
+                        <select class="form-select" id="teacher" name="teacher" required>
+                            <option value="">-- Sélectionner d'abord une matière --</option>
+                            {# Les options seront ajoutées dynamiquement par JavaScript #}
+                        </select>
+                    </div>
+                    <!-- CHAMP COEFFICIENT -->
+                    <div class="mb-3">
+                        <label for="coefficient" class="form-label">Coefficient</label>
+                        <input type="number" class="form-control" id="coefficient" name="coefficient" min="1" value="1" required>
+                        <div class="form-text">Utilisé pour le calcul de la moyenne générale.</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Ajouter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- FORMULAIRE POUR SUPPRIMER UNE MATIÈRE (Méthode POST) -->
+<form id="deleteSubjectForm" method="post" style="display: none;">
+    {% csrf_token %}
+</form>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Logique pour la suppression d'une matière
+    const deleteButtons = document.querySelectorAll('.btn-delete-subject');
+    const deleteForm = document.getElementById('deleteSubjectForm');
+
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const subjectId = this.getAttribute('data-id');
+            
+            if (confirm('Êtes-vous sûr de vouloir retirer cette matière de la classe ?')) {
+                // Utilisation de l'URL nommée de Django
+                deleteForm.action = "{% url 'academics:remove_subject_from_class' 0 %}".replace('0', subjectId);
+                deleteForm.submit();
+            }
+        });
+    });
+
+    // Logique pour le filtrage dynamique des enseignants
+    const subjectSelect = document.getElementById('subject');
+    const teacherSelect = document.getElementById('teacher');
+
+    subjectSelect.addEventListener('change', function() {
+        const subjectId = this.value;
+        
+        // Vider la liste des enseignants et désactiver le select
+        teacherSelect.innerHTML = '<option value="">-- Chargement... --</option>';
+        teacherSelect.disabled = true;
+
+        if (subjectId) {
+            // Appeler notre nouvelle vue API pour récupérer les enseignants
+            fetch(`/academics/api/get-teachers-for-subject/?subject_id=${subjectId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('La réponse du réseau n\'était pas valide');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Réactiver le select
+                    teacherSelect.disabled = false;
+                    teacherSelect.innerHTML = '<option value="">-- Sélectionner un enseignant --</option>';
+                    
+                    if (data.teachers && data.teachers.length > 0) {
+                        data.teachers.forEach(teacher => {
+                            const option = document.createElement('option');
+                            option.value = teacher.id;
+                            option.textContent = teacher.text;
+                            teacherSelect.appendChild(option);
+                        });
+                    } else {
+                        // S'il n'y a pas d'enseignants pour cette matière
+                        teacherSelect.innerHTML = '<option value="">Aucun enseignant trouvé pour cette matière</option>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur lors de la récupération des enseignants:', error);
+                    teacherSelect.disabled = false;
+                    teacherSelect.innerHTML = '<option value="">Erreur de chargement</option>';
+                });
+        } else {
+            // Si aucune matière n'est sélectionnée, réinitialiser le select des enseignants
+            teacherSelect.disabled = false;
+            teacherSelect.innerHTML = '<option value="">-- Sélectionner d\'abord une matière --</option>';
+        }
+    });
+});
+</script>
 {% endblock %}

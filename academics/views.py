@@ -7,7 +7,9 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from django.contrib.auth.models import User
 from school.models import SchoolYear
-from .models import Subject, ClassLevel, Class, Enrollment, Assignment, Grade
+from .models import Subject, ClassLevel, Class, Enrollment, Assignment, Grade, ClassSubject, Schedule, ScheduleEntry, TimeSlot
+from django.db.models import Prefetch
+from django.http import JsonResponse
 
 def is_admin(user):
     return user.is_authenticated and user.userprofile.user_type == 'admin'
@@ -436,3 +438,191 @@ def class_level_delete(request, pk):
         return redirect('academics:class_level_list')
     
     return render(request, 'academics/class_level_confirm_delete.html', {'level': level})
+
+
+@login_required
+@user_passes_test(is_admin)
+def class_detail(request, pk):
+    class_obj = get_object_or_404(Class, pk=pk)
+    enrollments = class_obj.enrollments.all()
+    all_subjects = Subject.objects.all()
+    teachers = User.objects.filter(userprofile__user_type='teacher')
+    assigned_subjects = ClassSubject.objects.filter(
+        class_obj=class_obj, 
+        school_year=class_obj.school_year
+    ).select_related('subject', 'teacher').order_by('subject__name')
+
+    context = {
+        'class_obj': class_obj,
+        'enrollments': enrollments,
+        'all_subjects': all_subjects,
+        'teachers': teachers,
+        'assigned_subjects': assigned_subjects,
+    }
+    
+    return render(request, 'academics/class_detail.html', context)
+
+
+# Dans academics/views.py
+
+@login_required
+@user_passes_test(is_admin)
+def add_subject_to_class(request, class_pk):
+    class_obj = get_object_or_404(Class, pk=class_pk)
+    
+    if request.method == 'POST':
+        subject_id = request.POST.get('subject')
+        teacher_id = request.POST.get('teacher')
+        coefficient = request.POST.get('coefficient', 1) # Récupérer le coefficient
+        
+        subject = get_object_or_404(Subject, pk=subject_id)
+        teacher = get_object_or_404(User, pk=teacher_id)
+        
+        if not ClassSubject.objects.filter(
+            class_obj=class_obj, 
+            subject=subject, 
+            school_year=class_obj.school_year
+        ).exists():
+            ClassSubject.objects.create(
+                class_obj=class_obj,
+                subject=subject,
+                teacher=teacher,
+                school_year=class_obj.school_year,
+                coefficient=coefficient # Sauvegarder le coefficient
+            )
+            messages.success(request, f"La matière '{subject.name}' a été ajoutée avec succès.")
+        else:
+            messages.warning(request, f"La matière '{subject.name}' est déjà assignée à cette classe pour cette année scolaire.")
+            
+        return redirect('academics:class_detail', pk=class_obj.pk)
+    
+    return redirect('academics:class_detail', pk=class_obj.pk)
+
+
+@login_required
+@user_passes_test(is_admin)
+def remove_subject_from_class(request, class_subject_pk):
+    class_subject = get_object_or_404(ClassSubject, pk=class_subject_pk)
+    class_pk = class_subject.class_obj.pk # On récupère l'ID de la classe pour la redirection
+    
+    if request.method == 'POST':
+        subject_name = class_subject.subject.name
+        class_subject.delete()
+        messages.success(request, f"La matière '{subject_name}' a été retirée de la classe.")
+        return redirect('academics:class_detail', pk=class_pk)
+        
+    # Si ce n'est pas POST, on pourrait rediriger ou afficher une page de confirmation
+    return redirect('academics:class_detail', pk=class_pk)
+
+
+
+@login_required
+@user_passes_test(is_admin)
+def get_teachers_for_subject(request):
+    """
+    Vue API pour récupérer les enseignants qualifiés pour une matière donnée.
+    Retourne une réponse JSON.
+    """
+    subject_id = request.GET.get('subject_id')
+    if not subject_id:
+        return JsonResponse({'error': 'subject_id manquant'}, status=400)
+
+    try:
+        subject = Subject.objects.get(pk=subject_id)
+    except Subject.DoesNotExist:
+        return JsonResponse({'error': 'Matière non trouvée'}, status=404)
+
+    # Récupérer les User qui sont liés à cette matière via le modèle TeacherSubject
+    teachers = User.objects.filter(
+        userprofile__user_type='teacher',
+        subjects__subject=subject # La magie opère ici !
+    ).distinct().order_by('last_name', 'first_name')
+
+    # Formatter les données pour le select2 (ou un simple select)
+    teacher_list = [{'id': t.pk, 'text': t.get_full_name() or t.username} for t in teachers]
+    
+    return JsonResponse({'teachers': teacher_list})
+
+
+# Dans academics/views.py
+
+@login_required
+@user_passes_test(is_admin)
+def class_schedule(request, class_pk):
+    class_obj = get_object_or_404(Class, pk=class_pk)
+    
+    schedule, created = Schedule.objects.get_or_create(
+        class_obj=class_obj,
+        school_year=class_obj.school_year
+    )
+    
+    time_slots = TimeSlot.objects.all().order_by('start_time')
+    
+    entries = schedule.entries.all().select_related(
+        'class_subject__subject', 
+        'class_subject__teacher', 
+        'time_slot'
+    ).order_by('day_of_week', 'time_slot__start_time').values(
+        'id', 
+        'day_of_week', 
+        'class_subject__subject__name', 
+        'class_subject__teacher__first_name', 
+        'class_subject__teacher__last_name', 
+        'time_slot_id' 
+    )
+
+    schedule_by_day = {}
+    for day_num, day_name in ScheduleEntry.DAYS_OF_WEEK:
+        # On filtre la liste de dictionnaires pour ce jour spécifique
+        day_entries = [entry for entry in entries if entry['day_of_week'] == day_num]
+        schedule_by_day[day_num] = {
+            'name': day_name,
+            'entries': day_entries
+        }
+
+    context = {
+        'class_obj': class_obj,
+        'schedule': schedule,
+        'time_slots': time_slots,
+        'schedule_by_day': schedule_by_day,
+        'days_of_week': ScheduleEntry.DAYS_OF_WEEK,
+    }
+    
+    return render(request, 'academics/class_schedule.html', context)
+
+
+
+@login_required
+@user_passes_test(is_admin)
+def add_schedule_entry(request, schedule_pk):
+    schedule = get_object_or_404(Schedule, pk=schedule_pk)
+    
+    if request.method == 'POST':
+        subject_id = request.POST.get('subject')
+        teacher_id = request.POST.get('teacher') # On pourrait aussi le déduire du subject
+        time_slot_id = request.POST.get('time_slot')
+        day_of_week = request.POST.get('day_of_week')
+        
+        class_subject = get_object_or_404(ClassSubject, pk=subject_id, schedule__class_obj=schedule.class_obj)
+        time_slot = get_object_or_404(TimeSlot, pk=time_slot_id)
+        
+        # Vérifier si une entrée n'existe pas déjà à ce moment
+        if not ScheduleEntry.objects.filter(
+            schedule=schedule,
+            day_of_week=day_of_week,
+            time_slot=time_slot
+        ).exists():
+            ScheduleEntry.objects.create(
+                schedule=schedule,
+                class_subject=class_subject,
+                time_slot=time_slot,
+                day_of_week=day_of_week
+            )
+            messages.success(request, "Le cours a été ajouté à l'emploi du temps.")
+        else:
+            messages.warning(request, "Un cours est déjà programmé à ce moment.")
+            
+        return redirect('academics:class_schedule', schedule_pk=schedule.class_obj.pk)
+    
+    # Si ce n'est pas POST, rediriger vers la page de l'emploi du temps
+    return redirect('academics:class_schedule', schedule_pk=schedule.class_obj.pk)

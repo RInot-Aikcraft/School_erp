@@ -1,0 +1,228 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %} {# Assurez-vous que cette ligne est bien présente #}
+{% block title %}Emploi du temps - {{ class_obj.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- En-tête de la page -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body bg-info bg-opacity-10 p-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <div class="icon-box bg-info bg-opacity-20 text-info rounded-circle p-3">
+                                    <i class="fas fa-calendar-alt fa-2x"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-4">
+                                <h2 class="mb-0">Emploi du temps</h2>
+                                <p class="text-muted mb-0">
+                                    Classe: {{ class_obj.name }} | Année Scolaire: {{ class_obj.school_year.name }}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <a href="{% url 'academics:class_detail' class_obj.pk %}" class="btn btn-outline-secondary" title="Retour aux détails de la classe">
+                                <i class="fas fa-arrow-left"></i> Retour
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tableau de l'emploi du temps -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Vue Hebdomadaire</h5>
+            <!-- Bouton pour ajouter une entrée -->
+            <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addEntryModal">
+                <i class="fas fa-plus me-1"></i>Ajouter un cours
+            </button>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col" style="width: 100px;">Heure</th>
+                            {% for day_num, day_name in days_of_week %}
+                            <th scope="col" class="text-center">{{ day_name }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for slot in time_slots %}
+                        <tr>
+                            <th scope="row" class="text-nowrap align-middle">
+                                {{ slot.start_time|date:"H:i" }} - {{ slot.end_time|date:"H:i" }}
+                            </th>
+                            {% for day_num, day_name in days_of_week %}
+                            <td class="align-middle" style="height: 80px;">
+                                {% with entry=schedule_by_day|lookup:day_num.entries|get_item:slot.pk %}
+                                    {% if entry %}
+                                        <div class="p-2 h-100 d-flex flex-column">
+                                            <strong class="small">{{ entry.class_subject.subject_name }}</strong>
+                                            <small class="text-muted">{{ entry.class_subject.teacher_first_name }} {{ entry.class_subject.teacher_last_name }}</small>
+                                            <div class="mt-auto">
+                                                <!-- Formulaire de suppression pour cette entrée -->
+                                                <form method="post" action="{% url 'academics:delete_schedule_entry' entry.pk %}" style="display:inline;">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-xs btn-outline-danger" title="Supprimer ce cours" onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce cours ?');">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                {% endwith %}
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL POUR AJOUTER UNE ENTRÉE -->
+<div class="modal fade" id="addEntryModal" tabindex="-1" aria-labelledby="addEntryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form id="addEntryForm" method="post" action="{% url 'academics:add_schedule_entry' schedule.pk %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addEntryModalLabel">Ajouter un cours à l'emploi du temps</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="subject" class="form-label">Matière</label>
+                            <select class="form-select" id="subject" name="subject" required>
+                                <option value="">-- Sélectionner une matière --</option>
+                                {% for cs in class_obj.class_subjects.all %}
+                                    <option value="{{ cs.pk }}">{{ cs.subject.name }} (Coeff: {{ cs.coefficient }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="teacher" class="form-label">Enseignant</label>
+                            <select class="form-select" id="teacher" name="teacher" required>
+                                <option value="">-- Sélectionner d'abord une matière --</option>
+                                {# Les options seront ajoutées dynamiquement par JavaScript #}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="day_of_week" class="form-label">Jour de la semaine</label>
+                            <select class="form-select" id="day_of_week" name="day_of_week" required>
+                                <option value="">-- Sélectionner un jour --</option>
+                                {% for day_num, day_name in days_of_week %}
+                                <option value="{{ day_num }}">{{ day_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="time_slot" class="form-label">Créneau Horaire</label>
+                            <select class="form-select" id="time_slot" name="time_slot" required>
+                                <option value="">-- Sélectionner un créneau --</option>
+                                {% for slot in time_slots %}
+                                <option value="{{ slot.pk }}">{{ slot.start_time|date:"H:i" }} - {{ slot.end_time|date:"H:i" }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Ajouter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Formulaire caché pour la suppression (pour éviter les modals de confirmation JS) -->
+<form id="deleteEntryForm" method="post" style="display: none;">
+    {% csrf_token %}
+</form>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // --- LOGIQUE POUR L'AJOUT D'UN COURS ---
+    const subjectSelect = document.getElementById('subject');
+    const teacherSelect = document.getElementById('teacher');
+    const addEntryForm = document.getElementById('addEntryForm');
+    const modal = new bootstrap.Modal(document.getElementById('addEntryModal'));
+
+    // Réinitialiser le formulaire à chaque ouverture du modal
+    document.getElementById('addEntryModal').addEventListener('show.bs.modal', function () {
+        addEntryForm.reset();
+        teacherSelect.innerHTML = '<option value="">-- Sélectionner d\'abord une matière --</option>';
+    });
+
+    // Mettre à jour la liste des enseignants quand une matière est sélectionnée
+    subjectSelect.addEventListener('change', function() {
+        const subjectPk = this.value;
+        
+        // Vider et désactiver le select des enseignants
+        teacherSelect.innerHTML = '<option value="">-- Sélectionner un enseignant --</option>';
+        teacherSelect.disabled = true;
+
+        if (subjectPk) {
+            // Récupérer les enseignants pour la matière sélectionnée
+            fetch(`/academics/api/get-teachers-for-subject/?subject_id=${subjectPk}`)
+                .then(response => response.json())
+                .then(data => {
+                    teacherSelect.disabled = false;
+                    if (data.teachers && data.teachers.length > 0) {
+                        data.teachers.forEach(teacher => {
+                            const option = document.createElement('option');
+                            option.value = teacher.id;
+                            option.textContent = teacher.text;
+                            teacherSelect.appendChild(option);
+                        });
+                    } else {
+                        teacherSelect.innerHTML = '<option value="">Aucun enseignant trouvé pour cette matière</option>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur lors de la récupération des enseignants:', error);
+                    teacherSelect.disabled = false;
+                    teacherSelect.innerHTML = '<option value="">Erreur de chargement</option>';
+                });
+        } else {
+            teacherSelect.disabled = false;
+        }
+    });
+
+    // --- LOGIQUE POUR LA SUPPRESSION D'UN COURS ---
+    const deleteButtons = document.querySelectorAll('form[action^="/academics/delete_schedule_entry/"]');
+    const deleteForm = document.getElementById('deleteEntryForm');
+
+    deleteButtons.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (confirm('Êtes-vous sûr de vouloir supprimer ce cours ? Cette action est irréversible.')) {
+                // Soumettre le formulaire caché
+                deleteForm.action = this.action;
+                deleteForm.submit();
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

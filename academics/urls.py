@@ -15,6 +15,15 @@ urlpatterns = [
     path('classes/<int:pk>/', views.class_detail, name='class_detail'),
     path('classes/<int:pk>/edit/', views.class_edit, name='class_edit'),
     path('classes/<int:pk>/delete/', views.class_delete, name='class_delete'),
+    path('classes/<int:class_pk>/add-subject/', views.add_subject_to_class, name='add_subject_to_class'),
+    
+    path('class-subjects/<int:class_subject_pk>/delete/', views.remove_subject_from_class, name='remove_subject_from_class'),
+    path('api/get-teachers-for-subject/', views.get_teachers_for_subject, name='get_teachers_for_subject'),
+
+    path('classes/<int:class_pk>/schedule/', views.class_schedule, name='class_schedule'),
+    path('schedules/<int:schedule_pk>/add-entry/', views.add_schedule_entry, name='add_schedule_entry'),
+
+
     
     path('assignments/', views.assignment_list, name='assignment_list'),
     path('assignments/create/', views.assignment_create, name='assignment_create'),
@@ -27,7 +36,6 @@ urlpatterns = [
     path('grades/<int:pk>/', views.grade_detail, name='grade_detail'),
     path('grades/<int:pk>/edit/', views.grade_edit, name='grade_edit'),
     path('grades/<int:pk>/delete/', views.grade_delete, name='grade_delete'),
-
 
   
     path('levels/', views.class_level_list, name='class_level_list'),

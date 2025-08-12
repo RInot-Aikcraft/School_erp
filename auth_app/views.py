@@ -333,3 +333,70 @@ def teacher_delete(request, pk):
         messages.success(request, 'Enseignant supprimé avec succès!')
         return redirect('auth_app:teacher_list')
     return render(request, 'auth_app/admin/teacher_confirm_delete.html', {'teacher': teacher})
+
+
+# Dans auth_app/views.py
+
+# ... (autres imports)
+from django.db.models import Count
+from academics.models import Class, Subject, Assignment, Enrollment
+from school.models import SchoolYear
+
+@login_required
+@user_passes_test(is_admin)
+def admin_dashboard(request):
+    # Statistiques des utilisateurs (déjà existantes)
+    total_users = User.objects.count()
+    admin_count = UserProfile.objects.filter(user_type='admin').count()
+    teacher_count = UserProfile.objects.filter(user_type='teacher').count()
+    student_count = UserProfile.objects.filter(user_type='student').count()
+    parent_count = UserProfile.objects.filter(user_type='parent').count()
+
+    # --- NOUVELLES INFORMATIONS CONTEXTUELLES ---
+    
+    # 1. Récupérer l'année scolaire en cours
+    current_school_year = SchoolYear.objects.filter(current=True).first()
+    
+    # 2. Statistiques pour l'année en cours (si une année est définie)
+    context_data = {
+        'total_users': total_users,
+        'admin_count': admin_count,
+        'teacher_count': teacher_count,
+        'student_count': student_count,
+        'parent_count': parent_count,
+        'users': User.objects.all().order_by('-date_joined')[:5],
+        'current_school_year': current_school_year,
+    }
+
+    if current_school_year:
+        # Nombre de classes cette année
+        class_count = Class.objects.filter(school_year=current_school_year).count()
+        
+        # Nombre de matières enseignées (on compte les TeacherSubject uniques)
+        subject_count = Subject.objects.filter(teachers__isnull=False).distinct().count()
+
+        # Nombre d'élèves inscrits cette année
+        enrollment_count = Enrollment.objects.filter(school_year=current_school_year, is_active=True).count()
+
+        # Prochains devoirs à rendre (à partir d'aujourd'hui)
+        from django.utils import timezone
+        upcoming_assignments = Assignment.objects.filter(
+            due_date__gte=timezone.now()
+        ).order_by('due_date')[:5]
+
+        context_data.update({
+            'class_count': class_count,
+            'subject_count': subject_count,
+            'enrollment_count': enrollment_count,
+            'upcoming_assignments': upcoming_assignments,
+        })
+    else:
+        # Si aucune année n'est définie, on met des valeurs nulles ou des messages
+        context_data.update({
+            'class_count': 0,
+            'subject_count': 0,
+            'enrollment_count': 0,
+            'upcoming_assignments': [],
+        })
+
+    return render(request, 'auth_app/admin/dashboard.html', context_data)
