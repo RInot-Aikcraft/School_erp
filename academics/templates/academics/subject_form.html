@@ -1,14 +1,12 @@
-<!-- academics/templates/academics/subject_form.html -->
+<!-- Dans academics/templates/academics/subject_form.html -->
 {% extends 'base.html' %}
 {% load static %}
-{% load bootstrap5 %}
-
 {% block title %}{% if subject %}Modifier{% else %}Créer{% endif %} une matière{% endblock %}
 
 {% block content %}
 <div class="container-fluid py-4">
     <div class="row">
-        <div class="col-lg-6 mx-auto">
+        <div class="col-lg-8 mx-auto">
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white py-3">
                     <h5 class="mb-0">{% if subject %}Modifier{% else %}Créer{% endif %} une matière</h5>
@@ -16,27 +14,31 @@
                 <div class="card-body p-4">
                     <form method="post">
                         {% csrf_token %}
-                        
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="code" class="form-label">Code</label>
-                                <input type="text" class="form-control" id="code" name="code" value="{% if subject %}{{ subject.code }}{% endif %}" required>
-                                <div class="form-text">Ex: MATH001</div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="name" class="form-label">Nom de la matière</label>
+                                <input type="text" class="form-control" id="name" name="name" value="{{ subject.name|default:'' }}" required>
                             </div>
-                            <div class="col-md-6">
-                                <label for="name" class="form-label">Nom</label>
-                                <input type="text" class="form-control" id="name" name="name" value="{% if subject %}{{ subject.name }}{% endif %}" required>
+                            <div class="col-md-6 mb-3">
+                                <label for="code" class="form-label">Code</label>
+                                <input type="text" class="form-control" id="code" name="code" value="{{ subject.code|default:'' }}" required>
                             </div>
                         </div>
-                        
                         <div class="mb-3">
                             <label for="description" class="form-label">Description</label>
-                            <textarea class="form-control" id="description" name="description" rows="3">{% if subject %}{{ subject.description }}{% endif %}</textarea>
+                            <textarea class="form-control" id="description" name="description" rows="3">{{ subject.description|default:'' }}</textarea>
                         </div>
-                        
+                        <div class="mb-3">
+                            <label for="color" class="form-label">Couleur</label>
+                            <div class="input-group">
+                                <input type="color" class="form-control form-control-color" id="color" name="color" value="{{ subject.color|default:'#3498db' }}" title="Choisir une couleur">
+                                <input type="text" class="form-control" id="color_text" value="{{ subject.color|default:'#3498db' }}" placeholder="#3498db">
+                            </div>
+                            <div class="form-text">Code hexadécimal de la couleur (ex: #3498db)</div>
+                        </div>
                         <div class="d-flex justify-content-end">
-                            <a href="{% url 'academics:subject_list' %}" class="btn btn-secondary me-2">Annuler</a>
-                            <button type="submit" class="btn btn-danger">Enregistrer</button>
+                            <a href="{% url 'academics:subject_list' %}" class="btn btn-outline-secondary me-2">Annuler</a>
+                            <button type="submit" class="btn btn-primary">Enregistrer</button>
                         </div>
                     </form>
                 </div>
@@ -44,4 +46,24 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const colorPicker = document.getElementById('color');
+    const colorText = document.getElementById('color_text');
+    
+    // Synchroniser le sélecteur de couleur avec le champ texte
+    colorPicker.addEventListener('input', function() {
+        colorText.value = this.value;
+    });
+    
+    colorText.addEventListener('input', function() {
+        if (/^#[0-9A-F]{6}$/i.test(this.value)) {
+            colorPicker.value = this.value;
+        }
+    });
+});
+</script>
 {% endblock %}

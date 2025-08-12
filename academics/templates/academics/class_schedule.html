@@ -62,10 +62,11 @@
                                 {% with day_data=schedule_by_day|get_item:day_num %}
                                     {% with entry=day_data.slots|get_item:slot.start %}
                                         {% if entry %}
-                                            <div class="p-2 h-100 d-flex flex-column">
+                                            <div class="p-2 h-100 d-flex flex-column rounded text-white" 
+                                                 style="background-color: {{ entry.class_subject.subject.color }};">
                                                 <strong class="small">{{ entry.class_subject.subject.name }}</strong>
-                                                <small class="text-muted">{{ entry.class_subject.teacher.first_name }} {{ entry.class_subject.teacher.last_name }}</small>
-                                                <small class="text-muted mt-auto">
+                                                <small class="text-white-50">{{ entry.class_subject.teacher.first_name }} {{ entry.class_subject.teacher.last_name }}</small>
+                                                <small class="text-white-50 mt-auto">
                                                     {{ entry.time_slot.start_time|date:"H:i" }}-{{ entry.time_slot.end_time|date:"H:i" }}
                                                 </small>
                                             </div>
@@ -80,6 +81,23 @@
                         {% endfor %}
                     </tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Légende des couleurs -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="mb-0">Légende des matières</h5>
+        </div>
+        <div class="card-body">
+            <div class="d-flex flex-wrap">
+                {% for subject in subjects %}
+                <div class="d-flex align-items-center me-3 mb-2">
+                    <div class="rounded me-2" style="width: 20px; height: 20px; background-color: {{ subject.color }};"></div>
+                    <span>{{ subject.name }}</span>
+                </div>
+                {% endfor %}
             </div>
         </div>
     </div>
@@ -102,7 +120,7 @@
                             <select class="form-select" id="class_subject" name="subject" required>
                                 <option value="">-- Sélectionner une matière --</option>
                                 {% for cs in class_obj.class_subjects.all %}
-                                    <option value="{{ cs.pk }}" data-teacher-id="{{ cs.teacher.pk }}" data-teacher-name="{{ cs.teacher.get_full_name|default:cs.teacher.username }}">
+                                    <option value="{{ cs.pk }}" data-teacher-id="{{ cs.teacher.pk }}" data-teacher-name="{{ cs.teacher.get_full_name|default:cs.teacher.username }}" data-color="{{ cs.subject.color }}">
                                         {{ cs.subject.name }} (Coeff: {{ cs.coefficient }})
                                     </option>
                                 {% endfor %}

@@ -1,7 +1,5 @@
-<!-- academics/templates/academics/class_list.html -->
 {% extends 'base.html' %}
 {% load static %}
-
 {% block title %}Classes{% endblock %}
 
 {% block content %}
@@ -9,13 +7,43 @@
     <div class="row">
         <div class="col-12">
             <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Classes</h5>
-                    <a href="{% url 'academics:class_create' %}" class="btn btn-danger">
-                        <i class="fas fa-plus me-2"></i>Ajouter une classe
-                    </a>
+                <div class="card-header bg-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Classes</h5>
+                        <a href="{% url 'academics:class_create' %}" class="btn btn-danger">
+                            <i class="fas fa-plus me-2"></i>Ajouter une classe
+                        </a>
+                    </div>
                 </div>
                 <div class="card-body">
+                    <!-- Filtre par année scolaire -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <form method="get" id="schoolYearFilter">
+                                <div class="input-group">
+                                    <span class="input-group-text">Année scolaire</span>
+                                    <select class="form-select" name="school_year" id="schoolYearSelect" onchange="document.getElementById('schoolYearFilter').submit();">
+                                        {% for year in school_years %}
+                                            <option value="{{ year.pk }}" 
+                                                    {% if year == selected_year %}selected{% endif %}
+                                                    {% if year == active_school_year %}data-active="true"{% endif %}>
+                                                {{ year.name }}
+                                                {% if year == active_school_year %}(Active){% endif %}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            {% if selected_year != active_school_year %}
+                                <a href="?school_year={{ active_school_year.pk }}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-sync-alt me-1"></i> Voir l'année active
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
                     <div class="table-responsive">
                         <table class="table table-hover">
                             <thead>
@@ -33,7 +61,12 @@
                                 <tr>
                                     <td>{{ class_obj.name }}</td>
                                     <td>{{ class_obj.level.name }}</td>
-                                    <td>{{ class_obj.school_year.name }}</td>
+                                    <td>
+                                        {{ class_obj.school_year.name }}
+                                        {% if class_obj.school_year == active_school_year %}
+                                            <span class="badge bg-success ms-1">Active</span>
+                                        {% endif %}
+                                    </td>
                                     <td>{{ class_obj.main_teacher.get_full_name|default:"Non assigné" }}</td>
                                     <td>{{ class_obj.enrollments.count }}/{{ class_obj.max_students }}</td>
                                     <td>
@@ -47,12 +80,15 @@
                                             <a href="{% url 'academics:class_delete' class_obj.pk %}" class="btn btn-sm btn-outline-danger" title="Supprimer">
                                                 <i class="fas fa-trash"></i>
                                             </a>
+                                            <a href="{% url 'academics:class_schedule' class_obj.pk %}" class="btn btn-sm btn-outline-warning" title="Emploi du temps">
+                                                <i class="fas fa-calendar-alt"></i>
+                                            </a>
                                         </div>
                                     </td>
                                 </tr>
                                 {% empty %}
                                 <tr>
-                                    <td colspan="6" class="text-center">Aucune classe trouvée</td>
+                                    <td colspan="6" class="text-center">Aucune classe trouvée pour cette année scolaire</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>

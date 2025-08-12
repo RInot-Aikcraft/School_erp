@@ -17,6 +17,23 @@ class Subject(models.Model):
         verbose_name = "Matière"
         verbose_name_plural = "Matières"
 
+
+# Dans academics/models.py
+class Subject(models.Model):
+    name = models.CharField(max_length=100)
+    code = models.CharField(max_length=20, unique=True)
+    description = models.TextField(blank=True)
+    color = models.CharField(max_length=7, default="#3498db", help_text="Code hexadécimal de la couleur (ex: #3498db)")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return self.name
+    
+    class Meta:
+        verbose_name = "Matière"
+        verbose_name_plural = "Matières"
+
 class ClassLevel(models.Model):
     name = models.CharField(max_length=50)  # Ex: "6ème", "5ème", etc.
     description = models.TextField(blank=True)

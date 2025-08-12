@@ -31,11 +31,13 @@ def subject_create(request):
         name = request.POST.get('name')
         code = request.POST.get('code')
         description = request.POST.get('description', '')
+        color = request.POST.get('color', '#3498db')  # Couleur par défaut si non spécifiée
         
         Subject.objects.create(
             name=name,
             code=code,
-            description=description
+            description=description,
+            color=color
         )
         
         messages.success(request, 'Matière créée avec succès!')
@@ -58,6 +60,7 @@ def subject_edit(request, pk):
         subject.name = request.POST.get('name', subject.name)
         subject.code = request.POST.get('code', subject.code)
         subject.description = request.POST.get('description', subject.description)
+        subject.color = request.POST.get('color', subject.color)
         
         subject.save()
         messages.success(request, 'Matière mise à jour avec succès!')
@@ -77,12 +80,38 @@ def subject_delete(request, pk):
     
     return render(request, 'academics/subject_confirm_delete.html', {'subject': subject})
 
-# Vues pour la gestion des classes
+
 @login_required
 @user_passes_test(is_admin)
 def class_list(request):
-    classes = Class.objects.all().order_by('name')
-    return render(request, 'academics/class_list.html', {'classes': classes})
+    # Récupérer toutes les années scolaires
+    school_years = SchoolYear.objects.all().order_by('-start_date')
+    
+    # Récupérer l'année scolaire active ou la plus récente
+    active_school_year = SchoolYear.objects.filter(current=True).first()
+    if not active_school_year and school_years:
+        active_school_year = school_years.first()
+    
+    # Récupérer l'année scolaire sélectionnée (depuis les paramètres GET ou l'année active par défaut)
+    selected_year_id = request.GET.get('school_year')
+    if selected_year_id:
+        selected_year = get_object_or_404(SchoolYear, pk=selected_year_id)
+    else:
+        selected_year = active_school_year
+    
+    # Filtrer les classes par année scolaire sélectionnée
+    classes = Class.objects.filter(school_year=selected_year).select_related(
+        'level', 'school_year', 'main_teacher'
+    ).order_by('level__name', 'name')
+    
+    context = {
+        'classes': classes,
+        'school_years': school_years,
+        'selected_year': selected_year,
+        'active_school_year': active_school_year,
+    }
+    
+    return render(request, 'academics/class_list.html', context)
 
 @login_required
 @user_passes_test(is_admin)
@@ -562,9 +591,12 @@ def class_schedule(request, class_pk):
         'time_slot'
     ).order_by('day_of_week', 'time_slot__start_time')
     
+    # Récupérer toutes les matières pour la légende
+    subjects = Subject.objects.all()
+    
     # Définir les créneaux horaires (de 7h à 18h, par exemple)
     time_slots = []
-    for hour in range(6, 19):  # De 7h à 17h
+    for hour in range(7, 18):  # De 7h à 17h
         start_time = f"{hour:02d}:00"
         end_time = f"{hour+1:02d}:00"
         time_slots.append({
@@ -614,6 +646,7 @@ def class_schedule(request, class_pk):
         'schedule_by_day': schedule_by_day,
         'days_of_week': days_of_week,
         'time_slots': time_slots,
+        'subjects': subjects,  # Ajout de la liste des matières
     }
     
     return render(request, 'academics/class_schedule.html', context)
