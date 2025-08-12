@@ -9,7 +9,7 @@ urlpatterns = [
     path('login/', views.custom_login, name='login'),
     path('logout/', views.custom_logout, name='logout'),
     
-    # URLs admin - utilisez un préfixe différent pour éviter les conflits
+    # URLs admin
     path('dashboard/', views.admin_dashboard, name='admin_dashboard'),
     path('users/', views.user_list, name='user_list'),
     path('users/create/', views.user_create, name='user_create'),
@@ -17,9 +17,10 @@ urlpatterns = [
     path('users/<int:pk>/update/', views.user_update, name='user_update'),
     path('users/<int:pk>/delete/', views.user_delete, name='user_delete'),
     
-    # URLs enseignant
+    # URLs enseignant - MODIFIÉ pour rediriger vers le module teachers
     path('teacher/', views.teacher_dashboard, name='teacher_dashboard'),
-    # URLs pour la gestion des enseignants
+    
+    # URLs pour la gestion des enseignants (admin seulement)
     path('teachers/', views.teacher_list, name='teacher_list'),
     path('teachers/create/', views.teacher_create, name='teacher_create'),
     path('teachers/<int:pk>/', views.teacher_detail, name='teacher_detail'),

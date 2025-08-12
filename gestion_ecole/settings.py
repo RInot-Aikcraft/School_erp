@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     'auth_app', 
     'school',
     'academics',
+    'teachers',
 ]
 
 MIDDLEWARE = [
