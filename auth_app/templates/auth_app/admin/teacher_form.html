@@ -1,9 +1,9 @@
 {% extends 'base.html' %}
 {% load static %}
 {% load bootstrap5 %}
+{% load custom_filters %} {# <-- AJOUT : Chargement de votre filtre personnalisé #}
 
 {% block title %}{{ title }}{% endblock %}
-
 {% block content %}
 <div class="container-fluid py-4">
     <div class="row">
@@ -103,7 +103,8 @@
                             <label for="profile_picture" class="form-label">Photo de profil</label>
                             <input type="file" class="form-control" id="profile_picture" name="profile_picture" accept="image/*">
                             <div class="form-text">Formats acceptés: JPG, PNG, GIF. Taille maximale: 2MB.</div>
-                            {% if profile.profile_picture %}
+                            {# CORRECTION : Vérifie si profile existe avant d'afficher l'image #}
+                            {% if profile and profile.profile_picture %}
                             <div class="mt-2">
                                 <img src="{{ profile.profile_picture.url }}" alt="Photo actuelle" style="max-height: 100px;">
                                 <div class="form-text">Photo actuelle</div>
@@ -114,6 +115,36 @@
                         <!-- Informations personnelles supplémentaires -->
                         <h5 class="mt-4 mb-3">Informations personnelles</h5>
                         
+                        {% if form %}
+                        <!-- Champs pour la création (utilisation du formulaire) -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                {% bootstrap_field form.gender %}
+                            </div>
+                            <div class="col-md-6">
+                                {% bootstrap_field form.civil_status %}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                {% bootstrap_field form.place_of_birth %}
+                            </div>
+                            <div class="col-md-6">
+                                {% bootstrap_field form.nationality %}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                {% bootstrap_field form.id_card_number %}
+                            </div>
+                            <div class="col-md-6">
+                                {# Le champ date_of_birth est déjà plus haut #}
+                            </div>
+                        </div>
+                        {% else %}
+                        <!-- Champs pour la modification (champs manuels) -->
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label for="gender" class="form-label">Sexe</label>
@@ -151,14 +182,25 @@
                                 <label for="id_card_number" class="form-label">Numéro CIN / Carte d'identité</label>
                                 <input type="text" class="form-control" id="id_card_number" name="id_card_number" value="{{ profile.id_card_number }}">
                             </div>
-                            <div class="col-md-6">
-                                <label for="date_of_birth" class="form-label">Date de naissance</label>
-                                <input type="date" class="form-control" id="date_of_birth" name="date_of_birth" value="{{ profile.date_of_birth|date:'Y-m-d' }}">
-                            </div>
+                            {# CORRECTION : Suppression du doublon du champ date_of_birth #}
                         </div>
+                        {% endif %}
                         
                         <h5 class="mt-4 mb-3">Contact d'urgence</h5>
                         
+                        {% if form %}
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                {% bootstrap_field form.emergency_contact_name %}
+                            </div>
+                            <div class="col-md-4">
+                                {% bootstrap_field form.emergency_contact_relationship %}
+                            </div>
+                            <div class="col-md-4">
+                                {% bootstrap_field form.emergency_contact_phone %}
+                            </div>
+                        </div>
+                        {% else %}
                         <div class="row mb-3">
                             <div class="col-md-4">
                                 <label for="emergency_contact_name" class="form-label">Nom</label>
@@ -173,10 +215,47 @@
                                 <input type="text" class="form-control" id="emergency_contact_phone" name="emergency_contact_phone" value="{{ profile.emergency_contact_phone }}">
                             </div>
                         </div>
+                        {% endif %}
                         
                         <!-- Informations professionnelles -->
                         <h5 class="mt-4 mb-3">Informations professionnelles</h5>
                         
+                        {% if form %}
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                {% bootstrap_field form.internal_id %}
+                            </div>
+                            <div class="col-md-6">
+                                {% bootstrap_field form.professional_id %}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                {% bootstrap_field form.position %}
+                            </div>
+                            <div class="col-md-6">
+                                {% bootstrap_field form.employment_status %}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                {% bootstrap_field form.hire_date %}
+                            </div>
+                            <div class="col-md-6">
+                                {% bootstrap_field form.experience_years %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            {% bootstrap_field form.diplomas %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {% bootstrap_field form.previous_positions %}
+                        </div>
+                        {% else %}
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label for="internal_id" class="form-label">Numéro matricule interne</label>
@@ -224,6 +303,7 @@
                             <label for="previous_positions" class="form-label">Expérience professionnelle (postes précédents)</label>
                             <textarea class="form-control" id="previous_positions" name="previous_positions" rows="3">{{ profile.previous_positions }}</textarea>
                         </div>
+                        {% endif %}
                         
                         <!-- Matières enseignées -->
                         <h5 class="mt-4 mb-3">Matières enseignées</h5>
@@ -248,6 +328,7 @@
                                             {% for level in class_levels %}
                                             <div class="form-check">
                                                 <input class="form-check-input" type="checkbox" name="levels_{{ subject.pk }}" value="{{ level.pk }}" id="level_{{ subject.pk }}_{{ level.pk }}"
+                                                    {# CORRECTION : Utilisation du filtre lookup #}
                                                     {% if subject.pk in subjects_levels and level.pk in subjects_levels|lookup:subject.pk %}checked{% endif %}>
                                                 <label class="form-check-label" for="level_{{ subject.pk }}_{{ level.pk }}">
                                                     {{ level.name }}
@@ -270,7 +351,6 @@
         </div>
     </div>
 </div>
-
 <script>
 function toggleLevels(subjectId) {
     const container = document.getElementById(`levels-container-${subjectId}`);

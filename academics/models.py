@@ -3,7 +3,6 @@ from django.db import models
 from django.contrib.auth.models import User
 from school.models import SchoolYear, Period
 
-
 class Subject(models.Model):
     name = models.CharField(max_length=100)
     code = models.CharField(max_length=20, unique=True)
@@ -106,4 +105,24 @@ class TeacherSubject(models.Model):
         unique_together = ('teacher', 'subject')
     
     def __str__(self):
-        return f"{self.teacher.get_full_name|default:self.teacher.username} - {self.subject.name}"
+        # CORRECTION : Ajout des parenthèses pour appeler la méthode get_full_name()
+        return f"{self.teacher.get_full_name() or self.teacher.username} - {self.subject.name}"
+
+# MODÈLE AJOUTÉ : TeacherSubjectLevel
+class TeacherSubjectLevel(models.Model):
+    """
+    Modèle intermédiaire pour associer un enseignant-matière à un niveau d'enseignement.
+    Permet de savoir qu'un enseignant enseigne une matière spécifique à des niveaux spécifiques.
+    """
+    teacher_subject = models.ForeignKey(TeacherSubject, on_delete=models.CASCADE, related_name='levels')
+    class_level = models.ForeignKey(ClassLevel, on_delete=models.CASCADE, related_name='teacher_subject_levels')
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = "Niveau d'enseignement"
+        verbose_name_plural = "Niveaux d'enseignement"
+        # Un enseignant ne peut pas enseigner la même matière au même niveau deux fois
+        unique_together = ('teacher_subject', 'class_level')
+        
+    def __str__(self):
+        return f"{self.teacher_subject.teacher.get_full_name() or self.teacher_subject.teacher.username} - {self.teacher_subject.subject.name} ({self.class_level.name})"
