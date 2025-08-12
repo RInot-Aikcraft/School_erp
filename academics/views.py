@@ -544,53 +544,48 @@ def get_teachers_for_subject(request):
     return JsonResponse({'teachers': teacher_list})
 
 
-# Dans academics/views.py
-
 @login_required
 @user_passes_test(is_admin)
 def class_schedule(request, class_pk):
     class_obj = get_object_or_404(Class, pk=class_pk)
     
+    # Récupérer ou créer l'emploi du temps pour cette classe
     schedule, created = Schedule.objects.get_or_create(
         class_obj=class_obj,
         school_year=class_obj.school_year
     )
     
-    time_slots = TimeSlot.objects.all().order_by('start_time')
-    
-    entries = schedule.entries.all().select_related(
+    # Récupérer toutes les entrées d'emploi du temps
+    entries = schedule.entries.select_related(
         'class_subject__subject', 
         'class_subject__teacher', 
         'time_slot'
-    ).order_by('day_of_week', 'time_slot__start_time').values(
-        'id', 
-        'day_of_week', 
-        'class_subject__subject__name', 
-        'class_subject__teacher__first_name', 
-        'class_subject__teacher__last_name', 
-        'time_slot_id' 
-    )
-
+    ).order_by('day_of_week', 'time_slot__start_time')
+    
+    # Organiser les entrées par jour
     schedule_by_day = {}
-    for day_num, day_name in ScheduleEntry.DAYS_OF_WEEK:
-        # On filtre la liste de dictionnaires pour ce jour spécifique
-        day_entries = [entry for entry in entries if entry['day_of_week'] == day_num]
+    for day_num, day_name in [
+        ('1', 'Lundi'), ('2', 'Mardi'), ('3', 'Mercredi'), 
+        ('4', 'Jeudi'), ('5', 'Vendredi'), ('6', 'Samedi'), ('7', 'Dimanche')
+    ]:
         schedule_by_day[day_num] = {
             'name': day_name,
-            'entries': day_entries
+            'entries': [entry for entry in entries if entry.day_of_week == day_num]
         }
-
+    
+    days_of_week = [
+        ('1', 'Lundi'), ('2', 'Mardi'), ('3', 'Mercredi'),
+        ('4', 'Jeudi'), ('5', 'Vendredi'), ('6', 'Samedi'), ('7', 'Dimanche'),
+    ]
+    
     context = {
         'class_obj': class_obj,
         'schedule': schedule,
-        'time_slots': time_slots,
         'schedule_by_day': schedule_by_day,
-        'days_of_week': ScheduleEntry.DAYS_OF_WEEK,
+        'days_of_week': days_of_week,
     }
     
     return render(request, 'academics/class_schedule.html', context)
-
-
 
 @login_required
 @user_passes_test(is_admin)
@@ -599,19 +594,33 @@ def add_schedule_entry(request, schedule_pk):
     
     if request.method == 'POST':
         subject_id = request.POST.get('subject')
-        teacher_id = request.POST.get('teacher') # On pourrait aussi le déduire du subject
-        time_slot_id = request.POST.get('time_slot')
         day_of_week = request.POST.get('day_of_week')
+        start_time = request.POST.get('start_time')
+        end_time = request.POST.get('end_time')
         
-        class_subject = get_object_or_404(ClassSubject, pk=subject_id, schedule__class_obj=schedule.class_obj)
-        time_slot = get_object_or_404(TimeSlot, pk=time_slot_id)
+        # Récupérer le ClassSubject par son ID
+        class_subject = get_object_or_404(ClassSubject, pk=subject_id)
+        
+        # Vérifier que ce ClassSubject appartient bien à la classe du schedule
+        if class_subject.class_obj != schedule.class_obj:
+            messages.error(request, "Cette matière n'est pas assignée à cette classe.")
+            return redirect('academics:class_schedule', class_pk=schedule.class_obj.pk)  # Correction ici
+        
+        # Créer ou récupérer un TimeSlot correspondant aux heures spécifiées
+        time_slot, created = TimeSlot.objects.get_or_create(
+            start_time=start_time,
+            end_time=end_time
+        )
         
         # Vérifier si une entrée n'existe pas déjà à ce moment
-        if not ScheduleEntry.objects.filter(
+        if ScheduleEntry.objects.filter(
             schedule=schedule,
             day_of_week=day_of_week,
             time_slot=time_slot
         ).exists():
+            messages.warning(request, "Un cours est déjà programmé à ce moment.")
+        else:
+            # Créer la nouvelle entrée dans l'emploi du temps
             ScheduleEntry.objects.create(
                 schedule=schedule,
                 class_subject=class_subject,
@@ -619,10 +628,8 @@ def add_schedule_entry(request, schedule_pk):
                 day_of_week=day_of_week
             )
             messages.success(request, "Le cours a été ajouté à l'emploi du temps.")
-        else:
-            messages.warning(request, "Un cours est déjà programmé à ce moment.")
             
-        return redirect('academics:class_schedule', schedule_pk=schedule.class_obj.pk)
+        return redirect('academics:class_schedule', class_pk=schedule.class_obj.pk)  # Correction ici
     
     # Si ce n'est pas POST, rediriger vers la page de l'emploi du temps
-    return redirect('academics:class_schedule', schedule_pk=schedule.class_obj.pk)
+    return redirect('academics:class_schedule', class_pk=schedule.class_obj.pk)  # Correction ici

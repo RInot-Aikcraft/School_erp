@@ -15,16 +15,23 @@ def lookup(dictionary, key):
         return dictionary.get(key, None)
     return None
 
+
 @register.filter
-def get_item(list_of_dicts, key):
-    """
-    Récupère un dictionnaire dans une liste en fonction de la valeur d'une clé.
-    Exemple : list_of_dicts|get_item:1234 cherchera un dict où dict['id'] == 1234
-    """
-    if not isinstance(list_of_dicts, list):
+def pprint(value):
+    """Formatte une valeur pour le débogage."""
+    import pprint
+    return pprint.pformat(value)
+
+@register.filter
+def first(sequence):
+    """Renvoie le premier élément d'une séquence."""
+    try:
+        return sequence[0]
+    except (IndexError, TypeError):
         return None
-    for item in list_of_dicts:
-        # On suppose que la clé à chercher est 'time_slot_id' et que la valeur à comparer est un entier
-        if item.get('time_slot_id') == int(key):
-            return item
-    return None
+    
+
+@register.filter
+def get_item(dictionary, key):
+    """Retourne un élément d'un dictionnaire par sa clé."""
+    return dictionary.get(key)
