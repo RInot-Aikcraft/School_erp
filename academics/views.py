@@ -562,27 +562,58 @@ def class_schedule(request, class_pk):
         'time_slot'
     ).order_by('day_of_week', 'time_slot__start_time')
     
-    # Organiser les entrées par jour
-    schedule_by_day = {}
-    for day_num, day_name in [
-        ('1', 'Lundi'), ('2', 'Mardi'), ('3', 'Mercredi'), 
-        ('4', 'Jeudi'), ('5', 'Vendredi'), ('6', 'Samedi'), ('7', 'Dimanche')
-    ]:
-        schedule_by_day[day_num] = {
-            'name': day_name,
-            'entries': [entry for entry in entries if entry.day_of_week == day_num]
-        }
+    # Définir les créneaux horaires (de 7h à 18h, par exemple)
+    time_slots = []
+    for hour in range(6, 19):  # De 7h à 17h
+        start_time = f"{hour:02d}:00"
+        end_time = f"{hour+1:02d}:00"
+        time_slots.append({
+            'start': start_time,
+            'end': end_time,
+            'display': f"{start_time} - {end_time}"
+        })
     
+    # Organiser les entrées par jour et par créneau horaire
+    schedule_by_day = {}
     days_of_week = [
         ('1', 'Lundi'), ('2', 'Mardi'), ('3', 'Mercredi'),
         ('4', 'Jeudi'), ('5', 'Vendredi'), ('6', 'Samedi'), ('7', 'Dimanche'),
     ]
+    
+    # Initialiser la structure
+    for day_num, day_name in days_of_week:
+        schedule_by_day[day_num] = {
+            'name': day_name,
+            'slots': {}
+        }
+        # Initialiser tous les créneaux comme vides
+        for slot in time_slots:
+            schedule_by_day[day_num]['slots'][slot['start']] = None
+    
+    # Remplir avec les entrées existantes
+    for entry in entries:
+        day_num = entry.day_of_week
+        entry_start_time = entry.time_slot.start_time.strftime("%H:%M")
+        entry_end_time = entry.time_slot.end_time.strftime("%H:%M")
+        
+        if day_num in schedule_by_day:
+            # Calculer la durée du cours en heures
+            start_hour = int(entry_start_time.split(':')[0])
+            end_hour = int(entry_end_time.split(':')[0])
+            duration = end_hour - start_hour
+            
+            # Remplir tous les créneaux concernés par ce cours
+            for hour_offset in range(duration):
+                slot_time = f"{start_hour + hour_offset:02d}:00"
+                if slot_time in schedule_by_day[day_num]['slots']:
+                    schedule_by_day[day_num]['slots'][slot_time] = entry
     
     context = {
         'class_obj': class_obj,
         'schedule': schedule,
         'schedule_by_day': schedule_by_day,
         'days_of_week': days_of_week,
+        'time_slots': time_slots,
     }
     
     return render(request, 'academics/class_schedule.html', context)

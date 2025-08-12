@@ -38,53 +38,50 @@
         </div>
     </div>
 
-    <!-- Affichage de l'emploi du temps sous forme de liste par jour -->
-    <div class="row">
-        {% for day_num, day_name in days_of_week %}
-        <div class="col-md-6 col-lg-4 mb-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-header bg-primary text-white py-2">
-                    <h5 class="mb-0 text-center">{{ day_name }}</h5>
-                </div>
-                <div class="card-body p-0">
-                    {% with day_data=schedule_by_day|get_item:day_num %}
-                        {% if day_data %}
-                            {% with entries=day_data.entries %}
-                                {% if entries %}
-                                    <div class="list-group list-group-flush">
-                                        {% for entry in entries %}
-                                        <div class="list-group-item">
-                                            <div class="d-flex justify-content-between align-items-start">
-                                                <div>
-                                                    <h6 class="mb-1">{{ entry.class_subject.subject.name }}</h6>
-                                                    <p class="mb-1 small text-muted">{{ entry.class_subject.teacher.first_name }} {{ entry.class_subject.teacher.last_name }}</p>
-                                                    <small class="text-muted">Coefficient: {{ entry.class_subject.coefficient }}</small>
-                                                </div>
-                                                <span class="badge bg-primary rounded-pill">
-                                                    {{ entry.time_slot.start_time|date:"H:i" }} - {{ entry.time_slot.end_time|date:"H:i" }}
-                                                </span>
+    <!-- Tableau de l'emploi du temps -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col" style="width: 100px;">Heure</th>
+                            {% for day_num, day_name in days_of_week %}
+                            <th scope="col" class="text-center">{{ day_name }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for slot in time_slots %}
+                        <tr>
+                            <th scope="row" class="text-nowrap align-middle">
+                                {{ slot.display }}
+                            </th>
+                            {% for day_num, day_name in days_of_week %}
+                            <td class="align-middle" style="height: 80px;">
+                                {% with day_data=schedule_by_day|get_item:day_num %}
+                                    {% with entry=day_data.slots|get_item:slot.start %}
+                                        {% if entry %}
+                                            <div class="p-2 h-100 d-flex flex-column">
+                                                <strong class="small">{{ entry.class_subject.subject.name }}</strong>
+                                                <small class="text-muted">{{ entry.class_subject.teacher.first_name }} {{ entry.class_subject.teacher.last_name }}</small>
+                                                <small class="text-muted mt-auto">
+                                                    {{ entry.time_slot.start_time|date:"H:i" }}-{{ entry.time_slot.end_time|date:"H:i" }}
+                                                </small>
                                             </div>
-                                        </div>
-                                        {% endfor %}
-                                    </div>
-                                {% else %}
-                                    <div class="text-center py-4 text-muted">
-                                        <i class="fas fa-calendar-times fa-2x mb-2"></i>
-                                        <p>Aucun cours prévu</p>
-                                    </div>
-                                {% endif %}
-                            {% endwith %}
-                        {% else %}
-                            <div class="text-center py-4 text-muted">
-                                <i class="fas fa-calendar-times fa-2x mb-2"></i>
-                                <p>Aucun cours prévu</p>
-                            </div>
-                        {% endif %}
-                    {% endwith %}
-                </div>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    {% endwith %}
+                                {% endwith %}
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
-        {% endfor %}
     </div>
 </div>
 
@@ -129,11 +126,21 @@
                         </div>
                         <div class="col-md-3 mb-3">
                             <label for="start_time" class="form-label">Heure de début</label>
-                            <input type="time" class="form-control" id="start_time" name="start_time" required>
+                            <select class="form-select" id="start_time" name="start_time" required>
+                                <option value="">-- Sélectionner une heure --</option>
+                                {% for slot in time_slots %}
+                                <option value="{{ slot.start }}">{{ slot.start }}</option>
+                                {% endfor %}
+                            </select>
                         </div>
                         <div class="col-md-3 mb-3">
                             <label for="end_time" class="form-label">Heure de fin</label>
-                            <input type="time" class="form-control" id="end_time" name="end_time" required>
+                            <select class="form-select" id="end_time" name="end_time" required>
+                                <option value="">-- Sélectionner une heure --</option>
+                                {% for slot in time_slots %}
+                                <option value="{{ slot.end }}">{{ slot.end }}</option>
+                                {% endfor %}
+                            </select>
                         </div>
                     </div>
                 </div>
@@ -145,7 +152,6 @@
         </div>
     </div>
 </div>
-
 
 {% endblock %}
 
