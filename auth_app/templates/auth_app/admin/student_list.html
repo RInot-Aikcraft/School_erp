@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Liste des Élèves{% endblock %}
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Liste des Élèves</h5>
+                    <a href="{% url 'auth_app:student_create' %}" class="btn btn-info">
+                        <i class="fas fa-plus me-2"></i>Ajouter un élève
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nom d'utilisateur</th>
+                                    <th>Nom complet</th>
+                                    <th>Email</th>
+                                    <th>Téléphone</th>
+                                    <th>Date de naissance</th>
+                                    <th>Date d'inscription</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for student in students %}
+                                <tr>
+                                    <td>{{ student.id }}</td>
+                                    <td>{{ student.username }}</td>
+                                    <td>{{ student.get_full_name|default:"Non spécifié" }}</td>
+                                    <td>{{ student.email }}</td>
+                                    <td>{{ student.userprofile.phone|default:"Non spécifié" }}</td>
+                                    <td>{{ student.userprofile.date_of_birth|date:"d/m/Y"|default:"Non spécifiée" }}</td>
+                                    <td>{{ student.date_joined|date:"d/m/Y H:i" }}</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{% url 'auth_app:student_detail' student.pk %}" class="btn btn-sm btn-outline-primary" title="Voir">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{% url 'auth_app:student_edit' student.pk %}" class="btn btn-sm btn-outline-info" title="Modifier">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{% url 'auth_app:student_delete' student.pk %}" class="btn btn-sm btn-outline-danger" title="Supprimer">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="8" class="text-center">Aucun élève trouvé</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    {% if is_paginated %}
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center">
+                            {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Précédent">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                            {% endif %}
+                            
+                            {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                            </li>
+                            {% endif %}
+                            {% endfor %}
+                            
+                            {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Suivant">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

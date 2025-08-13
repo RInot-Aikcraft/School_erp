@@ -1,0 +1,286 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Détails de l'Élève{% endblock %}
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Détails de l'Élève</h5>
+                    <div>
+                        <a href="{% url 'auth_app:student_edit' student.pk %}" class="btn btn-sm btn-outline-info me-2">
+                            <i class="fas fa-edit me-1"></i>Modifier
+                        </a>
+                        <a href="{% url 'auth_app:student_list' %}" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Retour
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-4 text-center">
+                            {% if profile.profile_picture %}
+                            <img src="{{ profile.profile_picture.url }}" class="rounded-circle img-thumbnail" alt="Photo de profil" style="width: 150px; height: 150px; object-fit: cover;">
+                            {% else %}
+                            <div class="rounded-circle bg-info bg-opacity-10 d-flex align-items-center justify-content-center mx-auto" style="width: 150px; height: 150px;">
+                                <i class="fas fa-user fa-4x text-info"></i>
+                            </div>
+                            {% endif %}
+                            
+                            <h5 class="mt-3">{{ student.get_full_name|default:student.username }}</h5>
+                            <span class="badge bg-info">
+                                {{ profile.get_user_type_display }}
+                            </span>
+                        </div>
+                        
+                        <div class="col-md-8">
+                            <div class="row mb-3">
+                                <div class="col-sm-3 text-muted">Nom d'utilisateur:</div>
+                                <div class="col-sm-9">{{ student.username }}</div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-sm-3 text-muted">Email:</div>
+                                <div class="col-sm-9">{{ student.email }}</div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-sm-3 text-muted">Prénom:</div>
+                                <div class="col-sm-9">{{ student.first_name|default:"Non spécifié" }}</div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-sm-3 text-muted">Nom:</div>
+                                <div class="col-sm-9">{{ student.last_name|default:"Non spécifié" }}</div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-sm-3 text-muted">Téléphone:</div>
+                                <div class="col-sm-9">{{ profile.phone|default:"Non spécifié" }}</div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-sm-3 text-muted">Date de naissance:</div>
+                                <div class="col-sm-9">{{ profile.date_of_birth|date:"d/m/Y"|default:"Non spécifiée" }}</div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-sm-3 text-muted">Adresse:</div>
+                                <div class="col-sm-9">{{ profile.address|default:"Non spécifiée" }}</div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-sm-3 text-muted">Date d'inscription:</div>
+                                <div class="col-sm-9">{{ student.date_joined|date:"d/m/Y H:i" }}</div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-sm-3 text-muted">Dernière connexion:</div>
+                                <div class="col-sm-9">{{ student.last_login|date:"d/m/Y H:i"|default:"Jamais" }}</div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-sm-3 text-muted">Statut:</div>
+                                <div class="col-sm-9">
+                                    {% if student.is_active %}
+                                    <span class="badge bg-success">Actif</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Inactif</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Informations personnelles supplémentaires -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Informations personnelles</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">Genre:</div>
+                                        <div class="col-sm-8">{{ profile.get_gender_display|default:"Non spécifié" }}</div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">Lieu de naissance:</div>
+                                        <div class="col-sm-8">{{ profile.place_of_birth|default:"Non spécifié" }}</div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">Nationalité:</div>
+                                        <div class="col-sm-8">{{ profile.nationality|default:"Non spécifiée" }}</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">CIN / Passeport:</div>
+                                        <div class="col-sm-8">{{ profile.id_card_number|default:"Non spécifié" }}</div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">Numéro d'étudiant:</div>
+                                        <div class="col-sm-8">{{ profile.student_id|default:"Non spécifié" }}</div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">Groupe sanguin:</div>
+                                        <div class="col-sm-8">{{ profile.blood_type|default:"Non spécifié" }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Contact d'urgence -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Contact d'urgence</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">Nom:</div>
+                                        <div class="col-sm-8">{{ profile.emergency_contact_name|default:"Non spécifié" }}</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">Relation:</div>
+                                        <div class="col-sm-8">{{ profile.emergency_contact_relationship|default:"Non spécifiée" }}</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">Téléphone:</div>
+                                        <div class="col-sm-8">{{ profile.emergency_contact_phone|default:"Non spécifié" }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Informations médicales -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Informations médicales</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="row mb-3">
+                                        <div class="col-sm-3 text-muted">Allergies:</div>
+                                        <div class="col-sm-9">{{ profile.allergies|default:"Aucune allergie connue" }}</div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-sm-3 text-muted">Conditions médicales:</div>
+                                        <div class="col-sm-9">{{ profile.medical_conditions|default:"Aucune condition médicale connue" }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Scolarité antérieure -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Scolarité antérieure</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">École précédente:</div>
+                                        <div class="col-sm-8">{{ profile.previous_school|default:"Non spécifiée" }}</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">Adresse:</div>
+                                        <div class="col-sm-8">{{ profile.previous_school_address|default:"Non spécifiée" }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Parents associés -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Parents associés</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if student.parents.all %}
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Nom</th>
+                                                <th>Relation</th>
+                                                <th>Contact principal</th>
+                                                <th>Droit de récupération</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for relationship in student.parents.all %}
+                                            <tr>
+                                                <td>{{ relationship.parent.get_full_name }}</td>
+                                                <td>{{ relationship.get_relationship_type_display }}</td>
+                                                <td>
+                                                    {% if relationship.is_primary_contact %}
+                                                        <span class="badge bg-success">Oui</span>
+                                                    {% else %}
+                                                        <span class="badge bg-secondary">Non</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    {% if relationship.has_pickup_rights %}
+                                                        <span class="badge bg-success">Oui</span>
+                                                    {% else %}
+                                                        <span class="badge bg-danger">Non</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <a href="{% url 'auth_app:parent_detail' relationship.parent.pk %}" class="btn btn-sm btn-outline-primary">
+                                                        <i class="fas fa-eye"></i> Voir
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="d-flex justify-content-end mb-3">
+                                    <a href="{% url 'auth_app:add_parent_to_student' student.pk %}" class="btn btn-primary">
+                                        <i class="fas fa-plus me-2"></i>Ajouter un parent
+                                    </a>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-end">
+                        <a href="{% url 'auth_app:student_edit' student.pk %}" class="btn btn-info me-2">
+                            <i class="fas fa-edit me-1"></i>Modifier
+                        </a>
+                        <a href="{% url 'auth_app:student_delete' student.pk %}" class="btn btn-danger">
+                            <i class="fas fa-trash me-1"></i>Supprimer
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

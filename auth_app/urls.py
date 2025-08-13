@@ -32,4 +32,22 @@ urlpatterns = [
     
     # URLs parent
     path('parent/', views.parent_dashboard, name='parent_dashboard'),
+    # Ajoutez ces URLs à votre urlpatterns existant
+
+    path('parents/', views.parent_list, name='parent_list'),
+    path('parents/create/', views.parent_create, name='parent_create'),
+    path('parents/<int:pk>/edit/', views.parent_edit, name='parent_edit'),
+    path('parents/<int:pk>/', views.parent_detail, name='parent_detail'),
+    path('parents/<int:pk>/delete/', views.parent_delete, name='parent_delete'),
+
+    # Ajoutez ces URLs à votre urlpatterns existant
+    path('students/', views.student_list, name='student_list'),
+    path('students/create/', views.student_create, name='student_create'),
+    path('students/<int:pk>/edit/', views.student_edit, name='student_edit'),
+    path('students/<int:pk>/', views.student_detail, name='student_detail'),
+    path('students/<int:pk>/delete/', views.student_delete, name='student_delete'),
+
+    # Dans auth_app/urls.py
+    path('students/<int:student_pk>/add-parent/', views.add_parent_to_student, name='add_parent_to_student'),
+    path('parent-relationships/<int:relationship_pk>/delete/', views.delete_parent_student_relationship, name='delete_parent_student_relationship'),
 ]

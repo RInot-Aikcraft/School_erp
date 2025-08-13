@@ -1,0 +1,66 @@
+/* Styles pour le dashboard financier */
+.card-hover {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.card-hover:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+}
+
+.icon-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+}
+
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+.timeline:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 10px;
+    height: 100%;
+    width: 2px;
+    background: #e9ecef;
+}
+.timeline-item {
+    position: relative;
+    padding-bottom: 20px;
+}
+.timeline-point {
+    position: absolute;
+    left: -30px;
+    top: 5px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 3px solid #fff;
+    box-shadow: 0 0 0 2px;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+}
+.calendar-day, .calendar-date {
+    padding: 8px 0;
+    text-align: center;
+}
+.calendar-date {
+    border-radius: 50%;
+    cursor: pointer;
+}
+.calendar-date:hover {
+    background-color: #f8f9fa;
+}
+
+.event-item:last-child {
+    border-bottom: none !important;
+    padding-bottom: 0 !important;
+}

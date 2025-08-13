@@ -3,6 +3,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from school.models import SchoolYear, Period
 
+
 class Subject(models.Model):
     name = models.CharField(max_length=100)
     code = models.CharField(max_length=20, unique=True)

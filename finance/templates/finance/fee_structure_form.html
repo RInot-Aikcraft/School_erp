@@ -1,0 +1,43 @@
+{% extends 'finance/base.html' %}
+{% block finance_content %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Ajouter une structure de frais</h5>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="{{ form.classroom.id_for_label }}">Classe</label>
+                {{ form.classroom }}
+                {% if form.classroom.errors %}
+                    <div class="text-danger">{{ form.classroom.errors }}</div>
+                {% endif %}
+            </div>
+            <div class="form-group">
+                <label for="{{ form.fee_type.id_for_label }}">Type de frais</label>
+                {{ form.fee_type }}
+                {% if form.fee_type.errors %}
+                    <div class="text-danger">{{ form.fee_type.errors }}</div>
+                {% endif %}
+            </div>
+            <div class="form-group">
+                <label for="{{ form.amount.id_for_label }}">Montant</label>
+                {{ form.amount }}
+                {% if form.amount.errors %}
+                    <div class="text-danger">{{ form.amount.errors }}</div>
+                {% endif %}
+            </div>
+            <div class="form-group">
+                <label for="{{ form.academic_year.id_for_label }}">Année académique</label>
+                {{ form.academic_year }}
+                {% if form.academic_year.errors %}
+                    <div class="text-danger">{{ form.academic_year.errors }}</div>
+                {% endif %}
+            </div>
+            <button type="submit" class="btn btn-primary">Enregistrer</button>
+            <a href="{% url 'finance:fee_structure_list' %}" class="btn btn-secondary">Annuler</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,336 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Détails du Parent{% endblock %}
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Détails du Parent</h5>
+                    <div>
+                        <a href="{% url 'auth_app:parent_edit' parent.pk %}" class="btn btn-sm btn-outline-info me-2">
+                            <i class="fas fa-edit me-1"></i>Modifier
+                        </a>
+                        <a href="{% url 'auth_app:parent_list' %}" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Retour
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-4 text-center">
+                            {% if profile.profile_picture %}
+                            <img src="{{ profile.profile_picture.url }}" class="rounded-circle img-thumbnail" alt="Photo de profil" style="width: 150px; height: 150px; object-fit: cover;">
+                            {% else %}
+                            <div class="rounded-circle bg-warning bg-opacity-10 d-flex align-items-center justify-content-center mx-auto" style="width: 150px; height: 150px;">
+                                <i class="fas fa-user fa-4x text-warning"></i>
+                            </div>
+                            {% endif %}
+                            
+                            <h5 class="mt-3">{{ parent.get_full_name|default:parent.username }}</h5>
+                            <span class="badge bg-warning">
+                                {{ profile.get_user_type_display }}
+                            </span>
+                        </div>
+                        
+                        <div class="col-md-8">
+                            <div class="row mb-3">
+                                <div class="col-sm-3 text-muted">Nom d'utilisateur:</div>
+                                <div class="col-sm-9">{{ parent.username }}</div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-sm-3 text-muted">Email:</div>
+                                <div class="col-sm-9">{{ parent.email }}</div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-sm-3 text-muted">Prénom:</div>
+                                <div class="col-sm-9">{{ parent.first_name|default:"Non spécifié" }}</div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-sm-3 text-muted">Nom:</div>
+                                <div class="col-sm-9">{{ parent.last_name|default:"Non spécifié" }}</div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-sm-3 text-muted">Téléphone:</div>
+                                <div class="col-sm-9">{{ profile.phone|default:"Non spécifié" }}</div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-sm-3 text-muted">Date de naissance:</div>
+                                <div class="col-sm-9">{{ profile.date_of_birth|date:"d/m/Y"|default:"Non spécifiée" }}</div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-sm-3 text-muted">Adresse:</div>
+                                <div class="col-sm-9">{{ profile.address|default:"Non spécifiée" }}</div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-sm-3 text-muted">Date d'inscription:</div>
+                                <div class="col-sm-9">{{ parent.date_joined|date:"d/m/Y H:i" }}</div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-sm-3 text-muted">Dernière connexion:</div>
+                                <div class="col-sm-9">{{ parent.last_login|date:"d/m/Y H:i"|default:"Jamais" }}</div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-sm-3 text-muted">Statut:</div>
+                                <div class="col-sm-9">
+                                    {% if parent.is_active %}
+                                    <span class="badge bg-success">Actif</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Inactif</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Informations personnelles supplémentaires -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Informations personnelles</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">Genre:</div>
+                                        <div class="col-sm-8">{{ profile.get_gender_display|default:"Non spécifié" }}</div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">Lieu de naissance:</div>
+                                        <div class="col-sm-8">{{ profile.place_of_birth|default:"Non spécifié" }}</div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">Nationalité:</div>
+                                        <div class="col-sm-8">{{ profile.nationality|default:"Non spécifiée" }}</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">CIN / Passeport:</div>
+                                        <div class="col-sm-8">{{ profile.id_card_number|default:"Non spécifié" }}</div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">Situation civile:</div>
+                                        <div class="col-sm-8">{{ profile.get_civil_status_display|default:"Non spécifiée" }}</div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">Nombre d'enfants:</div>
+                                        <div class="col-sm-8">{{ profile.number_of_children|default:"Non spécifié" }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Contact d'urgence -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Contact d'urgence</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">Nom:</div>
+                                        <div class="col-sm-8">{{ profile.emergency_contact_name|default:"Non spécifié" }}</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">Relation:</div>
+                                        <div class="col-sm-8">{{ profile.emergency_contact_relationship|default:"Non spécifiée" }}</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">Téléphone:</div>
+                                        <div class="col-sm-8">{{ profile.emergency_contact_phone|default:"Non spécifié" }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Informations professionnelles -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Informations professionnelles</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">Profession:</div>
+                                        <div class="col-sm-8">{{ profile.occupation|default:"Non spécifiée" }}</div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">Employeur:</div>
+                                        <div class="col-sm-8">{{ profile.employer|default:"Non spécifié" }}</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted">Téléphone pro:</div>
+                                        <div class="col-sm-8">{{ profile.work_phone|default:"Non spécifié" }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Section pour afficher les enfants associés -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Enfants associés</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if children_relationships %}
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Nom</th>
+                                            <th>Relation</th>
+                                            <th>Contact principal</th>
+                                            <th>Droit de récupération</th>
+                                            <th>Classe</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for relationship in children_relationships %}
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    {% if relationship.student.userprofile.profile_picture %}
+                                                    <img src="{{ relationship.student.userprofile.profile_picture.url }}" class="rounded-circle me-2" alt="Photo" style="width: 30px; height: 30px; object-fit: cover;">
+                                                    {% else %}
+                                                    <div class="rounded-circle bg-info bg-opacity-10 d-flex align-items-center justify-content-center me-2" style="width: 30px; height: 30px;">
+                                                        <i class="fas fa-user text-info"></i>
+                                                    </div>
+                                                    {% endif %}
+                                                    {{ relationship.student.get_full_name }}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-info">{{ relationship.get_relationship_type_display }}</span>
+                                            </td>
+                                            <td>
+                                                {% if relationship.is_primary_contact %}
+                                                <span class="badge bg-success">Oui</span>
+                                                {% else %}
+                                                <span class="badge bg-secondary">Non</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if relationship.has_pickup_rights %}
+                                                <span class="badge bg-success">Oui</span>
+                                                {% else %}
+                                                <span class="badge bg-danger">Non</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <!-- Vous devrez adapter cette partie selon votre modèle de classe -->
+                                                {% if relationship.student.userprofile.student_class %}
+                                                {{ relationship.student.userprofile.student_class }}
+                                                {% else %}
+                                                <span class="text-muted">Non définie</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <a href="{% url 'auth_app:student_detail' relationship.student.pk %}" class="btn btn-sm btn-outline-primary" title="Voir détails">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    <button class="btn btn-sm btn-outline-danger remove-relation" data-id="{{ relationship.id }}" title="Supprimer la relation">
+                                                        <i class="fas fa-unlink"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <div class="alert alert-info">
+                                Aucun enfant n'est actuellement associé à ce parent.
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-end">
+                        <a href="{% url 'auth_app:parent_edit' parent.pk %}" class="btn btn-info me-2">
+                            <i class="fas fa-edit me-1"></i>Modifier
+                        </a>
+                        <a href="{% url 'auth_app:parent_delete' parent.pk %}" class="btn btn-danger">
+                            <i class="fas fa-trash me-1"></i>Supprimer
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Formulaire de confirmation pour supprimer une relation -->
+<div class="modal fade" id="removeRelationModal" tabindex="-1" aria-labelledby="removeRelationModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="removeRelationModalLabel">Confirmer la suppression</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Êtes-vous sûr de vouloir supprimer cette relation parent-enfant ?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <form id="removeRelationForm" method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Confirmer</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gérer la suppression des relations
+    const removeButtons = document.querySelectorAll('.remove-relation');
+    const removeRelationModal = new bootstrap.Modal(document.getElementById('removeRelationModal'));
+    const removeRelationForm = document.getElementById('removeRelationForm');
+    
+    removeButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const relationshipId = this.getAttribute('data-id');
+            removeRelationForm.action = `/parent-relationships/${relationshipId}/delete/`;
+            removeRelationModal.show();
+        });
+    });
+});
+</script>
+{% endblock %}
+{% endblock %}

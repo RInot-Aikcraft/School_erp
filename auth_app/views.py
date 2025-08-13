@@ -3,8 +3,8 @@ from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from django.contrib.auth.models import User
-from .models import UserProfile
-from .forms import CustomUserCreationForm
+from .models import UserProfile, ParentStudentRelationship
+from .forms import CustomUserCreationForm, ParentCreationForm, StudentCreationForm, ParentStudentRelationshipForm
 from academics.models import Subject, TeacherSubject, TeacherSubjectLevel, ClassLevel
 from django.db.models import Count
 from academics.models import Class, Assignment, Enrollment
@@ -22,14 +22,13 @@ def is_student(user):
 def is_parent(user):
     return user.is_authenticated and user.userprofile.user_type == 'parent'
 
-# Ajoutez cette fonction
 def redirect_to_login(request):
     if request.user.is_authenticated:
         # Redirection en fonction du type d'utilisateur
         if request.user.userprofile.user_type == 'admin':
             return redirect('auth_app:admin_dashboard')
         elif request.user.userprofile.user_type == 'teacher':
-            return redirect('teachers:dashboard')  # MODIFIÉ: Rediriger vers le module teachers
+            return redirect('teachers:dashboard')
         elif request.user.userprofile.user_type == 'student':
             return redirect('auth_app:student_dashboard')
         elif request.user.userprofile.user_type == 'parent':
@@ -46,12 +45,9 @@ def admin_dashboard(request):
     student_count = UserProfile.objects.filter(user_type='student').count()
     parent_count = UserProfile.objects.filter(user_type='parent').count()
     
-    # --- NOUVELLES INFORMATIONS CONTEXTUELLES ---
-    
-    # 1. Récupérer l'année scolaire en cours
+    # Récupérer l'année scolaire en cours
     current_school_year = SchoolYear.objects.filter(current=True).first()
     
-    # 2. Statistiques pour l'année en cours (si une année est définie)
     context_data = {
         'total_users': total_users,
         'admin_count': admin_count,
@@ -61,6 +57,7 @@ def admin_dashboard(request):
         'users': User.objects.all().order_by('-date_joined')[:5],
         'current_school_year': current_school_year,
     }
+    
     if current_school_year:
         # Nombre de classes cette année
         class_count = Class.objects.filter(school_year=current_school_year).count()
@@ -170,7 +167,6 @@ def user_detail(request, pk):
 @login_required
 @user_passes_test(is_teacher)
 def teacher_dashboard(request):
-    # MODIFIÉ: Rediriger vers le module teachers
     return redirect('teachers:dashboard')
 
 @login_required
@@ -196,7 +192,7 @@ def custom_login(request):
             if user.userprofile.user_type == 'admin':
                 return redirect('auth_app:admin_dashboard')
             elif user.userprofile.user_type == 'teacher':
-                return redirect('teachers:dashboard')  # MODIFIÉ: Rediriger vers le module teachers
+                return redirect('teachers:dashboard')
             elif user.userprofile.user_type == 'student':
                 return redirect('auth_app:student_dashboard')
             elif user.userprofile.user_type == 'parent':
@@ -374,3 +370,311 @@ def teacher_delete(request, pk):
         messages.success(request, 'Enseignant supprimé avec succès!')
         return redirect('auth_app:teacher_list')
     return render(request, 'auth_app/admin/teacher_confirm_delete.html', {'teacher': teacher})
+
+# Vues pour la gestion des parents
+@login_required
+@user_passes_test(is_admin)
+def parent_list(request):
+    parents = User.objects.filter(userprofile__user_type='parent')
+    return render(request, 'auth_app/admin/parent_list.html', {'parents': parents})
+
+@login_required
+@user_passes_test(is_admin)
+def parent_create(request):
+    if request.method == 'POST':
+        form = ParentCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            
+            # Le formulaire s'occupe déjà de tout, plus besoin de mettre à jour manuellement
+            messages.success(request, 'Parent créé avec succès!')
+            return redirect('auth_app:parent_list')
+        else:
+            # Afficher les erreurs du formulaire pour le débogage
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
+    else:
+        # Utiliser le formulaire spécifique pour les parents
+        form = ParentCreationForm()
+    
+    return render(request, 'auth_app/admin/parent_form.html', {
+        'form': form, 
+        'title': 'Créer un parent'
+    })
+
+@login_required
+@user_passes_test(is_admin)
+def parent_edit(request, pk):
+    parent = get_object_or_404(User, pk=pk)
+    profile = parent.userprofile
+    
+    if request.method == 'POST':
+        # Mise à jour des informations de base
+        parent.first_name = request.POST.get('first_name', '')
+        parent.last_name = request.POST.get('last_name', '')
+        parent.email = request.POST.get('email', '')
+        
+        # Mise à jour des informations du profil
+        profile.phone = request.POST.get('phone', '')
+        profile.address = request.POST.get('address', '')
+        
+        if request.POST.get('date_of_birth'):
+            profile.date_of_birth = request.POST.get('date_of_birth')
+            
+        # Informations personnelles supplémentaires
+        profile.gender = request.POST.get('gender', '')
+        profile.place_of_birth = request.POST.get('place_of_birth', '')
+        profile.nationality = request.POST.get('nationality', '')
+        profile.id_card_number = request.POST.get('id_card_number', '')
+        profile.civil_status = request.POST.get('civil_status', '')
+        profile.emergency_contact_name = request.POST.get('emergency_contact_name', '')
+        profile.emergency_contact_relationship = request.POST.get('emergency_contact_relationship', '')
+        profile.emergency_contact_phone = request.POST.get('emergency_contact_phone', '')
+        
+        # Informations spécifiques aux parents
+        if request.POST.get('number_of_children'):
+            profile.number_of_children = int(request.POST.get('number_of_children'))
+        profile.occupation = request.POST.get('occupation', '')
+        profile.employer = request.POST.get('employer', '')
+        profile.work_phone = request.POST.get('work_phone', '')
+        
+        # Sauvegarde
+        parent.save()
+        profile.save()
+        
+        # Gestion de la photo de profil
+        if 'profile_picture' in request.FILES:
+            profile.profile_picture = request.FILES['profile_picture']
+            profile.save()
+        
+        messages.success(request, 'Parent mis à jour avec succès!')
+        return redirect('auth_app:parent_list')
+    
+    context = {
+        'parent': parent,
+        'profile': profile,
+        'title': 'Modifier un parent',
+    }
+    return render(request, 'auth_app/admin/parent_form.html', context)
+
+@login_required
+@user_passes_test(is_admin)
+def parent_detail(request, pk):
+    parent = get_object_or_404(User, pk=pk)
+    # Récupérer les enfants associés à ce parent
+    children_relationships = ParentStudentRelationship.objects.filter(parent=parent)
+    
+    return render(request, 'auth_app/admin/parent_detail.html', {
+        'parent': parent,
+        'profile': parent.userprofile,
+        'children_relationships': children_relationships
+    })
+
+@login_required
+@user_passes_test(is_admin)
+def parent_delete(request, pk):
+    parent = get_object_or_404(User, pk=pk)
+    if request.method == 'POST':
+        parent.delete()
+        messages.success(request, 'Parent supprimé avec succès!')
+        return redirect('auth_app:parent_list')
+    return render(request, 'auth_app/admin/parent_confirm_delete.html', {'parent': parent})
+
+# Vues pour la gestion des élèves
+@login_required
+@user_passes_test(is_admin)
+def student_list(request):
+    students = User.objects.filter(userprofile__user_type='student')
+    return render(request, 'auth_app/admin/student_list.html', {'students': students})
+
+@login_required
+@user_passes_test(is_admin)
+def student_create(request):
+    if request.method == 'POST':
+        form = StudentCreationForm(request.POST)
+        if form.is_valid():
+            student = form.save()
+            
+            # Gérer les relations avec les parents si spécifiées
+            parent_ids = request.POST.getlist('parents')
+            relationship_types = request.POST.getlist('relationship_types')
+            
+            for i, parent_id in enumerate(parent_ids):
+                if parent_id:  # S'assurer que l'ID n'est pas vide
+                    parent = get_object_or_404(User, pk=parent_id)
+                    relationship_type = relationship_types[i] if i < len(relationship_types) else 'guardian'
+                    
+                    # Créer la relation parent-élève
+                    ParentStudentRelationship.objects.create(
+                        parent=parent,
+                        student=student,
+                        relationship_type=relationship_type,
+                        is_primary_contact=(i == 0)  # Le premier parent est le contact principal
+                    )
+            
+            messages.success(request, 'Élève créé avec succès!')
+            return redirect('auth_app:student_list')
+        else:
+            # Afficher les erreurs du formulaire pour le débogage
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
+    else:
+        # Utiliser le formulaire spécifique pour les élèves
+        form = StudentCreationForm()
+        # Récupérer tous les parents pour le formulaire
+        parents = User.objects.filter(userprofile__user_type='parent')
+    
+    return render(request, 'auth_app/admin/student_form.html', {
+        'form': form, 
+        'title': 'Créer un élève',
+        'parents': parents
+    })
+
+@login_required
+@user_passes_test(is_admin)
+def student_edit(request, pk):
+    student = get_object_or_404(User, pk=pk)
+    profile = student.userprofile
+    
+    if request.method == 'POST':
+        # Mise à jour des informations de base
+        student.first_name = request.POST.get('first_name', '')
+        student.last_name = request.POST.get('last_name', '')
+        student.email = request.POST.get('email', '')
+        
+        # Mise à jour des informations du profil
+        profile.phone = request.POST.get('phone', '')
+        profile.address = request.POST.get('address', '')
+        
+        if request.POST.get('date_of_birth'):
+            profile.date_of_birth = request.POST.get('date_of_birth')
+            
+        # Informations personnelles supplémentaires
+        profile.gender = request.POST.get('gender', '')
+        profile.place_of_birth = request.POST.get('place_of_birth', '')
+        profile.nationality = request.POST.get('nationality', '')
+        profile.id_card_number = request.POST.get('id_card_number', '')
+        profile.civil_status = request.POST.get('civil_status', '')
+        profile.emergency_contact_name = request.POST.get('emergency_contact_name', '')
+        profile.emergency_contact_relationship = request.POST.get('emergency_contact_relationship', '')
+        profile.emergency_contact_phone = request.POST.get('emergency_contact_phone', '')
+        
+        # Informations spécifiques aux élèves
+        profile.student_id = request.POST.get('student_id', '')
+        profile.blood_type = request.POST.get('blood_type', '')
+        profile.allergies = request.POST.get('allergies', '')
+        profile.medical_conditions = request.POST.get('medical_conditions', '')
+        profile.previous_school = request.POST.get('previous_school', '')
+        profile.previous_school_address = request.POST.get('previous_school_address', '')
+        
+        # Sauvegarde
+        student.save()
+        profile.save()
+        
+        # Mise à jour des relations avec les parents
+        ParentStudentRelationship.objects.filter(student=student).delete()
+        parent_ids = request.POST.getlist('parents')
+        relationship_types = request.POST.getlist('relationship_types')
+        
+        for i, parent_id in enumerate(parent_ids):
+            if parent_id:  # S'assurer que l'ID n'est pas vide
+                parent = get_object_or_404(User, pk=parent_id)
+                relationship_type = relationship_types[i] if i < len(relationship_types) else 'guardian'
+                
+                # Créer la relation parent-élève
+                ParentStudentRelationship.objects.create(
+                    parent=parent,
+                    student=student,
+                    relationship_type=relationship_type,
+                    is_primary_contact=(i == 0)  # Le premier parent est le contact principal
+                )
+        
+        # Gestion de la photo de profil
+        if 'profile_picture' in request.FILES:
+            profile.profile_picture = request.FILES['profile_picture']
+            profile.save()
+        
+        messages.success(request, 'Élève mis à jour avec succès!')
+        return redirect('auth_app:student_list')
+    
+    # Récupérer les relations parent-élève existantes
+    parent_relationships = ParentStudentRelationship.objects.filter(student=student)
+    parent_ids = [rel.parent.pk for rel in parent_relationships]
+    relationship_types = [rel.relationship_type for rel in parent_relationships]
+    
+    # Récupérer tous les parents pour le formulaire
+    parents = User.objects.filter(userprofile__user_type='parent')
+    
+    context = {
+        'student': student,
+        'profile': profile,
+        'title': 'Modifier un élève',
+        'parents': parents,
+        'parent_ids': parent_ids,
+        'relationship_types': relationship_types
+    }
+    return render(request, 'auth_app/admin/student_form.html', context)
+
+@login_required
+@user_passes_test(is_admin)
+def student_detail(request, pk):
+    student = get_object_or_404(User, pk=pk)
+    # Récupérer les parents associés à cet élève
+    parent_relationships = ParentStudentRelationship.objects.filter(student=student)
+    
+    return render(request, 'auth_app/admin/student_detail.html', {
+        'student': student,
+        'profile': student.userprofile,
+        'parent_relationships': parent_relationships
+    })
+
+@login_required
+@user_passes_test(is_admin)
+def student_delete(request, pk):
+    student = get_object_or_404(User, pk=pk)
+    if request.method == 'POST':
+        student.delete()
+        messages.success(request, 'Élève supprimé avec succès!')
+        return redirect('auth_app:student_list')
+    return render(request, 'auth_app/admin/student_confirm_delete.html', {'student': student})
+
+
+# Dans auth_app/views.py
+@login_required
+@user_passes_test(is_admin)
+def add_parent_to_student(request, student_pk):
+    student = get_object_or_404(User, pk=student_pk)
+    
+    if request.method == 'POST':
+        form = ParentStudentRelationshipForm(request.POST, student=student)
+        if form.is_valid():
+            relationship = form.save(commit=False)
+            relationship.student = student
+            relationship.save()
+            messages.success(request, 'Parent associé avec succès!')
+            return redirect('auth_app:student_detail', student_pk)
+    else:
+        form = ParentStudentRelationshipForm(student=student)
+    
+    return render(request, 'auth_app/admin/add_parent_to_student.html', {
+        'form': form,
+        'student': student,
+        'title': f'Ajouter un parent à {student.get_full_name}'
+    })
+
+@login_required
+@user_passes_test(is_admin)
+def delete_parent_student_relationship(request, relationship_pk):
+    relationship = get_object_or_404(ParentStudentRelationship, pk=relationship_pk)
+    parent_pk = relationship.parent.pk
+    
+    if request.method == 'POST':
+        relationship.delete()
+        messages.success(request, 'Relation supprimée avec succès!')
+        return redirect('auth_app:parent_detail', parent_pk)
+    
+    return render(request, 'auth_app/admin/confirm_delete_relationship.html', {
+        'relationship': relationship
+    })

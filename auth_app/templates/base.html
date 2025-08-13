@@ -39,8 +39,8 @@
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" href="{% url 'auth_app:user_list' %}"><i class="fas fa-users me-2"></i>Utilisateurs</a></li>
                             <li><a class="dropdown-item" href="{% url 'auth_app:teacher_list' %}"><i class="fas fa-chalkboard-teacher me-2"></i>Enseignants</a></li>
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-user-graduate me-2"></i>Élèves</a></li>
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-user-friends me-2"></i>Parents</a></li>
+                            <li><a class="dropdown-item" href="{% url 'auth_app:student_list' %}"><i class="fas fa-user-graduate me-2"></i>Élèves</a></li>
+                            <li><a class="dropdown-item" href="{% url 'auth_app:parent_list' %}"><i class="fas fa-user-friends me-2"></i>Parents</a></li>
                         </ul>
                     </li>
                     
@@ -91,6 +91,20 @@
                             <li><a class="dropdown-item" href="{% url 'academics:grade_list' %}"><i class="fas fa-chart-bar me-2"></i>Notes</a></li>
                         </ul>
                     </li>
+
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="financeDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-coins me-1"></i>Finance
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a href="{% url 'finance:fee_type_list' %}" class="dropdown-item">Types de frais</a></li>
+                            <li><a href="{% url 'finance:fee_structure_list' %}" class="dropdown-item">Structures de frais</a></li>
+                            <li><a href="{% url 'finance:fee_list' %}" class="dropdown-item">Frais des élèves</a></li>
+                            <li><a href="{% url 'finance:payment_list' %}" class="dropdown-item">Paiements</a></li>
+                        </ul>
+                    </li>
+    
                     {% endif %}
                     
                     {% if user.userprofile.user_type == 'teacher' %}

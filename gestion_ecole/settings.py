@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'school',
     'academics',
     'teachers',
+    'finance',
 ]
 
 MIDDLEWARE = [
@@ -84,7 +85,7 @@ WSGI_APPLICATION = 'gestion_ecole.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'school_db',
+        'NAME': 'school',
         'USER': 'odoo',  
         'PASSWORD': '1234',
         'HOST': 'localhost',
@@ -109,7 +110,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # Internationalization
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'fr-FR'
 TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True

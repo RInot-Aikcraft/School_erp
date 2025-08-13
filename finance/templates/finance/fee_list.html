@@ -1,0 +1,63 @@
+{% extends 'finance/base.html' %}
+{% block finance_content %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Frais des élèves</h5>
+    </div>
+    <div class="card-body">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+        
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Élève</th>
+                        <th>Type de frais</th>
+                        <th>Classe</th>
+                        <th>Montant dû</th>
+                        <th>Montant payé</th>
+                        <th>Solde</th>
+                        <th>Statut</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for fee in fees %}
+                    <tr>
+                        <td>{{ fee.student.get_full_name }}</td>
+                        <td>{{ fee.fee_structure.fee_type.name }}</td>
+                        <td>{{ fee.fee_structure.classroom.name }}</td>
+                        <td>{{ fee.amount_due }}</td>
+                        <td>{{ fee.amount_paid }}</td>
+                        <td>{{ fee.balance }}</td>
+                        <td>
+                            {% if fee.status == 'paid' %}
+                                <span class="badge badge-success">Payé</span>
+                            {% elif fee.status == 'partially_paid' %}
+                                <span class="badge badge-warning">Partiellement payé</span>
+                            {% else %}
+                                <span class="badge badge-danger">Non payé</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'finance:student_fee_list' student_id=fee.student.id %}" class="btn btn-sm btn-info">Voir détails</a>
+                            {% if fee.status != 'paid' %}
+                                <a href="{% url 'finance:payment_create' fee_id=fee.id %}" class="btn btn-sm btn-primary">Enregistrer paiement</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center">Aucun frais trouvé</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
