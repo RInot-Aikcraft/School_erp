@@ -92,19 +92,6 @@
                         </ul>
                     </li>
 
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="financeDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-coins me-1"></i>Finance
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a href="{% url 'finance:fee_type_list' %}" class="dropdown-item">Types de frais</a></li>
-                            <li><a href="{% url 'finance:fee_structure_list' %}" class="dropdown-item">Structures de frais</a></li>
-                            <li><a href="{% url 'finance:fee_list' %}" class="dropdown-item">Frais des élèves</a></li>
-                            <li><a href="{% url 'finance:payment_list' %}" class="dropdown-item">Paiements</a></li>
-                        </ul>
-                    </li>
-    
                     {% endif %}
                     
                     {% if user.userprofile.user_type == 'teacher' %}

@@ -35,7 +35,6 @@ INSTALLED_APPS = [
     'school',
     'academics',
     'teachers',
-    'finance',
 ]
 
 MIDDLEWARE = [
