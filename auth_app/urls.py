@@ -51,3 +51,5 @@ urlpatterns = [
     path('students/<int:student_pk>/add-parent/', views.add_parent_to_student, name='add_parent_to_student'),
     path('parent-relationships/<int:relationship_pk>/delete/', views.delete_parent_student_relationship, name='delete_parent_student_relationship'),
 ]
+
+

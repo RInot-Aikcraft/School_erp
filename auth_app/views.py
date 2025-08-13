@@ -5,10 +5,10 @@ from django.contrib import messages
 from django.contrib.auth.models import User
 from .models import UserProfile, ParentStudentRelationship
 from .forms import CustomUserCreationForm, ParentCreationForm, StudentCreationForm, ParentStudentRelationshipForm
-from academics.models import Subject, TeacherSubject, TeacherSubjectLevel, ClassLevel
+from academics.models import Subject, TeacherSubject, TeacherSubjectLevel, ClassLevel, Class, Assignment, Enrollment
 from django.db.models import Count
-from academics.models import Class, Assignment, Enrollment
 from school.models import SchoolYear
+
 
 def is_admin(user):
     return user.is_authenticated and user.userprofile.user_type == 'admin'
@@ -499,6 +499,7 @@ def student_create(request):
             # Gérer les relations avec les parents si spécifiées
             parent_ids = request.POST.getlist('parents')
             relationship_types = request.POST.getlist('relationship_types')
+            primary_contact_id = request.POST.get('primary_contact')
             
             for i, parent_id in enumerate(parent_ids):
                 if parent_id:  # S'assurer que l'ID n'est pas vide
@@ -510,7 +511,7 @@ def student_create(request):
                         parent=parent,
                         student=student,
                         relationship_type=relationship_type,
-                        is_primary_contact=(i == 0)  # Le premier parent est le contact principal
+                        is_primary_contact=(parent_id == primary_contact_id)
                     )
             
             messages.success(request, 'Élève créé avec succès!')
@@ -529,7 +530,8 @@ def student_create(request):
     return render(request, 'auth_app/admin/student_form.html', {
         'form': form, 
         'title': 'Créer un élève',
-        'parents': parents
+        'parents': parents,
+        'parent_relationship_map': {}  # Vide pour la création
     })
 
 @login_required
@@ -577,6 +579,7 @@ def student_edit(request, pk):
         ParentStudentRelationship.objects.filter(student=student).delete()
         parent_ids = request.POST.getlist('parents')
         relationship_types = request.POST.getlist('relationship_types')
+        primary_contact_id = request.POST.get('primary_contact')
         
         for i, parent_id in enumerate(parent_ids):
             if parent_id:  # S'assurer que l'ID n'est pas vide
@@ -588,7 +591,7 @@ def student_edit(request, pk):
                     parent=parent,
                     student=student,
                     relationship_type=relationship_type,
-                    is_primary_contact=(i == 0)  # Le premier parent est le contact principal
+                    is_primary_contact=(parent_id == primary_contact_id)
                 )
         
         # Gestion de la photo de profil
@@ -601,8 +604,15 @@ def student_edit(request, pk):
     
     # Récupérer les relations parent-élève existantes
     parent_relationships = ParentStudentRelationship.objects.filter(student=student)
-    parent_ids = [rel.parent.pk for rel in parent_relationships]
-    relationship_types = [rel.relationship_type for rel in parent_relationships]
+    
+    # Créer un dictionnaire pour mapper les IDs de parents à leurs relations
+    parent_relationship_map = {}
+    primary_contact_id = None
+    
+    for relationship in parent_relationships:
+        parent_relationship_map[relationship.parent.pk] = relationship.relationship_type
+        if relationship.is_primary_contact:
+            primary_contact_id = relationship.parent.pk
     
     # Récupérer tous les parents pour le formulaire
     parents = User.objects.filter(userprofile__user_type='parent')
@@ -612,8 +622,8 @@ def student_edit(request, pk):
         'profile': profile,
         'title': 'Modifier un élève',
         'parents': parents,
-        'parent_ids': parent_ids,
-        'relationship_types': relationship_types
+        'parent_relationship_map': parent_relationship_map,
+        'primary_contact_id': primary_contact_id
     }
     return render(request, 'auth_app/admin/student_form.html', context)
 
@@ -639,7 +649,6 @@ def student_delete(request, pk):
         messages.success(request, 'Élève supprimé avec succès!')
         return redirect('auth_app:student_list')
     return render(request, 'auth_app/admin/student_confirm_delete.html', {'student': student})
-
 
 # Dans auth_app/views.py
 @login_required
@@ -678,3 +687,5 @@ def delete_parent_student_relationship(request, relationship_pk):
     return render(request, 'auth_app/admin/confirm_delete_relationship.html', {
         'relationship': relationship
     })
+
+
