@@ -10,6 +10,7 @@ from school.models import SchoolYear
 from .models import Subject, ClassLevel, Class, Enrollment, Assignment, Grade, ClassSubject, Schedule, ScheduleEntry, TimeSlot
 from django.db.models import Prefetch
 from django.http import JsonResponse
+from finance.models import Inscription
 
 def is_admin(user):
     return user.is_authenticated and user.userprofile.user_type == 'admin'
@@ -473,25 +474,42 @@ def class_level_delete(request, pk):
 @user_passes_test(is_admin)
 def class_detail(request, pk):
     class_obj = get_object_or_404(Class, pk=pk)
-    enrollments = class_obj.enrollments.all()
+    
+    # Récupérer les inscriptions depuis le modèle finance.Inscription
+    from finance.models import Inscription
+    inscriptions = Inscription.objects.filter(
+        classe_demandee=class_obj,
+        annee_scolaire=class_obj.school_year
+    ).select_related('eleve')
+    
+    # Calculer le nombre d'élèves inscrits
+    enrolled_students_count = inscriptions.count()
+    
+    # Calculer le pourcentage d'occupation
+    if class_obj.max_students > 0:
+        occupancy_percentage = (enrolled_students_count / class_obj.max_students) * 100
+    else:
+        occupancy_percentage = 0
+    
+    # Récupérer les matières assignées à cette classe
     all_subjects = Subject.objects.all()
     teachers = User.objects.filter(userprofile__user_type='teacher')
     assigned_subjects = ClassSubject.objects.filter(
         class_obj=class_obj, 
         school_year=class_obj.school_year
     ).select_related('subject', 'teacher').order_by('subject__name')
-
+    
     context = {
         'class_obj': class_obj,
-        'enrollments': enrollments,
+        'inscriptions': inscriptions,
+        'enrolled_students_count': enrolled_students_count,
+        'occupancy_percentage': occupancy_percentage,
         'all_subjects': all_subjects,
         'teachers': teachers,
         'assigned_subjects': assigned_subjects,
     }
     
     return render(request, 'academics/class_detail.html', context)
-
-
 # Dans academics/views.py
 
 @login_required
@@ -697,3 +715,4 @@ def add_schedule_entry(request, schedule_pk):
     
     # Si ce n'est pas POST, rediriger vers la page de l'emploi du temps
     return redirect('academics:class_schedule', class_pk=schedule.class_obj.pk)  # Correction ici
+

@@ -752,3 +752,59 @@ def get_classes_by_year(request):
         return JsonResponse({'classes': classes_data})
     
     return JsonResponse({'classes': []})
+
+
+@login_required
+def liste(request):
+    # Récupérer les paramètres de filtrage
+    statut = request.GET.get('statut')
+    annee_scolaire_id = request.GET.get('annee_scolaire')
+    classe_id = request.GET.get('classe')
+    
+    # Récupérer toutes les années scolaires
+    school_years = SchoolYear.objects.all().order_by('-start_date')
+    
+    # Récupérer l'année scolaire active
+    try:
+        active_school_year = SchoolYear.objects.get(current=True)
+    except SchoolYear.DoesNotExist:
+        active_school_year = None
+    
+    # Récupérer l'année sélectionnée (par défaut l'année active)
+    selected_year_id = request.GET.get('school_year')
+    if selected_year_id:
+        try:
+            selected_year = SchoolYear.objects.get(pk=selected_year_id)
+        except SchoolYear.DoesNotExist:
+            selected_year = active_school_year
+    else:
+        selected_year = active_school_year
+    
+    # Filtrer les inscriptions
+    inscriptions = Inscription.objects.all()
+    
+    # Filtrer par année scolaire
+    if selected_year:
+        inscriptions = inscriptions.filter(annee_scolaire=selected_year)
+    
+    # Appliquer les autres filtres
+    if statut:
+        inscriptions = inscriptions.filter(statut=statut)
+    if classe_id:
+        inscriptions = inscriptions.filter(classe_demandee_id=classe_id)
+    
+    # Récupérer les données pour les filtres
+    classes = Class.objects.filter(school_year=selected_year) if selected_year else Class.objects.none()
+    
+    context = {
+        'inscriptions': inscriptions,
+        'school_years': school_years,
+        'selected_year': selected_year,
+        'active_school_year': active_school_year,
+        'classes': classes,
+        'statut_choices': Inscription.STATUT_CHOICES,
+        # Conserver les valeurs des filtres pour réaffichage
+        'filtre_statut': statut,
+        'filtre_classe': classe_id,
+    }
+    return render(request, 'liste.html', context)

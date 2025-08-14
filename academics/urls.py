@@ -43,4 +43,7 @@ urlpatterns = [
     path('levels/<int:pk>/', views.class_level_detail, name='class_level_detail'),
     path('levels/<int:pk>/edit/', views.class_level_edit, name='class_level_edit'),
     path('levels/<int:pk>/delete/', views.class_level_delete, name='class_level_delete'),
+
+
+
 ]

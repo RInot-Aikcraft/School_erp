@@ -31,6 +31,7 @@ urlpatterns = [
     path('inscriptions/detail/<int:pk>/', views.detail_inscription, name='detail_inscription'),
     path('inscriptions/confirmer/<int:pk>/', views.confirmer_inscription, name='confirmer_inscription'),
     path('inscriptions/<int:pk>/ajouter-paiement/', views.ajouter_paiement_inscription, name='ajouter_paiement_inscription'),
+     path('', views.liste, name='liste'),
     
     # URL AJAX pour récupérer les classes par année scolaire
     path('api/get-classes-by-year/', views.get_classes_by_year, name='get_classes_by_year'),

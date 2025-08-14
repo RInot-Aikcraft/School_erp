@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Liste des élèves inscrits{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Liste des élèves inscrits</h1>
+    </div>
+
+    <!-- Filtres -->
+    <div class="card mb-4">
+        <div class="card-header">
+            Filtres
+        </div>
+        <div class="card-body">
+            <form method="get" action="{% url 'finance:liste' %}">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label for="school_year" class="form-label">Année scolaire</label>
+                        <select class="form-select" id="school_year" name="school_year">
+                            <option value="">-- Toutes les années --</option>
+                            {% for year in school_years %}
+                            <option value="{{ year.id }}" {% if selected_year and selected_year.id == year.id %}selected{% endif %}>
+                                {{ year.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="classe" class="form-label">Classe</label>
+                        <select class="form-select" id="classe" name="classe">
+                            <option value="">-- Toutes les classes --</option>
+                            {% for classe in classes %}
+                            <option value="{{ classe.id }}" {% if filtre_classe and filtre_classe == classe.id|stringformat:"s" %}selected{% endif %}>
+                                {{ classe.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary me-2">
+                            Filtrer
+                        </button>
+                        <a href="{% url 'finance:liste' %}" class="btn btn-outline-secondary">
+                            Réinitialiser
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tableau des inscriptions -->
+    <div class="card">
+        <div class="card-header">
+            Liste des élèves inscrits
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Élève</th>
+                            <th>Classe demandée</th>
+                            <th>Classe attribuée</th>
+                            <th>Année scolaire</th>
+                            <th>Date d'inscription</th>
+                            <th>Statut</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for inscription in inscriptions %}
+                        <tr>
+                            <td>{{ inscription.eleve.get_full_name|default:inscription.eleve.username }}</td>
+                            <td>{{ inscription.classe_demandee.name }}</td>
+                            <td>
+                                {% if inscription.classe_attribuee %}
+                                    {{ inscription.classe_attribuee.name }}
+                                {% else %}
+                                    <span class="text-muted">Non attribuée</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ inscription.annee_scolaire.name }}</td>
+                            <td>{{ inscription.date_inscription|date:"d/m/Y" }}</td>
+                            <td>
+                                {% if inscription.statut == 'EN_ATTENTE' %}
+                                    <span>En attente</span>
+                                {% elif inscription.statut == 'ACCEPTÉE' %}
+                                    <span>Acceptée</span>
+                                {% elif inscription.statut == 'REFUSÉE' %}
+                                    <span>Refusée</span>
+                                {% elif inscription.statut == 'CONFIRMÉE' %}
+                                    <span>Confirmée</span>
+                                {% elif inscription.statut == 'ANNULÉE' %}
+                                    <span>Annulée</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center">Aucune inscription trouvée</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
