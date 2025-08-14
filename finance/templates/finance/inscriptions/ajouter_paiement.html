@@ -1,0 +1,145 @@
+ {% extends 'base.html' %}
+{% load static %}
+{% load currency_filters %}
+
+{% block title %}Ajouter un Paiement{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Ajouter un Paiement</h5>
+                        <a href="{% url 'finance:detail_inscription' inscription.pk %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Retour aux détails
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <div class="alert alert-info">
+                        <h5 class="alert-heading">Paiement pour l'inscription</h5>
+                        <p class="mb-0">Vous êtes sur le point d'enregistrer un paiement pour l'inscription de <strong>{{ inscription.eleve.get_full_name|default:inscription.eleve.username }}</strong> pour la classe <strong>{{ inscription.classe_demandee.name }}</strong>.</p>
+                        <hr>
+                        <p class="mb-0">Solde restant à payer: <strong>{% if inscription.get_solde > 0 %}{{ inscription.get_solde|format_ariary }}{% else %}{{ inscription.get_solde|format_ariary }}{% endif %}</strong></p>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="type_frais" class="form-label">Type de frais</label>
+                                    <select class="form-select" id="type_frais" name="type_frais" required>
+                                        <option value="">-- Sélectionner un type de frais --</option>
+                                        {% for type_frais in types_frais %}
+                                        <option value="{{ type_frais.id }}">{{ type_frais.nom_frais }} ({{ type_frais.montant|format_ariary }})</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="type_caisse" class="form-label">Type de caisse</label>
+                                    <select class="form-select" id="type_caisse" name="type_caisse" required>
+                                        <option value="">-- Sélectionner une caisse --</option>
+                                        {% for caisse in types_caisse %}
+                                        <option value="{{ caisse.id }}">{{ caisse.nom }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="montant" class="form-label">Montant (Ar)</label>
+                                    <input type="number" class="form-control" id="montant" name="montant" step="0.01" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="date_paiement" class="form-label">Date de paiement</label>
+                                    <input type="datetime-local" class="form-control" id="date_paiement" name="date_paiement" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="mode_paiement" class="form-label">Mode de paiement</label>
+                                    <select class="form-select" id="mode_paiement" name="mode_paiement" required>
+                                        <option value="">-- Sélectionner un mode --</option>
+                                        {% for code, label in mode_paiement_choices %}
+                                        <option value="{{ code }}">{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="reference" class="form-label">Référence</label>
+                                    <input type="text" class="form-control" id="reference" name="reference" placeholder="Numéro de chèque, transaction, etc.">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <label for="notes" class="form-label">Notes</label>
+                                    <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="fas fa-save me-2"></i>Enregistrer le paiement
+                                </button>
+                                <a href="{% url 'finance:detail_inscription' inscription.pk %}" class="btn btn-outline-secondary">
+                                    Annuler
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Définir la date et heure actuelles par défaut
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    
+    const defaultDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+    document.getElementById('date_paiement').value = defaultDateTime;
+    
+    // Mettre à jour le montant lorsque le type de frais est sélectionné
+    document.getElementById('type_frais').addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        const montantText = selectedOption.text.match(/\(([^)]+)\)/);
+        if (montantText) {
+            const montant = montantText[1].replace(' Ar', '').trim();
+            document.getElementById('montant').value = montant.replace(' ', '').replace(',', '.');
+        }
+    });
+});
+</script>
+{% endblock %}

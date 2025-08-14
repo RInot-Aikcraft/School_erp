@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load currency_filters %}
+
+{% block title %}Types de Frais{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Types de Frais</h5>
+                        <a href="{% url 'finance:ajouter_type_frais' %}" class="btn btn-danger">
+                            <i class="fas fa-plus me-2"></i>Ajouter un type de frais
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Filtre par année scolaire -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <form method="get" id="schoolYearFilter">
+                                <div class="input-group">
+                                    <span class="input-group-text">Année scolaire</span>
+                                    <select class="form-select" name="school_year" id="schoolYearSelect" onchange="document.getElementById('schoolYearFilter').submit();">
+                                        {% for year in school_years %}
+                                            <option value="{{ year.pk }}" 
+                                                    {% if year == selected_year %}selected{% endif %}
+                                                    {% if year == active_school_year %}data-active="true"{% endif %}>
+                                                {{ year.name }}
+                                                {% if year == active_school_year %}(Active){% endif %}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            {% if selected_year != active_school_year %}
+                                <a href="?school_year={{ active_school_year.pk }}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-sync-alt me-1"></i> Voir l'année active
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Nom du frais</th>
+                                    <th>Classe</th>
+                                    <th>Année scolaire</th>
+                                    <th>Montant</th>
+                                    <th>Périodicité</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for type_frais in type_frais_list %}
+                                <tr>
+                                    <td>{{ type_frais.nom_frais }}</td>
+                                    <td>{{ type_frais.classe.name }}</td>
+                                    <td>
+                                        {{ type_frais.annee_scolaire.name }}
+                                        {% if type_frais.annee_scolaire == active_school_year %}
+                                            <span class="badge bg-success ms-1">Active</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ type_frais.montant|format_ariary }}</td>
+                                    <td>{{ type_frais.get_periodicite_display }}</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{% url 'finance:modifier_type_frais' type_frais.pk %}" class="btn btn-sm btn-outline-info" title="Modifier">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{% url 'finance:supprimer_type_frais' type_frais.pk %}" class="btn btn-sm btn-outline-danger" title="Supprimer">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center">Aucun type de frais trouvé pour cette année scolaire</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

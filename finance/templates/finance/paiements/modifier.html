@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load currency_filters %}
+
+{% block title %}Modifier un Paiement{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Modifier un Paiement</h5>
+                        <a href="{% url 'finance:liste_paiements' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Retour à la liste
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="eleve" class="form-label">Élève</label>
+                                    <select class="form-select" id="eleve" name="eleve" required>
+                                        <option value="">-- Sélectionner un élève --</option>
+                                        {% for eleve in eleves %}
+                                        <option value="{{ eleve.id }}" {% if eleve.id == paiement.eleve.id %}selected{% endif %}>{{ eleve.get_full_name|default:eleve.username }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="type_frais" class="form-label">Type de frais</label>
+                                    <select class="form-select" id="type_frais" name="type_frais" required>
+                                        <option value="">-- Sélectionner un type de frais --</option>
+                                        {% for type_frais in types_frais %}
+                                        <option value="{{ type_frais.id }}" {% if type_frais.id == paiement.type_frais.id %}selected{% endif %}>{{ type_frais.nom_frais }} ({{ type_frais.classe.name }} - {{ type_frais.montant|format_ariary }})</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="type_caisse" class="form-label">Type de caisse</label>
+                                    <select class="form-select" id="type_caisse" name="type_caisse" required>
+                                        <option value="">-- Sélectionner une caisse --</option>
+                                        {% for caisse in types_caisse %}
+                                        <option value="{{ caisse.id }}" {% if caisse.id == paiement.type_caisse.id %}selected{% endif %}>{{ caisse.nom }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="montant" class="form-label">Montant (Ar)</label>
+                                    <input type="number" class="form-control" id="montant" name="montant" step="0.01" value="{{ paiement.montant }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="date_paiement" class="form-label">Date de paiement</label>
+                                    <input type="datetime-local" class="form-control" id="date_paiement" name="date_paiement" value="{{ paiement.date_paiement|date:"Y-m-d\TH:i" }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="mois" class="form-label">Mois (pour écolage)</label>
+                                    <select class="form-select" id="mois" name="mois">
+                                        <option value="">-- Sélectionner un mois --</option>
+                                        {% for code, label in mois_choices %}
+                                        <option value="{{ code }}" {% if code == paiement.mois %}selected{% endif %}>{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="statut" class="form-label">Statut</label>
+                                    <select class="form-select" id="statut" name="statut" required>
+                                        {% for code, label in statut_choices %}
+                                        <option value="{{ code }}" {% if code == paiement.statut %}selected{% endif %}>{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="mode_paiement" class="form-label">Mode de paiement</label>
+                                    <select class="form-select" id="mode_paiement" name="mode_paiement" required>
+                                        {% for code, label in mode_paiement_choices %}
+                                        <option value="{{ code }}" {% if code == paiement.mode_paiement %}selected{% endif %}>{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="reference" class="form-label">Référence</label>
+                                    <input type="text" class="form-control" id="reference" name="reference" value="{{ paiement.reference }}" placeholder="Numéro de chèque, transaction, etc.">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <label for="notes" class="form-label">Notes</label>
+                                    <textarea class="form-control" id="notes" name="notes" rows="3">{{ paiement.notes }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="fas fa-save me-2"></i>Enregistrer les modifications
+                                </button>
+                                <a href="{% url 'finance:liste_paiements' %}" class="btn btn-outline-secondary">
+                                    Annuler
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

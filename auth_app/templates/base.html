@@ -91,6 +91,19 @@
                             <li><a class="dropdown-item" href="{% url 'academics:grade_list' %}"><i class="fas fa-chart-bar me-2"></i>Notes</a></li>
                         </ul>
                     </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="GestionFinanciereDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-book me-1"></i>Gestion Financière
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{% url 'finance:liste_type_frais' %}"><i class="fas fa-money-bill-wave me-2"></i>Type de Frais</a></li>
+                            <li><a class="dropdown-item" href="{% url 'finance:liste_type_caisse' %}"><i class="fas fa-cash-register me-2"></i>Types de Caisses</a></li>
+                            <li><a class="dropdown-item" href="{% url 'finance:liste_paiements' %}"> <i class="fas fa-money-bill-wave me-2"></i>Gestion des Paiements</a></li>
+                            <li><a class="dropdown-item" href="{% url 'finance:liste_inscriptions' %}" ><i class="fas fa-user-graduate me-2"></i><span>Inscriptions</span></a></li>
+                        </ul>
+                    </li>
+                   
+                   
 
                     {% endif %}
                     
@@ -134,6 +147,8 @@
                             <li><a class="dropdown-item" href="#"><i class="fas fa-money-bill-wave me-2"></i>Paiements</a></li>
                         </ul>
                     </li>
+
+                    
                     {% endif %}
                 </ul>
                 <ul class="navbar-nav">

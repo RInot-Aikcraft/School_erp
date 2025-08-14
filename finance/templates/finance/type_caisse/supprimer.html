@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Supprimer un Type de Caisse{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Supprimer un Type de Caisse</h5>
+                        <a href="{% url 'finance:liste_type_caisse' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Retour à la liste
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <div class="alert alert-warning">
+                        <h5 class="alert-heading">Confirmation de suppression</h5>
+                        <p class="mb-0">Êtes-vous sûr de vouloir supprimer le type de caisse "<strong>{{ type_caisse.nom }}</strong>" ?</p>
+                        <hr>
+                        <p class="mb-0">Cette action est irréversible.</p>
+                    </div>
+
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title">Détails du type de caisse</h5>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>Nom:</span>
+                                    <strong>
+                                        <span class="badge rounded-pill" style="background-color: {{ type_caisse.couleur }};">
+                                            {{ type_caisse.nom }}
+                                        </span>
+                                    </strong>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>Code:</span>
+                                    <strong>{{ type_caisse.code }}</strong>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>Description:</span>
+                                    <strong>{{ type_caisse.description|default:"Aucune description" }}</strong>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>Statut:</span>
+                                    <strong>
+                                        {% if type_caisse.est_active %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Inactive</span>
+                                        {% endif %}
+                                    </strong>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash me-2"></i>Confirmer la suppression
+                        </button>
+                        <a href="{% url 'finance:liste_type_caisse' %}" class="btn btn-outline-secondary">
+                            Annuler
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

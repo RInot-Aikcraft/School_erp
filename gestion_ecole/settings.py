@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     'school',
     'academics',
     'teachers',
+    'finance',
 ]
 
 MIDDLEWARE = [
@@ -85,7 +86,7 @@ WSGI_APPLICATION = 'gestion_ecole.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'school',
+        'NAME': 'school_db',
         'USER': 'odoo',  
         'PASSWORD': '1234',
         'HOST': 'localhost',

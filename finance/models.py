@@ -1,0 +1,238 @@
+from django.db import models
+from academics.models import Class
+from finance.templatetags.currency_filters import format_ariary
+from school.models import SchoolYear
+from django.contrib.auth.models import User
+
+class TypeFrais(models.Model):
+    id = models.AutoField(primary_key=True)
+    nom_frais = models.CharField(max_length=100, verbose_name="Nom du frais")
+    classe = models.ForeignKey(Class, on_delete=models.CASCADE, verbose_name="Classe")
+    annee_scolaire = models.ForeignKey(SchoolYear, on_delete=models.CASCADE, verbose_name="Année scolaire")
+    montant = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Montant (Ar)")
+    frais_inscription = models.BooleanField(default=False, verbose_name="Frais d'inscription")
+    PERIODICITE_CHOICES = [
+        ('MENSUEL', 'Mensuel'),
+        ('TRIMESTRIEL', 'Trimestriel'),
+        ('ANNUEL', 'Annuel'),
+        ('PONCTUEL', 'Ponctuel'),
+    ]
+    periodicite = models.CharField(max_length=20, choices=PERIODICITE_CHOICES, verbose_name="Périodicité")
+    date_creation = models.DateTimeField(auto_now_add=True, verbose_name="Date de création")
+    date_modification = models.DateTimeField(auto_now=True, verbose_name="Date de modification")
+
+    class Meta:
+        verbose_name = "Type de frais"
+        verbose_name_plural = "Types de frais"
+        ordering = ['nom_frais']
+
+    def __str__(self):
+        return f"{self.nom_frais} - {self.classe.name} - {self.annee_scolaire.name}"
+
+
+class TypeCaisse(models.Model):
+    """Modèle pour représenter les différents types de caisses de l'école"""
+    nom = models.CharField(max_length=100, verbose_name="Nom de la caisse")
+    code = models.CharField(max_length=20, unique=True, verbose_name="Code")
+    description = models.TextField(blank=True, verbose_name="Description")
+    est_active = models.BooleanField(default=True, verbose_name="Active")
+    couleur = models.CharField(max_length=7, default="#3498db", verbose_name="Couleur", 
+                               help_text="Code hexadécimal de la couleur (ex: #3498db)")
+    date_creation = models.DateTimeField(auto_now_add=True, verbose_name="Date de création")
+    date_modification = models.DateTimeField(auto_now=True, verbose_name="Date de modification")
+
+    class Meta:
+        verbose_name = "Type de caisse"
+        verbose_name_plural = "Types de caisses"
+        ordering = ['nom']
+
+    def __str__(self):
+        return self.nom
+    
+class Paiement(models.Model):
+    """Modèle pour enregistrer les paiements effectués par les élèves"""
+    STATUT_CHOICES = [
+        ('EN_ATTENTE', 'En attente'),
+        ('VALIDE', 'Validé'),
+        ('ANNULE', 'Annulé'),
+        ('REMBOURSE', 'Remboursé'),
+    ]
+    
+    MODE_PAIEMENT_CHOICES = [
+        ('ESPECE', 'Espèces'),
+        ('CHEQUE', 'Chèque'),
+        ('VIREMENT', 'Virement bancaire'),
+        ('MOBILE', 'Paiement mobile'),
+        ('AUTRE', 'Autre'),
+    ]
+    
+    MOIS_CHOICES = [
+        (1, 'Janvier'),
+        (2, 'Février'),
+        (3, 'Mars'),
+        (4, 'Avril'),
+        (5, 'Mai'),
+        (6, 'Juin'),
+        (7, 'Juillet'),
+        (8, 'Août'),
+        (9, 'Septembre'),
+        (10, 'Octobre'),
+        (11, 'Novembre'),
+        (12, 'Décembre'),
+    ]
+    
+    eleve = models.ForeignKey(User, on_delete=models.CASCADE, related_name='paiements', verbose_name="Élève")
+    type_frais = models.ForeignKey(TypeFrais, on_delete=models.CASCADE, related_name='paiements', verbose_name="Type de frais")
+    type_caisse = models.ForeignKey(TypeCaisse, on_delete=models.CASCADE, related_name='paiements', verbose_name="Type de caisse")
+    montant = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Montant payé (Ar)")
+    mois = models.PositiveSmallIntegerField(choices=MOIS_CHOICES, null=True, blank=True, verbose_name="Mois")
+    date_paiement = models.DateTimeField(verbose_name="Date de paiement")
+    date_enregistrement = models.DateTimeField(auto_now_add=True, verbose_name="Date d'enregistrement")
+    statut = models.CharField(max_length=20, choices=STATUT_CHOICES, default='EN_ATTENTE', verbose_name="Statut")
+    mode_paiement = models.CharField(max_length=20, choices=MODE_PAIEMENT_CHOICES, verbose_name="Mode de paiement")
+    reference = models.CharField(max_length=100, blank=True, verbose_name="Référence (numéro de chèque, transaction, etc.)")
+    notes = models.TextField(blank=True, verbose_name="Notes")
+    enregistre_par = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='paiements_enregistres', verbose_name="Enregistré par")
+    
+    class Meta:
+        verbose_name = "Paiement"
+        verbose_name_plural = "Paiements"
+        ordering = ['-date_paiement']
+    
+    def __str__(self):
+        return f"Paiement de {self.montant} par {self.eleve.get_full_name() or self.eleve.username} pour {self.type_frais.nom_frais}"
+    
+    def get_mois_display(self):
+        """Retourne le nom du mois"""
+        if self.mois:
+            mois_dict = dict(self.MOIS_CHOICES)
+            return mois_dict.get(self.mois, '')
+        return ''
+    
+
+# Ajoutez ce modèle à la suite de vos modèles existants
+class Inscription(models.Model):
+    """Modèle pour gérer les inscriptions des élèves"""
+    STATUT_CHOICES = [
+        ('EN_ATTENTE', 'En attente'),
+        ('ACCEPTÉE', 'Acceptée'),
+        ('REFUSÉE', 'Refusée'),
+        ('CONFIRMÉE', 'Confirmée'),
+        ('ANNULÉE', 'Annulée'),
+    ]
+    
+    eleve = models.ForeignKey(User, on_delete=models.CASCADE, related_name='inscriptions', verbose_name="Élève")
+    annee_scolaire = models.ForeignKey(SchoolYear, on_delete=models.CASCADE, related_name='inscriptions', verbose_name="Année scolaire")
+    classe_demandee = models.ForeignKey(Class, on_delete=models.CASCADE, related_name='demandes_inscription', verbose_name="Classe demandée")
+    classe_attribuee = models.ForeignKey(Class, on_delete=models.SET_NULL, null=True, blank=True, related_name='inscriptions_attribuees', verbose_name="Classe attribuée")
+    date_inscription = models.DateTimeField(auto_now_add=True, verbose_name="Date d'inscription")
+    statut = models.CharField(max_length=20, choices=STATUT_CHOICES, default='EN_ATTENTE', verbose_name="Statut")
+    date_confirmation = models.DateTimeField(null=True, blank=True, verbose_name="Date de confirmation")
+    notes = models.TextField(blank=True, verbose_name="Notes")
+    
+    class Meta:
+        verbose_name = "Inscription"
+        verbose_name_plural = "Inscriptions"
+        ordering = ['-date_inscription']
+        # Un élève ne peut avoir qu'une seule inscription par année scolaire
+        unique_together = ('eleve', 'annee_scolaire')
+    
+    def __str__(self):
+        return f"Inscription de {self.eleve.get_full_name() or self.eleve.username} - {self.classe_demandee.name} ({self.annee_scolaire.name})"
+    
+    def get_statut_display(self):
+        """Retourne le statut lisible"""
+        statut_dict = dict(self.STATUT_CHOICES)
+        return statut_dict.get(self.statut, '')
+    
+    def calculer_frais_inscription(self):
+        """
+        Calcule le montant total des frais d'inscription pour cette inscription
+        en se basant uniquement sur les types de frais marqués comme frais d'inscription
+        """
+        types_frais = TypeFrais.objects.filter(
+            classe=self.classe_demandee,
+            annee_scolaire=self.annee_scolaire,
+            frais_inscription=True  # Filtrer pour ne récupérer que les frais d'inscription
+        )
+        
+        # Calculer le total
+        total = sum(type_frais.montant for type_frais in types_frais)
+        return total
+    
+    def get_types_frais(self):
+        """
+        Récupère uniquement les types de frais d'inscription associés à cette inscription
+        """
+        return TypeFrais.objects.filter(
+            classe=self.classe_demandee,
+            annee_scolaire=self.annee_scolaire,
+            frais_inscription=True  # Filtrer pour ne récupérer que les frais d'inscription
+        )
+    
+    def get_paiements(self):
+        """
+        Récupère tous les paiements associés aux frais d'inscription de cette inscription
+        """
+        types_frais_inscription = self.get_types_frais()
+        return Paiement.objects.filter(
+            eleve=self.eleve,
+            type_frais__in=types_frais_inscription
+        )
+    
+    def get_montant_paye(self):
+        """
+        Calcule le montant total payé pour les frais d'inscription de cette inscription
+        """
+        paiements = self.get_paiements()
+        montant_paye = sum(paiement.montant for paiement in paiements if paiement.statut == 'VALIDE')
+        return montant_paye
+    
+    def get_solde(self):
+        """
+        Calcule le solde restant à payer pour les frais d'inscription
+        """
+        return self.calculer_frais_inscription() - self.get_montant_paye()
+    
+    def est_complettement_paye(self):
+        """
+        Vérifie si les frais d'inscription sont complètement payés
+        """
+        return self.get_solde() <= 0
+    
+    def confirmer_inscription(self):
+        """
+        Confirme l'inscription et assigne l'élève à la classe demandée
+        """
+        from academics.models import Enrollment
+        from django.utils import timezone
+        
+        # Vérifier si les frais d'inscription sont complètement payés
+        if not self.est_complettement_paye():
+            return False, "Les frais d'inscription ne sont pas complètement payés"
+        
+        # Vérifier s'il y a de la place dans la classe
+        effectif_actuel = Enrollment.objects.filter(
+            class_obj=self.classe_demandee,
+            school_year=self.annee_scolaire,
+            is_active=True
+        ).count()
+        
+        if effectif_actuel >= self.classe_demandee.max_students:
+            return False, "La classe est déjà complète"
+        
+        # Assigner la classe
+        self.classe_attribuee = self.classe_demandee
+        self.statut = 'CONFIRMÉE'
+        self.date_confirmation = timezone.now()
+        self.save()
+        
+        # Créer l'inscription académique
+        Enrollment.objects.get_or_create(
+            student=self.eleve,
+            class_obj=self.classe_demandee,
+            school_year=self.annee_scolaire,
+            defaults={'is_active': True}
+        )
+        
+        return True, "Inscription confirmée avec succès"

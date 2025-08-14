@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load currency_filters %}
+
+{% block title %}Supprimer une Inscription{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Supprimer une Inscription</h5>
+                        <a href="{% url 'finance:detail_inscription' inscription.pk %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Retour aux détails
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <div class="alert alert-warning">
+                        <h5 class="alert-heading">Confirmation de suppression</h5>
+                        <p class="mb-0">Êtes-vous sûr de vouloir supprimer l'inscription de <strong>{{ inscription.eleve.get_full_name|default:inscription.eleve.username }}</strong> pour la classe <strong>{{ inscription.classe_demandee.name }}</strong> ?</p>
+                        <hr>
+                        <p class="mb-0">Cette action est irréversible.</p>
+                    </div>
+
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title">Détails de l'inscription</h5>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>Élève:</span>
+                                    <strong>{{ inscription.eleve.get_full_name|default:inscription.eleve.username }}</strong>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>Année scolaire:</span>
+                                    <strong>{{ inscription.annee_scolaire.name }}</strong>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>Classe demandée:</span>
+                                    <strong>{{ inscription.classe_demandee.name }}</strong>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>Date d'inscription:</span>
+                                    <strong>{{ inscription.date_inscription|date:"d/m/Y H:i" }}</strong>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>Statut:</span>
+                                    <strong>
+                                        {% if inscription.statut == 'EN_ATTENTE' %}
+                                            <span class="badge bg-warning">{{ inscription.get_statut_display }}</span>
+                                        {% elif inscription.statut == 'ACCEPTÉE' %}
+                                            <span class="badge bg-info">{{ inscription.get_statut_display }}</span>
+                                        {% elif inscription.statut == 'REFUSÉE' %}
+                                            <span class="badge bg-danger">{{ inscription.get_statut_display }}</span>
+                                        {% elif inscription.statut == 'CONFIRMÉE' %}
+                                            <span class="badge bg-success">{{ inscription.get_statut_display }}</span>
+                                        {% elif inscription.statut == 'ANNULÉE' %}
+                                            <span class="badge bg-secondary">{{ inscription.get_statut_display }}</span>
+                                        {% endif %}
+                                    </strong>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash me-2"></i>Confirmer la suppression
+                        </button>
+                        <a href="{% url 'finance:detail_inscription' inscription.pk %}" class="btn btn-outline-secondary">
+                            Annuler
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

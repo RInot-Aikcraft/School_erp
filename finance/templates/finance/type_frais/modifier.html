@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load currency_filters %}
+{% block title %}Modifier un Type de Frais{% endblock %}
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Modifier un Type de Frais</h5>
+                        <a href="{% url 'finance:liste_type_frais' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Retour à la liste
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="nom_frais" class="form-label">Nom du frais</label>
+                                    <input type="text" class="form-control" id="nom_frais" name="nom_frais" value="{{ type_frais.nom_frais }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="montant" class="form-label">Montant (Ar)</label>
+                                    <input type="number" class="form-control" id="montant" name="montant" step="0.01" value="{{ type_frais.montant }}" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="classe" class="form-label">Classe</label>
+                                    <select class="form-select" id="classe" name="classe" required>
+                                        <option value="">-- Sélectionner une classe --</option>
+                                        {% for classe in classes %}
+                                        <option value="{{ classe.id }}" {% if classe.id == type_frais.classe.id %}selected{% endif %}>{{ classe.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="annee_scolaire" class="form-label">Année scolaire</label>
+                                    <select class="form-select" id="annee_scolaire" name="annee_scolaire" required>
+                                        <option value="">-- Sélectionner une année --</option>
+                                        {% for annee in annees_scolaires %}
+                                        <option value="{{ annee.id }}" {% if annee.id == type_frais.annee_scolaire.id %}selected{% endif %}>{{ annee.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="periodicite" class="form-label">Périodicité</label>
+                                    <select class="form-select" id="periodicite" name="periodicite" required>
+                                        <option value="">-- Sélectionner une périodicité --</option>
+                                        {% for code, label in periodicite_choices %}
+                                        <option value="{{ code }}" {% if code == type_frais.periodicite %}selected{% endif %}>{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Ajout du champ pour les frais d'inscription -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="mb-3 form-check">
+                                    <input type="checkbox" class="form-check-input" id="frais_inscription" name="frais_inscription" {% if type_frais.frais_inscription %}checked{% endif %}>
+                                    <label class="form-check-label" for="frais_inscription">
+                                        Frais d'inscription (à payer une seule fois lors de l'inscription)
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="fas fa-save me-2"></i>Enregistrer
+                                </button>
+                                <a href="{% url 'finance:liste_type_frais' %}" class="btn btn-outline-secondary">
+                                    Annuler
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

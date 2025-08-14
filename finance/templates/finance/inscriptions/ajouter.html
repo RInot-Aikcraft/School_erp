@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Ajouter une Inscription{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Ajouter une Inscription</h5>
+                        <a href="{% url 'finance:liste_inscriptions' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Retour à la liste
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="eleve" class="form-label">Élève</label>
+                                    <select class="form-select" id="eleve" name="eleve" required>
+                                        <option value="">-- Sélectionner un élève --</option>
+                                        {% for eleve in eleves %}
+                                        <option value="{{ eleve.id }}">{{ eleve.get_full_name|default:eleve.username }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="annee_scolaire" class="form-label">Année scolaire</label>
+                                    <select class="form-select" id="annee_scolaire" name="annee_scolaire" required>
+                                        <option value="">-- Sélectionner une année --</option>
+                                        {% for annee in school_years %}
+                                        <option value="{{ annee.id }}" {% if annee == active_school_year %}selected{% endif %}>
+                                            {{ annee.name }}
+                                            {% if annee == active_school_year %}(Active){% endif %}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="mb-3">
+                                    <label for="classe_demandee" class="form-label">Classe demandée</label>
+                                    <select class="form-select" id="classe_demandee" name="classe_demandee" required>
+                                        <option value="">-- Sélectionner une classe --</option>
+                                        <!-- Les classes seront chargées dynamiquement via JavaScript -->
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <label for="notes" class="form-label">Notes</label>
+                                    <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="fas fa-save me-2"></i>Enregistrer l'inscription
+                                </button>
+                                <a href="{% url 'finance:liste_inscriptions' %}" class="btn btn-outline-secondary">
+                                    Annuler
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Mettre à jour les classes lorsque l'année scolaire change
+    document.getElementById('annee_scolaire').addEventListener('change', function() {
+        const yearId = this.value;
+        if (yearId) {
+            fetch(`/finance/api/get-classes-by-year/?annee_scolaire_id=${yearId}`)
+                .then(response => response.json())
+                .then(data => {
+                    const classeSelect = document.getElementById('classe_demandee');
+                    // Vider le select
+                    classeSelect.innerHTML = '<option value="">-- Sélectionner une classe --</option>';
+                    
+                    // Ajouter les nouvelles options
+                    data.classes.forEach(classe => {
+                        const option = document.createElement('option');
+                        option.value = classe.id;
+                        option.textContent = classe.name;
+                        classeSelect.appendChild(option);
+                    });
+                });
+        } else {
+            // Si aucune année n'est sélectionnée, vider le select des classes
+            document.getElementById('classe_demandee').innerHTML = '<option value="">-- Sélectionner une classe --</option>';
+        }
+    });
+    
+    // Déclencher l'événement change au chargement pour charger les classes de l'année active
+    document.getElementById('annee_scolaire').dispatchEvent(new Event('change'));
+});
+</script>
+{% endblock %}

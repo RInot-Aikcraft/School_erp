@@ -1,0 +1,233 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load currency_filters %}
+
+{% block title %}Gestion des Inscriptions{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Gestion des Inscriptions</h5>
+                        <a href="{% url 'finance:ajouter_inscription' %}" class="btn btn-danger">
+                            <i class="fas fa-plus me-2"></i>Nouvelle inscription
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Statistiques -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body">
+                                    <h5 class="card-title">Total des inscriptions</h5>
+                                    <h3>{{ total_inscriptions }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body">
+                                    <h5 class="card-title">En attente</h5>
+                                    <h3>{{ total_en_attente }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-info text-white">
+                                <div class="card-body">
+                                    <h5 class="card-title">Acceptées</h5>
+                                    <h3>{{ total_acceptees }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body">
+                                    <h5 class="card-title">Confirmées</h5>
+                                    <h3>{{ total_confirmees }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Filtres -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title mb-4">Filtres</h5>
+                            <form method="get" id="filterForm">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="school_year" class="form-label">Année scolaire</label>
+                                            <select class="form-select" name="school_year" id="school_year" onchange="document.getElementById('filterForm').submit();">
+                                                <option value="">Toutes les années</option>
+                                                {% for year in school_years %}
+                                                    <option value="{{ year.pk }}" 
+                                                            {% if year == selected_year %}selected{% endif %}
+                                                            {% if year == active_school_year %}data-active="true"{% endif %}>
+                                                        {{ year.name }}
+                                                        {% if year == active_school_year %}(Active){% endif %}
+                                                    </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="classe" class="form-label">Classe</label>
+                                            <select class="form-select" name="classe" id="classe">
+                                                <option value="">Toutes les classes</option>
+                                                {% for classe in classes %}
+                                                <option value="{{ classe.id }}" {% if classe.id|safe == filtre_classe %}selected{% endif %}>
+                                                    {{ classe.name }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="statut" class="form-label">Statut</label>
+                                            <select class="form-select" name="statut" id="statut">
+                                                <option value="">Tous les statuts</option>
+                                                {% for code, label in statut_choices %}
+                                                <option value="{{ code }}" {% if code == filtre_statut %}selected{% endif %}>
+                                                    {{ label }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-12 d-flex justify-content-end">
+                                        <div class="mb-3">
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="fas fa-filter me-2"></i>Filtrer
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- Tableau des inscriptions -->
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Élève</th>
+                                    <th>Classe demandée</th>
+                                    <th>Classe attribuée</th>
+                                    <th>Date d'inscription</th>
+                                    <th>Frais d'inscription</th>
+                                    <th>Montant payé</th>
+                                    <th>Solde</th>
+                                    <th>Statut</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for inscription in inscriptions %}
+                                <tr>
+                                    <td>{{ inscription.id }}</td>
+                                    <td>{{ inscription.eleve.get_full_name|default:inscription.eleve.username }}</td>
+                                    <td>{{ inscription.classe_demandee.name }}</td>
+                                    <td>
+                                        {% if inscription.classe_attribuee %}
+                                            {{ inscription.classe_attribuee.name }}
+                                        {% else %}
+                                            <span class="text-muted">Non attribuée</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ inscription.date_inscription|date:"d/m/Y H:i" }}</td>
+                                    <td>{{ inscription.calculer_frais_inscription|format_ariary }}</td>
+                                    <td>{{ inscription.get_montant_paye|format_ariary }}</td>
+                                    <td>
+                                        {% if inscription.get_solde > 0 %}
+                                            <span class="text-danger">{{ inscription.get_solde|format_ariary }}</span>
+                                        {% else %}
+                                            <span class="text-success">{{ inscription.get_solde|format_ariary }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if inscription.statut == 'EN_ATTENTE' %}
+                                            <span class="badge bg-warning">{{ inscription.get_statut_display }}</span>
+                                        {% elif inscription.statut == 'ACCEPTÉE' %}
+                                            <span class="badge bg-info">{{ inscription.get_statut_display }}</span>
+                                        {% elif inscription.statut == 'REFUSÉE' %}
+                                            <span class="badge bg-danger">{{ inscription.get_statut_display }}</span>
+                                        {% elif inscription.statut == 'CONFIRMÉE' %}
+                                            <span class="badge bg-success">{{ inscription.get_statut_display }}</span>
+                                        {% elif inscription.statut == 'ANNULÉE' %}
+                                            <span class="badge bg-secondary">{{ inscription.get_statut_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{% url 'finance:detail_inscription' inscription.pk %}" class="btn btn-sm btn-outline-primary" title="Voir les détails">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{% url 'finance:modifier_inscription' inscription.pk %}" class="btn btn-sm btn-outline-info" title="Modifier">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            {% if inscription.statut == 'ACCEPTÉE' and inscription.est_complettement_paye %}
+                                                <a href="{% url 'finance:confirmer_inscription' inscription.pk %}" class="btn btn-sm btn-outline-success" title="Confirmer">
+                                                    <i class="fas fa-check"></i>
+                                                </a>
+                                            {% endif %}
+                                            <a href="{% url 'finance:supprimer_inscription' inscription.pk %}" class="btn btn-sm btn-outline-danger" title="Supprimer">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="10" class="text-center">Aucune inscription trouvée</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Mettre à jour les classes lorsque l'année scolaire change
+    document.getElementById('school_year').addEventListener('change', function() {
+        const yearId = this.value;
+        if (yearId) {
+            fetch(`/finance/api/get-classes-by-year/?annee_scolaire_id=${yearId}`)
+                .then(response => response.json())
+                .then(data => {
+                    const classeSelect = document.getElementById('classe');
+                    // Vider le select
+                    classeSelect.innerHTML = '<option value="">Toutes les classes</option>';
+                    
+                    // Ajouter les nouvelles options
+                    data.classes.forEach(classe => {
+                        const option = document.createElement('option');
+                        option.value = classe.id;
+                        option.textContent = classe.name;
+                        classeSelect.appendChild(option);
+                    });
+                });
+        } else {
+            // Si aucune année n'est sélectionnée, vider le select des classes
+            document.getElementById('classe').innerHTML = '<option value="">Toutes les classes</option>';
+        }
+    });
+});
+</script>
+{% endblock %}

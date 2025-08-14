@@ -1,0 +1,247 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load currency_filters %}
+{% block title %}Détails de l'Inscription #{{ inscription.id }}{% endblock %}
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Détails de l'Inscription #{{ inscription.id }}</h5>
+                        <a href="{% url 'finance:liste_inscriptions' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Retour à la liste
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="card mb-4">
+                                <div class="card-body">
+                                    <h5 class="card-title">Informations sur l'inscription</h5>
+                                    <ul class="list-group list-group-flush">
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span>Élève:</span>
+                                            <strong>{{ inscription.eleve.get_full_name|default:inscription.eleve.username }}</strong>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span>Année scolaire:</span>
+                                            <strong>{{ inscription.annee_scolaire.name }}</strong>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span>Classe demandée:</span>
+                                            <strong>{{ inscription.classe_demandee.name }}</strong>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span>Classe attribuée:</span>
+                                            <strong>
+                                                {% if inscription.classe_attribuee %}
+                                                    {{ inscription.classe_attribuee.name }}
+                                                {% else %}
+                                                    <span class="text-muted">Non attribuée</span>
+                                                {% endif %}
+                                            </strong>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span>Date d'inscription:</span>
+                                            <strong>{{ inscription.date_inscription|date:"d/m/Y H:i" }}</strong>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span>Statut:</span>
+                                            <strong>
+                                                {% if inscription.statut == 'EN_ATTENTE' %}
+                                                    <span class="badge bg-warning">{{ inscription.get_statut_display }}</span>
+                                                {% elif inscription.statut == 'ACCEPTÉE' %}
+                                                    <span class="badge bg-info">{{ inscription.get_statut_display }}</span>
+                                                {% elif inscription.statut == 'REFUSÉE' %}
+                                                    <span class="badge bg-danger">{{ inscription.get_statut_display }}</span>
+                                                {% elif inscription.statut == 'CONFIRMÉE' %}
+                                                    <span class="badge bg-success">{{ inscription.get_statut_display }}</span>
+                                                {% elif inscription.statut == 'ANNULÉE' %}
+                                                    <span class="badge bg-secondary">{{ inscription.get_statut_display }}</span>
+                                                {% endif %}
+                                            </strong>
+                                        </li>
+                                        {% if inscription.date_confirmation %}
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span>Date de confirmation:</span>
+                                            <strong>{{ inscription.date_confirmation|date:"d/m/Y H:i" }}</strong>
+                                        </li>
+                                        {% endif %}
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            {% if inscription.notes %}
+                            <div class="card mb-4">
+                                <div class="card-body">
+                                    <h5 class="card-title">Notes</h5>
+                                    <p>{{ inscription.notes }}</p>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            <div class="card mb-4">
+                                <div class="card-body">
+                                    <h5 class="card-title">Frais d'inscription</h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>Type de frais</th>
+                                                    <th>Montant</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for type_frais in types_frais %}
+                                                <tr>
+                                                    <td>{{ type_frais.nom_frais }}</td>
+                                                    <td>{{ type_frais.montant|format_ariary }}</td>
+                                                </tr>
+                                                {% empty %}
+                                                <tr>
+                                                    <td colspan="2" class="text-center">Aucun frais d'inscription trouvé</td>
+                                                </tr>
+                                                {% endfor %}
+                                                <tr class="table-active">
+                                                    <th>Total</th>
+                                                    <th>{{ frais_total|format_ariary }}</th>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="card mb-4">
+                                <div class="card-body">
+                                    <h5 class="card-title">Paiements des frais d'inscription</h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>ID</th>
+                                                    <th>Date</th>
+                                                    <th>Montant</th>
+                                                    <th>Mode</th>
+                                                    <th>Statut</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for paiement in paiements %}
+                                                <tr>
+                                                    <td>{{ paiement.id }}</td>
+                                                    <td>{{ paiement.date_paiement|date:"d/m/Y H:i" }}</td>
+                                                    <td>{{ paiement.montant|format_ariary }}</td>
+                                                    <td>{{ paiement.get_mode_paiement_display }}</td>
+                                                    <td>
+                                                        {% if paiement.statut == 'VALIDE' %}
+                                                            <span class="badge bg-success">{{ paiement.get_statut_display }}</span>
+                                                        {% elif paiement.statut == 'EN_ATTENTE' %}
+                                                            <span class="badge bg-warning">{{ paiement.get_statut_display }}</span>
+                                                        {% elif paiement.statut == 'ANNULE' %}
+                                                            <span class="badge bg-danger">{{ paiement.get_statut_display }}</span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>
+                                                        <div class="btn-group">
+                                                            <a href="{% url 'finance:modifier_paiement' paiement.pk %}" class="btn btn-sm btn-outline-info" title="Modifier">
+                                                                <i class="fas fa-edit"></i>
+                                                            </a>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                {% empty %}
+                                                <tr>
+                                                    <td colspan="6" class="text-center">Aucun paiement trouvé</td>
+                                                </tr>
+                                                {% endfor %}
+                                                <tr class="table-active">
+                                                    <th>Total payé</th>
+                                                    <th colspan="5">{{ montant_paye|format_ariary }}</th>
+                                                </tr>
+                                                <tr class="table-{% if solde > 0 %}danger{% else %}success{% endif %}">
+                                                    <th>Solde</th>
+                                                    <th colspan="5">{{ solde|format_ariary }}</th>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="card mb-4">
+                                <div class="card-body">
+                                    <h5 class="card-title">Actions</h5>
+                                    <div class="d-grid gap-2">
+                                        <a href="{% url 'finance:modifier_inscription' inscription.pk %}" class="btn btn-outline-info">
+                                            <i class="fas fa-edit me-2"></i>Modifier
+                                        </a>
+                                        {% if inscription.statut == 'ACCEPTÉE' and inscription.est_complettement_paye %}
+                                        <a href="{% url 'finance:confirmer_inscription' inscription.pk %}" class="btn btn-outline-success">
+                                            <i class="fas fa-check me-2"></i>Confirmer
+                                        </a>
+                                        {% endif %}
+                                        <a href="{% url 'finance:ajouter_paiement_inscription' inscription.pk %}" class="btn btn-outline-primary">
+                                            <i class="fas fa-money-bill-wave me-2"></i>Ajouter un paiement
+                                        </a>
+                                        {% if inscription.statut != 'ANNULÉE' %}
+                                        <a href="{% url 'finance:supprimer_inscription' inscription.pk %}" class="btn btn-outline-danger">
+                                            <i class="fas fa-trash me-2"></i>Supprimer
+                                        </a>
+                                        {% endif %}
+                                        <button type="button" class="btn btn-outline-primary" onclick="window.print()">
+                                            <i class="fas fa-print me-2"></i>Imprimer
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Résumé financier</h5>
+                                    <ul class="list-group list-group-flush">
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span>Total des frais d'inscription:</span>
+                                            <strong>{{ frais_total|format_ariary }}</strong>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span>Montant payé:</span>
+                                            <strong>{{ montant_paye|format_ariary }}</strong>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span>Solde:</span>
+                                            <strong>
+                                                {% if solde > 0 %}
+                                                    <span class="text-danger">{{ solde|format_ariary }}</span>
+                                                {% else %}
+                                                    <span class="text-success">{{ solde|format_ariary }}</span>
+                                                {% endif %}
+                                            </strong>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span>Statut du paiement:</span>
+                                            <strong>
+                                                {% if inscription.est_complettement_paye %}
+                                                    <span class="badge bg-success">Complètement payé</span>
+                                                {% else %}
+                                                    <span class="badge bg-warning">Partiellement payé</span>
+                                                {% endif %}
+                                            </strong>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

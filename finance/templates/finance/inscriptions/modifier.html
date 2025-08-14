@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Modifier une Inscription{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Modifier une Inscription</h5>
+                        <a href="{% url 'finance:detail_inscription' inscription.pk %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Retour aux détails
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Élève</label>
+                                    <input type="text" class="form-control" value="{{ inscription.eleve.get_full_name|default:inscription.eleve.username }}" readonly>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Année scolaire</label>
+                                    <input type="text" class="form-control" value="{{ inscription.annee_scolaire.name }}" readonly>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Classe demandée</label>
+                                    <input type="text" class="form-control" value="{{ inscription.classe_demandee.name }}" readonly>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="classe_attribuee" class="form-label">Classe attribuée</label>
+                                    <select class="form-select" id="classe_attribuee" name="classe_attribuee">
+                                        <option value="">-- Non attribuée --</option>
+                                        {% for classe in classes %}
+                                        <option value="{{ classe.id }}" {% if classe.id == inscription.classe_attribuee.id %}selected{% endif %}>
+                                            {{ classe.name }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="statut" class="form-label">Statut</label>
+                                    <select class="form-select" id="statut" name="statut" required>
+                                        {% for code, label in statut_choices %}
+                                        <option value="{{ code }}" {% if code == inscription.statut %}selected{% endif %}>
+                                            {{ label }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Date d'inscription</label>
+                                    <input type="text" class="form-control" value="{{ inscription.date_inscription|date:"d/m/Y H:i" }}" readonly>
+                                </div>
+                            </div>
+                        </div>
+                        {% if inscription.date_confirmation %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Date de confirmation</label>
+                                    <input type="text" class="form-control" value="{{ inscription.date_confirmation|date:"d/m/Y H:i" }}" readonly>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <!-- Laisser cette colonne vide pour l'équilibre visuel -->
+                            </div>
+                        </div>
+                        {% endif %}
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <label for="notes" class="form-label">Notes</label>
+                                    <textarea class="form-control" id="notes" name="notes" rows="3">{{ inscription.notes }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="fas fa-save me-2"></i>Enregistrer les modifications
+                                </button>
+                                <a href="{% url 'finance:detail_inscription' inscription.pk %}" class="btn btn-outline-secondary">
+                                    Annuler
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

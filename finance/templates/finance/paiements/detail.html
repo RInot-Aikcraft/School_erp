@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load currency_filters %}
+
+{% block title %}Détails du Paiement #{{ paiement.id }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Détails du Paiement #{{ paiement.id }}</h5>
+                        <a href="{% url 'finance:liste_paiements' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Retour à la liste
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="card mb-4">
+                                <div class="card-body">
+                                    <h5 class="card-title">Informations sur le paiement</h5>
+                                    <ul class="list-group list-group-flush">
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span>Élève:</span>
+                                            <strong>{{ paiement.eleve.get_full_name|default:paiement.eleve.username }}</strong>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span>Type de frais:</span>
+                                            <strong>{{ paiement.type_frais.nom_frais }} ({{ paiement.type_frais.classe.name }} - {{ paiement.type_frais.annee_scolaire.name }})</strong>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span>Type de caisse:</span>
+                                            <strong>
+                                                <span class="badge rounded-pill" style="background-color: {{ paiement.type_caisse.couleur }};">
+                                                    {{ paiement.type_caisse.nom }}
+                                                </span>
+                                            </strong>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span>Montant:</span>
+                                            <strong>{{ paiement.montant|format_ariary }}</strong>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span>Mois:</span>
+                                            <strong>
+                                                {% if paiement.mois %}
+                                                    <span class="badge bg-info">{{ paiement.get_mois_display }}</span>
+                                                {% else %}
+                                                    <span class="text-muted">Non spécifié</span>
+                                                {% endif %}
+                                            </strong>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span>Date de paiement:</span>
+                                            <strong>{{ paiement.date_paiement|date:"d/m/Y H:i" }}</strong>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span>Statut:</span>
+                                            <strong>
+                                                {% if paiement.statut == 'VALIDE' %}
+                                                    <span class="badge bg-success">{{ paiement.get_statut_display }}</span>
+                                                {% elif paiement.statut == 'EN_ATTENTE' %}
+                                                    <span class="badge bg-warning">{{ paiement.get_statut_display }}</span>
+                                                {% elif paiement.statut == 'ANNULE' %}
+                                                    <span class="badge bg-danger">{{ paiement.get_statut_display }}</span>
+                                                {% elif paiement.statut == 'REMBOURSE' %}
+                                                    <span class="badge bg-info">{{ paiement.get_statut_display }}</span>
+                                                {% endif %}
+                                            </strong>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span>Mode de paiement:</span>
+                                            <strong>{{ paiement.get_mode_paiement_display }}</strong>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span>Référence:</span>
+                                            <strong>{{ paiement.reference|default:"Non spécifiée" }}</strong>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span>Enregistré par:</span>
+                                            <strong>{{ paiement.enregistre_par.get_full_name|default:paiement.enregistre_par.username }}</strong>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span>Date d'enregistrement:</span>
+                                            <strong>{{ paiement.date_enregistrement|date:"d/m/Y H:i" }}</strong>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            {% if paiement.notes %}
+                            <div class="card mb-4">
+                                <div class="card-body">
+                                    <h5 class="card-title">Notes</h5>
+                                    <p>{{ paiement.notes }}</p>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="card mb-4">
+                                <div class="card-body">
+                                    <h5 class="card-title">Actions</h5>
+                                    <div class="d-grid gap-2">
+                                        <a href="{% url 'finance:modifier_paiement' paiement.pk %}" class="btn btn-outline-info">
+                                            <i class="fas fa-edit me-2"></i>Modifier
+                                        </a>
+                                        {% if paiement.statut == 'EN_ATTENTE' %}
+                                        <a href="{% url 'finance:valider_paiement' paiement.pk %}" class="btn btn-outline-success">
+                                            <i class="fas fa-check me-2"></i>Valider
+                                        </a>
+                                        {% endif %}
+                                        {% if paiement.statut != 'ANNULE' %}
+                                        <a href="{% url 'finance:annuler_paiement' paiement.pk %}" class="btn btn-outline-danger">
+                                            <i class="fas fa-times me-2"></i>Annuler
+                                        </a>
+                                        {% endif %}
+                                        <a href="{% url 'finance:supprimer_paiement' paiement.pk %}" class="btn btn-outline-danger">
+                                            <i class="fas fa-trash me-2"></i>Supprimer
+                                        </a>
+                                        <button type="button" class="btn btn-outline-primary" onclick="window.print()">
+                                            <i class="fas fa-print me-2"></i>Imprimer
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Historique des modifications</h5>
+                                    <ul class="list-group list-group-flush">
+                                        <li class="list-group-item">
+                                            <div class="d-flex justify-content-between">
+                                                <span>Création</span>
+                                                <small>{{ paiement.date_enregistrement|date:"d/m/Y H:i" }}</small>
+                                            </div>
+                                        </li>
+                                        <!-- Vous pouvez ajouter ici un historique des modifications si vous implémentez un système de suivi -->
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

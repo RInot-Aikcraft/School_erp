@@ -121,3 +121,5 @@ def save_user_profile(sender, instance, **kwargs):
     else:
         # Si le profil n'existe pas, créez-le
         UserProfile.objects.create(user=instance)
+
+

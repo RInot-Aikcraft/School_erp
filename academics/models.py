@@ -4,20 +4,6 @@ from django.contrib.auth.models import User
 from school.models import SchoolYear, Period
 
 
-class Subject(models.Model):
-    name = models.CharField(max_length=100)
-    code = models.CharField(max_length=20, unique=True)
-    description = models.TextField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    def __str__(self):
-        return self.name
-    
-    class Meta:
-        verbose_name = "Matière"
-        verbose_name_plural = "Matières"
-
 
 # Dans academics/models.py
 class Subject(models.Model):
