@@ -1,7 +1,6 @@
 <!-- auth_app/templates/base.html -->
 {% load bootstrap5 %}
 {% load static %}
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -31,80 +30,69 @@
                     </li>
                     
                     {% if user.userprofile.user_type == 'admin' %}
-                    <!-- Dans la section Gestion du menu déroulant -->
+                    <!-- Gestion des utilisateurs -->
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-users-cog me-1"></i>Gestion
+                        <a class="nav-link dropdown-toggle" href="#" id="usersDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-users me-1"></i>Utilisateurs
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{% url 'auth_app:user_list' %}"><i class="fas fa-users me-2"></i>Utilisateurs</a></li>
+                            <li><a class="dropdown-item" href="{% url 'auth_app:user_list' %}"><i class="fas fa-users me-2"></i>Tous les utilisateurs</a></li>
                             <li><a class="dropdown-item" href="{% url 'auth_app:teacher_list' %}"><i class="fas fa-chalkboard-teacher me-2"></i>Enseignants</a></li>
                             <li><a class="dropdown-item" href="{% url 'auth_app:student_list' %}"><i class="fas fa-user-graduate me-2"></i>Élèves</a></li>
                             <li><a class="dropdown-item" href="{% url 'auth_app:parent_list' %}"><i class="fas fa-user-friends me-2"></i>Parents</a></li>
                         </ul>
                     </li>
                     
-                    <!-- Gestion établissement -->
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="schoolDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-school me-1"></i>Gestion établissement
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{% url 'school:school_detail' %}"><i class="fas fa-info-circle me-2"></i>Informations générales</a></li>
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-map-marker-alt me-2"></i>Coordonnées</a></li>
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-user-tie me-2"></i>Direction</a></li>
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-phone me-2"></i>Contact</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="{% url 'school:school_edit' %}"><i class="fas fa-cog me-2"></i>Paramètres</a></li>
-                            
-                        </ul>
-                    </li>
-                    
-                    <!-- Gestion année scolaire -->
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="yearDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-calendar-alt me-1"></i>Gestion année scolaire
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{% url 'school:school_year_list' %}"><i class="fas fa-list me-2"></i>Liste des années</a></li>
-                            <li><a class="dropdown-item" href="{% url 'school:school_year_create' %}"><i class="fas fa-plus me-2"></i>Nouvelle année scolaire</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="{% url 'school:period_list' %}"><i class="fas fa-calendar-day me-2"></i>Périodes</a></li>
-                            <li><a class="dropdown-item" href="{% url 'school:holiday_list' %}"><i class="fas fa-calendar-week me-2"></i>Vacances</a></li>
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-clock me-2"></i>Emploi du temps</a></li>
-                        </ul>
-                    </li>
-                    
                     <!-- Gestion académique -->
-                   
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="academicDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-book me-1"></i>Gestion académique
+                            <i class="fas fa-book me-1"></i>Académique
                         </a>
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" href="{% url 'academics:class_level_list' %}"><i class="fas fa-layer-group me-2"></i>Niveaux</a></li>
                             <li><a class="dropdown-item" href="{% url 'academics:subject_list' %}"><i class="fas fa-book-open me-2"></i>Matières</a></li>
                             <li><a class="dropdown-item" href="{% url 'academics:class_list' %}"><i class="fas fa-door-open me-2"></i>Classes</a></li>
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-users me-2"></i>Inscriptions</a></li>
-                            <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="{% url 'academics:assignment_list' %}"><i class="fas fa-tasks me-2"></i>Devoirs</a></li>
                             <li><a class="dropdown-item" href="{% url 'academics:grade_list' %}"><i class="fas fa-chart-bar me-2"></i>Notes</a></li>
                         </ul>
                     </li>
+                    
+                    <!-- Gestion financière -->
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="GestionFinanciereDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-book me-1"></i>Gestion Financière
+                        <a class="nav-link dropdown-toggle" href="#" id="financeDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-money-bill-wave me-1"></i>Financier
                         </a>
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" href="{% url 'finance:liste_type_frais' %}"><i class="fas fa-money-bill-wave me-2"></i>Type de Frais</a></li>
                             <li><a class="dropdown-item" href="{% url 'finance:liste_type_caisse' %}"><i class="fas fa-cash-register me-2"></i>Types de Caisses</a></li>
-                            <li><a class="dropdown-item" href="{% url 'finance:liste_paiements' %}"> <i class="fas fa-money-bill-wave me-2"></i>Gestion des Paiements</a></li>
-                            <li><a class="dropdown-item" href="{% url 'finance:liste_inscriptions' %}" ><i class="fas fa-user-graduate me-2"></i><span>Inscriptions</span></a></li>
+                            <li><a class="dropdown-item" href="{% url 'finance:liste_paiements' %}"><i class="fas fa-money-check-alt me-2"></i>Gestion des Paiements</a></li>
+                            <li><a class="dropdown-item" href="{% url 'finance:liste_inscriptions' %}"><i class="fas fa-user-graduate me-2"></i>Inscriptions</a></li>
                         </ul>
                     </li>
-                   
-                   
-
+                    
+                    <!-- Gestion de l'école -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="schoolDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-school me-1"></i>École
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{% url 'school:school_detail' %}"><i class="fas fa-info-circle me-2"></i>Informations générales</a></li>
+                            <li><a class="dropdown-item" href="{% url 'school:school_year_list' %}"><i class="fas fa-calendar-alt me-2"></i>Années scolaires</a></li>
+                            <li><a class="dropdown-item" href="{% url 'school:period_list' %}"><i class="fas fa-calendar-day me-2"></i>Périodes</a></li>
+                            <li><a class="dropdown-item" href="{% url 'school:holiday_list' %}"><i class="fas fa-calendar-week me-2"></i>Vacances</a></li>
+                        </ul>
+                    </li>
+                    
+                    <!-- Paramètres -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="settingsDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-cog me-1"></i>Paramètres
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{% url 'school:school_edit' %}"><i class="fas fa-cogs me-2"></i>Paramètres de l'école</a></li>
+                            <li><a class="dropdown-item" href="{% url 'school:school_year_create' %}"><i class="fas fa-plus-circle me-2"></i>Nouvelle année scolaire</a></li>
+                        </ul>
+                    </li>
                     {% endif %}
                     
                     {% if user.userprofile.user_type == 'teacher' %}
@@ -113,8 +101,6 @@
                             <i class="fas fa-book me-1"></i>Cours
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-plus me-2"></i>Nouveau cours</a></li>
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-list me-2"></i>Mes cours</a></li>
                             <li><a class="dropdown-item" href="{% url 'academics:assignment_list' %}"><i class="fas fa-tasks me-2"></i>Devoirs</a></li>
                             <li><a class="dropdown-item" href="{% url 'academics:grade_list' %}"><i class="fas fa-chart-line me-2"></i>Statistiques</a></li>
                         </ul>
@@ -127,10 +113,8 @@
                             <i class="fas fa-graduation-cap me-1"></i>Études
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-calendar-alt me-2"></i>Emploi du temps</a></li>
                             <li><a class="dropdown-item" href="{% url 'academics:assignment_list' %}"><i class="fas fa-tasks me-2"></i>Devoirs</a></li>
                             <li><a class="dropdown-item" href="{% url 'academics:grade_list' %}"><i class="fas fa-chart-bar me-2"></i>Notes</a></li>
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-book me-2"></i>Cours</a></li>
                         </ul>
                     </li>
                     {% endif %}
@@ -141,14 +125,10 @@
                             <i class="fas fa-child me-1"></i>Enfants
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-chart-line me-2"></i>Suivi scolaire</a></li>
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-calendar-check me-2"></i>Présence</a></li>
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-comments me-2"></i>Communication</a></li>
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-money-bill-wave me-2"></i>Paiements</a></li>
+                            <!-- Tous les liens de ce menu étaient vides, j'ai donc supprimé le menu entier -->
+                            <!-- Vous pouvez ajouter ici les liens pertinents pour les parents -->
                         </ul>
                     </li>
-
-                    
                     {% endif %}
                 </ul>
                 <ul class="navbar-nav">
@@ -167,7 +147,6 @@
         </div>
     </nav>
     {% endif %}
-
     <main class="main-content">
         {% if messages %}
             {% for message in messages %}
@@ -181,7 +160,6 @@
         {% block content %}
         {% endblock %}
     </main>
-
     {% if user.is_authenticated %}
     <footer class="bg-dark text-white text-center py-3 mt-5">
         <div class="container">
@@ -189,7 +167,6 @@
         </div>
     </footer>
     {% endif %}
-
     {% bootstrap_javascript %}
     
     {% block extra_js %}

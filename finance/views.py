@@ -562,6 +562,7 @@ def ajouter_inscription(request):
         eleve_id = request.POST.get('eleve')
         annee_scolaire_id = request.POST.get('annee_scolaire')
         classe_demandee_id = request.POST.get('classe_demandee')
+        type_inscription = request.POST.get('type_inscription', 'PASSANT')
         notes = request.POST.get('notes')
         
         try:
@@ -578,6 +579,7 @@ def ajouter_inscription(request):
                 eleve=eleve,
                 annee_scolaire=annee_scolaire,
                 classe_demandee=classe_demandee,
+                type_inscription=type_inscription,
                 notes=notes
             )
             inscription.save()
@@ -601,7 +603,7 @@ def ajouter_inscription(request):
         'eleves': eleves,
         'school_years': school_years,
         'active_school_year': active_school_year,
-        'statut_choices': Inscription.STATUT_CHOICES,
+        'type_inscription_choices': Inscription.TYPE_INSCRIPTION_CHOICES,
     }
     return render(request, 'finance/inscriptions/ajouter.html', context)
 
@@ -748,7 +750,26 @@ def get_classes_by_year(request):
     
     if annee_scolaire_id:
         classes = Class.objects.filter(school_year_id=annee_scolaire_id)
-        classes_data = [{'id': classe.id, 'name': classe.name} for classe in classes]
+        classes_data = []
+        
+        for classe in classes:
+            # Calculer le nombre d'inscriptions confirmées pour cette classe
+            inscriptions_count = Inscription.objects.filter(
+                classe_demandee=classe,
+                annee_scolaire_id=annee_scolaire_id,
+                statut='CONFIRMÉE'
+            ).count()
+            
+            places_disponibles = classe.max_students - inscriptions_count
+            
+            classes_data.append({
+                'id': classe.id,
+                'name': classe.name,
+                'max_students': classe.max_students,
+                'inscriptions_count': inscriptions_count,
+                'places_disponibles': places_disponibles
+            })
+        
         return JsonResponse({'classes': classes_data})
     
     return JsonResponse({'classes': []})

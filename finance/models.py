@@ -110,7 +110,6 @@ class Paiement(models.Model):
         return ''
     
 
-# Ajoutez ce modèle à la suite de vos modèles existants
 class Inscription(models.Model):
     """Modèle pour gérer les inscriptions des élèves"""
     STATUT_CHOICES = [
@@ -121,10 +120,16 @@ class Inscription(models.Model):
         ('ANNULÉE', 'Annulée'),
     ]
     
+    TYPE_INSCRIPTION_CHOICES = [
+        ('PASSANT', 'Passant'),
+        ('REDOUBLANT', 'Redoublant'),
+    ]
+    
     eleve = models.ForeignKey(User, on_delete=models.CASCADE, related_name='inscriptions', verbose_name="Élève")
     annee_scolaire = models.ForeignKey(SchoolYear, on_delete=models.CASCADE, related_name='inscriptions', verbose_name="Année scolaire")
     classe_demandee = models.ForeignKey(Class, on_delete=models.CASCADE, related_name='demandes_inscription', verbose_name="Classe demandée")
     classe_attribuee = models.ForeignKey(Class, on_delete=models.SET_NULL, null=True, blank=True, related_name='inscriptions_attribuees', verbose_name="Classe attribuée")
+    type_inscription = models.CharField(max_length=20, choices=TYPE_INSCRIPTION_CHOICES, default='PASSANT', verbose_name="Type d'inscription")
     date_inscription = models.DateTimeField(auto_now_add=True, verbose_name="Date d'inscription")
     statut = models.CharField(max_length=20, choices=STATUT_CHOICES, default='EN_ATTENTE', verbose_name="Statut")
     date_confirmation = models.DateTimeField(null=True, blank=True, verbose_name="Date de confirmation")
@@ -144,6 +149,13 @@ class Inscription(models.Model):
         """Retourne le statut lisible"""
         statut_dict = dict(self.STATUT_CHOICES)
         return statut_dict.get(self.statut, '')
+    
+    def get_type_inscription_display(self):
+        """Retourne le type d'inscription lisible"""
+        type_dict = dict(self.TYPE_INSCRIPTION_CHOICES)
+        return type_dict.get(self.type_inscription, '')
+    
+    # ... le reste de vos méthodes existantes ...
     
     def calculer_frais_inscription(self):
         """

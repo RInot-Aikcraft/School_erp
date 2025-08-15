@@ -72,7 +72,7 @@
     <div class="row mb-4">
         <div class="col-12">
             <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <div class="card-header bg-white py-3">
                     <h5 class="mb-0"><i class="fas fa-user-graduate me-2 text-warning"></i>Élèves inscrits ({{ enrolled_students_count }})</h5>
                 </div>
                 <div class="card-body">
@@ -108,7 +108,8 @@
                                 <thead>
                                     <tr>
                                         <th>Élève</th>
-                                        <th>Contact</th>
+                                        <th>Date de naissance</th>
+                                        <th>Type d'inscription</th>
                                         <th>Date d'inscription</th>
                                         <th>Statut</th>
                                         <th>Actions</th>
@@ -130,10 +131,24 @@
                                                 </div>
                                                 <div>
                                                     <h6 class="mb-0">{{ inscription.eleve.get_full_name|default:inscription.eleve.username }}</h6>
+                                                    <small class="text-muted">{{ inscription.eleve.email }}</small>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td>{{ inscription.eleve.email }}</td>
+                                        <td>
+                                            {% if inscription.eleve.profile.date_of_birth %}
+                                                {{ inscription.eleve.profile.date_of_birth|date:"d/m/Y" }}
+                                            {% else %}
+                                                <span class="text-muted">Non renseignée</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if inscription.type_inscription == 'PASSANT' %}
+                                                <span class="badge bg-info">Passant</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">Redoublant</span>
+                                            {% endif %}
+                                        </td>
                                         <td>{{ inscription.date_inscription|date:"d/m/Y" }}</td>
                                         <td>
                                             {% if inscription.statut == 'CONFIRMÉE' %}
@@ -370,8 +385,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const searchTerm = this.value.toLowerCase();
             
             studentItems.forEach(item => {
-                const studentName = item.textContent.toLowerCase();
-                if (studentName.includes(searchTerm)) {
+                const studentName = item.querySelector('h6').textContent.toLowerCase();
+                const studentEmail = item.querySelector('small').textContent.toLowerCase();
+                const studentType = item.querySelector('td:nth-child(3) span').textContent.toLowerCase();
+                
+                if (studentName.includes(searchTerm) || studentEmail.includes(searchTerm) || studentType.includes(searchTerm)) {
                     item.style.display = '';
                 } else {
                     item.style.display = 'none';
@@ -388,14 +406,18 @@ document.addEventListener('DOMContentLoaded', function() {
             const studentsData = [];
             document.querySelectorAll('.student-item').forEach(item => {
                 const nameElement = item.querySelector('h6');
-                const emailElement = item.querySelector('td:nth-child(2)');
-                const dateElement = item.querySelector('td:nth-child(3)');
-                const statusElement = item.querySelector('td:nth-child(4) span');
+                const emailElement = item.querySelector('small');
+                const birthDateElement = item.querySelector('td:nth-child(2)');
+                const typeInscriptionElement = item.querySelector('td:nth-child(3) span');
+                const dateElement = item.querySelector('td:nth-child(4)');
+                const statusElement = item.querySelector('td:nth-child(5) span');
                 
                 if (nameElement && emailElement) {
                     studentsData.push({
                         name: nameElement.textContent.trim(),
                         email: emailElement.textContent.trim(),
+                        birthDate: birthDateElement ? birthDateElement.textContent.trim() : '',
+                        typeInscription: typeInscriptionElement ? typeInscriptionElement.textContent.trim() : '',
                         date: dateElement ? dateElement.textContent.trim() : '',
                         status: statusElement ? statusElement.textContent.trim() : ''
                     });
@@ -403,9 +425,9 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             
             // Créer un contenu CSV
-            let csvContent = "Nom,Email,Date d'inscription,Statut\n";
+            let csvContent = "Nom,Email,Date de naissance,Type d'inscription,Date d'inscription,Statut\n";
             studentsData.forEach(student => {
-                csvContent += `"${student.name}","${student.email}","${student.date}","${student.status}"\n`;
+                csvContent += `"${student.name}","${student.email}","${student.birthDate}","${student.typeInscription}","${student.date}","${student.status}"\n`;
             });
             
             // Créer un blob et télécharger le fichier

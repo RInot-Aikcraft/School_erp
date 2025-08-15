@@ -115,20 +115,16 @@
                             </form>
                         </div>
                     </div>
-                    
-                    <!-- Tableau des inscriptions -->
-                    <div class="table-responsive">
-                        <table class="table table-hover">
+                        <!-- Dans la section du tableau des inscriptions -->
+                        <table class="table table-bordered">
                             <thead>
                                 <tr>
-                                    <th>ID</th>
                                     <th>Élève</th>
                                     <th>Classe demandée</th>
                                     <th>Classe attribuée</th>
+                                    <th>Année scolaire</th>
+                                    <th>Type d'inscription</th>
                                     <th>Date d'inscription</th>
-                                    <th>Frais d'inscription</th>
-                                    <th>Montant payé</th>
-                                    <th>Solde</th>
                                     <th>Statut</th>
                                     <th>Actions</th>
                                 </tr>
@@ -136,7 +132,6 @@
                             <tbody>
                                 {% for inscription in inscriptions %}
                                 <tr>
-                                    <td>{{ inscription.id }}</td>
                                     <td>{{ inscription.eleve.get_full_name|default:inscription.eleve.username }}</td>
                                     <td>{{ inscription.classe_demandee.name }}</td>
                                     <td>
@@ -146,43 +141,42 @@
                                             <span class="text-muted">Non attribuée</span>
                                         {% endif %}
                                     </td>
-                                    <td>{{ inscription.date_inscription|date:"d/m/Y H:i" }}</td>
-                                    <td>{{ inscription.calculer_frais_inscription|format_ariary }}</td>
-                                    <td>{{ inscription.get_montant_paye|format_ariary }}</td>
+                                    <td>{{ inscription.annee_scolaire.name }}</td>
                                     <td>
-                                        {% if inscription.get_solde > 0 %}
-                                            <span class="text-danger">{{ inscription.get_solde|format_ariary }}</span>
+                                        {% if inscription.type_inscription == 'PASSANT' %}
+                                            <span class="badge bg-info">Passant</span>
                                         {% else %}
-                                            <span class="text-success">{{ inscription.get_solde|format_ariary }}</span>
+                                            <span class="badge bg-warning">Redoublant</span>
                                         {% endif %}
                                     </td>
+                                    <td>{{ inscription.date_inscription|date:"d/m/Y" }}</td>
                                     <td>
                                         {% if inscription.statut == 'EN_ATTENTE' %}
-                                            <span class="badge bg-warning">{{ inscription.get_statut_display }}</span>
+                                            <span>En attente</span>
                                         {% elif inscription.statut == 'ACCEPTÉE' %}
-                                            <span class="badge bg-info">{{ inscription.get_statut_display }}</span>
+                                            <span>Acceptée</span>
                                         {% elif inscription.statut == 'REFUSÉE' %}
-                                            <span class="badge bg-danger">{{ inscription.get_statut_display }}</span>
+                                            <span>Refusée</span>
                                         {% elif inscription.statut == 'CONFIRMÉE' %}
-                                            <span class="badge bg-success">{{ inscription.get_statut_display }}</span>
+                                            <span>Confirmée</span>
                                         {% elif inscription.statut == 'ANNULÉE' %}
-                                            <span class="badge bg-secondary">{{ inscription.get_statut_display }}</span>
+                                            <span>Annulée</span>
                                         {% endif %}
                                     </td>
                                     <td>
                                         <div class="btn-group">
-                                            <a href="{% url 'finance:detail_inscription' inscription.pk %}" class="btn btn-sm btn-outline-primary" title="Voir les détails">
+                                            <a href="{% url 'finance:detail_inscription' inscription.pk %}" class="btn btn-sm btn-info" title="Voir les détails">
                                                 <i class="fas fa-eye"></i>
                                             </a>
-                                            <a href="{% url 'finance:modifier_inscription' inscription.pk %}" class="btn btn-sm btn-outline-info" title="Modifier">
+                                            <a href="{% url 'finance:modifier_inscription' inscription.pk %}" class="btn btn-sm btn-primary" title="Modifier">
                                                 <i class="fas fa-edit"></i>
                                             </a>
-                                            {% if inscription.statut == 'ACCEPTÉE' and inscription.est_complettement_paye %}
-                                                <a href="{% url 'finance:confirmer_inscription' inscription.pk %}" class="btn btn-sm btn-outline-success" title="Confirmer">
-                                                    <i class="fas fa-check"></i>
-                                                </a>
+                                            {% if inscription.statut != 'CONFIRMÉE' %}
+                                            <a href="{% url 'finance:confirmer_inscription' inscription.pk %}" class="btn btn-sm btn-success" title="Confirmer l'inscription">
+                                                <i class="fas fa-check"></i>
+                                            </a>
                                             {% endif %}
-                                            <a href="{% url 'finance:supprimer_inscription' inscription.pk %}" class="btn btn-sm btn-outline-danger" title="Supprimer">
+                                            <a href="{% url 'finance:supprimer_inscription' inscription.pk %}" class="btn btn-sm btn-danger" title="Supprimer">
                                                 <i class="fas fa-trash"></i>
                                             </a>
                                         </div>
@@ -190,11 +184,12 @@
                                 </tr>
                                 {% empty %}
                                 <tr>
-                                    <td colspan="10" class="text-center">Aucune inscription trouvée</td>
+                                    <td colspan="8" class="text-center">Aucune inscription trouvée</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
                         </table>
+                    
                     </div>
                 </div>
             </div>

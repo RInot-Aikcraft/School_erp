@@ -1,8 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
-
 {% block title %}Ajouter une Inscription{% endblock %}
-
 {% block content %}
 <div class="container-fluid py-4">
     <div class="row">
@@ -25,7 +23,6 @@
                             </div>
                         {% endfor %}
                     {% endif %}
-
                     <form method="post">
                         {% csrf_token %}
                         <div class="row">
@@ -56,12 +53,23 @@
                             </div>
                         </div>
                         <div class="row">
-                            <div class="col-md-12">
+                            <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="classe_demandee" class="form-label">Classe demandée</label>
                                     <select class="form-select" id="classe_demandee" name="classe_demandee" required>
                                         <option value="">-- Sélectionner une classe --</option>
                                         <!-- Les classes seront chargées dynamiquement via JavaScript -->
+                                    </select>
+                                    <div id="places-disponibles" class="form-text mt-2"></div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="type_inscription" class="form-label">Type d'inscription</label>
+                                    <select class="form-select" id="type_inscription" name="type_inscription" required>
+                                        {% for code, label in type_inscription_choices %}
+                                        <option value="{{ code }}" {% if code == 'PASSANT' %}selected{% endif %}>{{ label }}</option>
+                                        {% endfor %}
                                     </select>
                                 </div>
                             </div>
@@ -90,7 +98,6 @@
         </div>
     </div>
 </div>
-
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Mettre à jour les classes lorsque l'année scolaire change
@@ -101,20 +108,53 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(response => response.json())
                 .then(data => {
                     const classeSelect = document.getElementById('classe_demandee');
+                    const placesDisponiblesDiv = document.getElementById('places-disponibles');
+                    
                     // Vider le select
                     classeSelect.innerHTML = '<option value="">-- Sélectionner une classe --</option>';
+                    placesDisponiblesDiv.innerHTML = '';
                     
                     // Ajouter les nouvelles options
                     data.classes.forEach(classe => {
                         const option = document.createElement('option');
                         option.value = classe.id;
                         option.textContent = classe.name;
+                        option.dataset.placesDisponibles = classe.places_disponibles;
+                        option.dataset.maxStudents = classe.max_students;
+                        option.dataset.inscriptionsCount = classe.inscriptions_count;
                         classeSelect.appendChild(option);
                     });
                 });
         } else {
             // Si aucune année n'est sélectionnée, vider le select des classes
             document.getElementById('classe_demandee').innerHTML = '<option value="">-- Sélectionner une classe --</option>';
+            document.getElementById('places-disponibles').innerHTML = '';
+        }
+    });
+    
+    // Afficher le nombre de places disponibles lorsqu'une classe est sélectionnée
+    document.getElementById('classe_demandee').addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        const placesDisponiblesDiv = document.getElementById('places-disponibles');
+        
+        if (selectedOption.value) {
+            const placesDisponibles = selectedOption.dataset.placesDisponibles;
+            const maxStudents = selectedOption.dataset.maxStudents;
+            const inscriptionsCount = selectedOption.dataset.inscriptionsCount;
+            
+            let alertClass = 'text-success';
+            if (placesDisponibles <= 3) alertClass = 'text-warning';
+            if (placesDisponibles <= 0) alertClass = 'text-danger';
+            
+            placesDisponiblesDiv.innerHTML = `
+                <div class="${alertClass}">
+                    <i class="fas fa-info-circle me-1"></i>
+                    ${placesDisponibles} place(s) disponible(s) sur ${maxStudents} 
+                    (${inscriptionsCount} inscription${inscriptionsCount > 1 ? 's' : ''} confirmée${inscriptions_count > 1 ? 's' : ''})
+                </div>
+            `;
+        } else {
+            placesDisponiblesDiv.innerHTML = '';
         }
     });
     

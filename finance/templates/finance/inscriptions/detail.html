@@ -49,6 +49,10 @@
                                             <strong>{{ inscription.date_inscription|date:"d/m/Y H:i" }}</strong>
                                         </li>
                                         <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span>type d'inscription:</span>
+                                            <strong>{{ inscription.type_inscription }}</strong>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
                                             <span>Statut:</span>
                                             <strong>
                                                 {% if inscription.statut == 'EN_ATTENTE' %}
