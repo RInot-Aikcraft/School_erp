@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 {% load currency_filters %}
-{% block title %}Gestion des Inscriptions{% endblock %}
+{% block title %}Écolages Impayés{% endblock %}
 {% block content %}
 <div class="container-fluid py-4">
     <div class="row">
@@ -9,60 +9,36 @@
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white py-3">
                     <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Gestion des Inscriptions</h5>
-                        <a href="{% url 'finance:ajouter_inscription' %}" class="btn btn-danger">
-                            <i class="fas fa-plus me-2"></i>Nouvelle inscription
+                        <h5 class="mb-0">Écolages Impayés</h5>
+                        <a href="{% url 'finance:liste_inscriptions' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Retour aux inscriptions
                         </a>
                     </div>
                 </div>
                 <div class="card-body">
                     <!-- Statistiques -->
                     <div class="row mb-4">
-                        <div class="col-md-2">
-                            <div class="card bg-primary text-white">
-                                <div class="card-body">
-                                    <h5 class="card-title">Total</h5>
-                                    <h3>{{ total_inscriptions }}</h3>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-2">
-                            <div class="card bg-warning text-white">
-                                <div class="card-body">
-                                    <h5 class="card-title">En attente</h5>
-                                    <h3>{{ total_en_attente }}</h3>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-2">
-                            <div class="card bg-success text-white">
-                                <div class="card-body">
-                                    <h5 class="card-title">Confirmées</h5>
-                                    <h3>{{ total_confirmees }}</h3>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-2">
+                        <div class="col-md-4">
                             <div class="card bg-danger text-white">
                                 <div class="card-body">
-                                    <h5 class="card-title">Frais inscription impayés</h5>
-                                    <h3>
-                                        <a href="{% url 'finance:liste_frais_inscription_impayes' %}" class="text-white text-decoration-none">
-                                            {{ total_frais_inscription_impayes }}
-                                        </a>
-                                    </h3>
+                                    <h5 class="card-title">Total d'écolages impayés</h5>
+                                    <h3>{{ total_ecolages_impayes }}</h3>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-2">
-                            <div class="card bg-secondary text-white">
+                        <div class="col-md-4">
+                            <div class="card bg-warning text-white">
                                 <div class="card-body">
-                                    <h5 class="card-title">Écolages impayés</h5>
-                                    <h3>
-                                        <a href="{% url 'finance:liste_ecolages_impayes' %}" class="text-white text-decoration-none">
-                                            {{ total_ecolages_impayes }}
-                                        </a>
-                                    </h3>
+                                    <h5 class="card-title">Élèves concernés</h5>
+                                    <h3>{{ resultats|length }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-info text-white">
+                                <div class="card-body">
+                                    <h5 class="card-title">Année scolaire</h5>
+                                    <h3>{{ selected_year.name|default:'Toutes' }}</h3>
                                 </div>
                             </div>
                         </div>
@@ -105,12 +81,12 @@
                                     </div>
                                     <div class="col-md-4">
                                         <div class="mb-3">
-                                            <label for="statut" class="form-label">Statut</label>
-                                            <select class="form-select" name="statut" id="statut">
-                                                <option value="">Tous les statuts</option>
-                                                {% for code, label in statut_choices %}
-                                                <option value="{{ code }}" {% if code == filtre_statut %}selected{% endif %}>
-                                                    {{ label }}
+                                            <label for="mois" class="form-label">Mois</label>
+                                            <select class="form-select" name="mois" id="mois">
+                                                <option value="">Tous les mois</option>
+                                                {% for mois in mois_disponibles %}
+                                                <option value="{{ mois.code }}" {% if mois.code|safe == filtre_mois %}selected{% endif %}>
+                                                    {{ mois.nom }} {{ mois.annee }}
                                                 </option>
                                                 {% endfor %}
                                             </select>
@@ -130,77 +106,46 @@
                         </div>
                     </div>
                     
-                    <!-- Tableau des inscriptions -->
+                    <!-- Tableau des écolages impayés -->
                     <div class="table-responsive">
                         <table class="table table-bordered">
                             <thead>
                                 <tr>
                                     <th>Élève</th>
-                                    <th>Classe demandée</th>
-                                    <th>Classe attribuée</th>
+                                    <th>Classe</th>
                                     <th>Année scolaire</th>
-                                    <th>Type d'inscription</th>
-                                    <th>Date d'inscription</th>
-                                    <th>Statut</th>
+                                    <th>Mois impayés</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for inscription in inscriptions %}
+                                {% for resultat in resultats %}
                                 <tr>
-                                    <td>{{ inscription.eleve.get_full_name|default:inscription.eleve.username }}</td>
-                                    <td>{{ inscription.classe_demandee.name }}</td>
+                                    <td>{{ resultat.inscription.eleve.get_full_name|default:resultat.inscription.eleve.username }}</td>
+                                    <td>{{ resultat.inscription.classe_demandee.name }}</td>
+                                    <td>{{ resultat.inscription.annee_scolaire.name }}</td>
                                     <td>
-                                        {% if inscription.classe_attribuee %}
-                                            {{ inscription.classe_attribuee.name }}
-                                        {% else %}
-                                            <span class="text-muted">Non attribuée</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>{{ inscription.annee_scolaire.name }}</td>
-                                    <td>
-                                        {% if inscription.type_inscription == 'PASSANT' %}
-                                            <span class="badge bg-info">Passant</span>
-                                        {% else %}
-                                            <span class="badge bg-warning">Redoublant</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>{{ inscription.date_inscription|date:"d/m/Y" }}</td>
-                                    <td>
-                                        {% if inscription.statut == 'EN_ATTENTE' %}
-                                            <span class="badge bg-warning">En attente</span>
-                                        {% elif inscription.statut == 'ACCEPTÉE' %}
-                                            <span class="badge bg-info">Acceptée</span>
-                                        {% elif inscription.statut == 'REFUSÉE' %}
-                                            <span class="badge bg-danger">Refusée</span>
-                                        {% elif inscription.statut == 'CONFIRMÉE' %}
-                                            <span class="badge bg-success">Confirmée</span>
-                                        {% elif inscription.statut == 'ANNULÉE' %}
-                                            <span class="badge bg-secondary">Annulée</span>
-                                        {% endif %}
+                                        {% for mois in resultat.mois_impayes %}
+                                        <span class="badge bg-warning">{{ mois.nom_mois }} {{ mois.annee }}</span>
+                                        {% if not forloop.last %}<br>{% endif %}
+                                        {% endfor %}
                                     </td>
                                     <td>
                                         <div class="btn-group">
-                                            <a href="{% url 'finance:detail_inscription' inscription.pk %}" class="btn btn-sm btn-info" title="Voir les détails">
+                                            <a href="{% url 'finance:detail_inscription' resultat.inscription.pk %}" class="btn btn-sm btn-info" title="Voir les détails">
                                                 <i class="fas fa-eye"></i>
                                             </a>
-                                            <a href="{% url 'finance:modifier_inscription' inscription.pk %}" class="btn btn-sm btn-primary" title="Modifier">
-                                                <i class="fas fa-edit"></i>
+                                            {% for mois in resultat.mois_impayes %}
+                                            <a href="{% url 'finance:ajouter_paiement' %}?eleve_id={{ resultat.inscription.eleve.id }}&mois={{ mois.mois }}&montant={{ mois.montant_du }}&inscription_id={{ resultat.inscription.pk }}" class="btn btn-sm btn-success" title="Payer pour {{ mois.nom_mois }}">
+                                                <i class="fas fa-money-bill-wave"></i>
                                             </a>
-                                            {% if inscription.statut != 'CONFIRMÉE' %}
-                                            <a href="{% url 'finance:confirmer_inscription' inscription.pk %}" class="btn btn-sm btn-success" title="Confirmer l'inscription">
-                                                <i class="fas fa-check"></i>
-                                            </a>
-                                            {% endif %}
-                                            <a href="{% url 'finance:supprimer_inscription' inscription.pk %}" class="btn btn-sm btn-danger" title="Supprimer">
-                                                <i class="fas fa-trash"></i>
-                                            </a>
+                                            {% endfor %}
                                         </div>
                                     </td>
                                 </tr>
                                 {% empty %}
                                 <tr>
-                                    <td colspan="8" class="text-center">Aucune inscription trouvée</td>
+                                    <td colspan="5" class="text-center">Aucun écolage impayé trouvé</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>

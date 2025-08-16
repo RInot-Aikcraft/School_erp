@@ -248,3 +248,90 @@ class Inscription(models.Model):
         )
         
         return True, "Inscription confirmée avec succès"
+    
+
+    def get_ecolages_impayes(self):
+        """
+        Récupère la liste de tous les mois de l'année scolaire avec leur statut de paiement
+        en distinguant les mois à venir, en cours, ou passés
+        """
+        from datetime import date
+        
+        # Récupérer les types de frais d'écolage mensuels pour cette classe et cette année scolaire
+        types_frais_ecolage = TypeFrais.objects.filter(
+            classe=self.classe_demandee,
+            annee_scolaire=self.annee_scolaire,
+            periodicite='MENSUEL',  # On ne s'intéresse qu'aux frais mensuels
+            frais_inscription=False
+        )
+        
+        # Récupérer les paiements d'écolage mensuels déjà effectués
+        paiements_ecolage = Paiement.objects.filter(
+            eleve=self.eleve,
+            type_frais__in=types_frais_ecolage,
+            statut='VALIDE'
+        )
+        
+        # Créer un dictionnaire des mois déjà payés avec leur montant
+        mois_payes = {}
+        for paiement in paiements_ecolage:
+            if paiement.mois:
+                mois_payes[paiement.mois] = paiement.montant
+        
+        # Récupérer la date actuelle
+        aujourd_hui = date.today()
+        
+        # Liste pour stocker tous les mois avec leur statut
+        tous_les_mois = []
+        
+        # Parcourir chaque mois de l'année scolaire
+        current_date = self.annee_scolaire.start_date
+        while current_date <= self.annee_scolaire.end_date:
+            mois_courant = current_date.month
+            annee_courante = current_date.year
+            
+            # Déterminer si le mois est à venir, en cours, ou passé
+            statut_temporel = ""
+            if current_date.year > aujourd_hui.year or (current_date.year == aujourd_hui.year and current_date.month > aujourd_hui.month):
+                statut_temporel = "à_venir"
+            elif current_date.year == aujourd_hui.year and current_date.month == aujourd_hui.month:
+                statut_temporel = "en_cours"
+            else:
+                statut_temporel = "passé"
+            
+            # Déterminer le statut de paiement pour ce mois
+            est_paye = mois_courant in mois_payes
+            montant_paye = mois_payes.get(mois_courant, 0)
+            
+            # Calculer le montant dû pour ce mois (somme de tous les frais mensuels)
+            montant_du = sum(type_frais.montant for type_frais in types_frais_ecolage)
+            
+            # Déterminer le statut affiché pour ce mois
+            # MODIFICATION ICI : si le mois est payé, afficher "Payé" même si le mois est à venir
+            if est_paye:
+                statut_affiche = "Payé"
+            elif statut_temporel == "à_venir":
+                statut_affiche = "À venir"
+            else:
+                statut_affiche = "Impayé"
+            
+            # Ajouter le mois à la liste avec toutes les informations
+            tous_les_mois.append({
+                'mois': mois_courant,
+                'annee': annee_courante,
+                'nom_mois': dict(Paiement.MOIS_CHOICES).get(mois_courant, ''),
+                'statut_temporel': statut_temporel,
+                'est_paye': est_paye,
+                'montant_du': montant_du,
+                'montant_paye': montant_paye if est_paye else 0,
+                'solde': montant_du - (montant_paye if est_paye else 0),
+                'statut_affiche': statut_affiche
+            })
+            
+            # Passer au mois suivant
+            if current_date.month == 12:
+                current_date = date(current_date.year + 1, 1, 1)
+            else:
+                current_date = date(current_date.year, current_date.month + 1, 1)
+        
+        return tous_les_mois

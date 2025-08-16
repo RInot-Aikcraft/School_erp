@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 {% load currency_filters %}
-{% block title %}Ajouter un Paiement{% endblock %}
+{% block title %}Ajouter un Paiement d'Écolage{% endblock %}
 {% block content %}
 <div class="container-fluid py-4">
     <div class="row">
@@ -9,9 +9,9 @@
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white py-3">
                     <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Ajouter un Paiement</h5>
-                        <a href="{% if inscription %}{% url 'finance:detail_inscription' inscription.pk %}{% else %}{% url 'finance:liste_paiements' %}{% endif %}" class="btn btn-outline-secondary">
-                            <i class="fas fa-arrow-left me-2"></i>Retour{% if inscription %} aux détails{% endif %}
+                        <h5 class="mb-0">Ajouter un Paiement d'Écolage</h5>
+                        <a href="{% url 'finance:detail_inscription' inscription.pk %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Retour aux détails
                         </a>
                     </div>
                 </div>
@@ -24,40 +24,18 @@
                             </div>
                         {% endfor %}
                     {% endif %}
-                    
-                    {% if inscription %}
                     <div class="alert alert-info">
-                        <h5 class="alert-heading">Paiement pour l'inscription</h5>
-                        <p class="mb-0">Vous êtes sur le point d'enregistrer un paiement pour l'inscription de <strong>{{ inscription.eleve.get_full_name|default:inscription.eleve.username }}</strong> pour la classe <strong>{{ inscription.classe_demandee.name }}</strong>.</p>
+                        <h5 class="alert-heading">Paiement d'écolage</h5>
+                        <p class="mb-0">Vous êtes sur le point d'enregistrer un paiement d'écolage pour <strong>{{ eleve.get_full_name|default:eleve.username }}</strong> pour le mois de <strong>{{ mois_nom }}</strong>.</p>
                         <hr>
-                        <p class="mb-0">Solde restant à payer: <strong>{% if inscription.get_solde > 0 %}{{ inscription.get_solde|format_ariary }}{% else %}{{ inscription.get_solde|format_ariary }}{% endif %}</strong></p>
+                        <p class="mb-0">Montant dû: <strong>{{ montant|format_ariary }}</strong></p>
                     </div>
-                    {% elif eleve %}
-                    <div class="alert alert-info">
-                        <h5 class="alert-heading">Paiement pour l'élève</h5>
-                        <p class="mb-0">Vous êtes sur le point d'enregistrer un paiement pour <strong>{{ eleve.get_full_name|default:eleve.username }}</strong>.</p>
-                    </div>
-                    {% endif %}
-                    
                     <form method="post">
                         {% csrf_token %}
+                        <input type="hidden" name="eleve" value="{{ eleve.id }}">
+                        <input type="hidden" name="mois" value="{{ mois }}">
+                        
                         <div class="row">
-                            {% if not eleve %}
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="eleve" class="form-label">Élève</label>
-                                    <select class="form-select" id="eleve" name="eleve" required>
-                                        <option value="">-- Sélectionner un élève --</option>
-                                        {% for eleve_option in eleves %}
-                                        <option value="{{ eleve_option.id }}">{{ eleve_option.get_full_name|default:eleve_option.username }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                            </div>
-                            {% else %}
-                            <input type="hidden" name="eleve" value="{{ eleve.id }}">
-                            {% endif %}
-                            
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="type_frais" class="form-label">Type de frais</label>
@@ -65,35 +43,6 @@
                                         <option value="">-- Sélectionner un type de frais --</option>
                                         {% for type_frais in types_frais %}
                                         <option value="{{ type_frais.id }}">{{ type_frais.nom_frais }} ({{ type_frais.montant|format_ariary }})</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="montant" class="form-label">Montant (Ar)</label>
-                                    <input type="number" class="form-control" id="montant" name="montant" step="0.01" value="{{ montant|default:'' }}" required>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="date_paiement" class="form-label">Date de paiement</label>
-                                    <input type="datetime-local" class="form-control" id="date_paiement" name="date_paiement" required>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="mois" class="form-label">Mois</label>
-                                    <select class="form-select" id="mois" name="mois">
-                                        <option value="">-- Sélectionner un mois --</option>
-                                        {% for code, label in mois_choices %}
-                                        <option value="{{ code }}" {% if mois and code|add:0 == mois|add:0 %}selected{% endif %}>{{ label }}</option>
                                         {% endfor %}
                                     </select>
                                 </div>
@@ -110,7 +59,20 @@
                                 </div>
                             </div>
                         </div>
-                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="montant" class="form-label">Montant (Ar)</label>
+                                    <input type="number" class="form-control" id="montant" name="montant" step="0.01" value="{{ montant }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="date_paiement" class="form-label">Date de paiement</label>
+                                    <input type="datetime-local" class="form-control" id="date_paiement" name="date_paiement" required>
+                                </div>
+                            </div>
+                        </div>
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
@@ -130,7 +92,6 @@
                                 </div>
                             </div>
                         </div>
-                        
                         <div class="row">
                             <div class="col-12">
                                 <div class="mb-3">
@@ -139,13 +100,12 @@
                                 </div>
                             </div>
                         </div>
-                        
                         <div class="row">
                             <div class="col-12">
                                 <button type="submit" class="btn btn-danger">
                                     <i class="fas fa-save me-2"></i>Enregistrer le paiement
                                 </button>
-                                <a href="{% if inscription %}{% url 'finance:detail_inscription' inscription.pk %}{% else %}{% url 'finance:liste_paiements' %}{% endif %}" class="btn btn-outline-secondary">
+                                <a href="{% url 'finance:detail_inscription' inscription.pk %}" class="btn btn-outline-secondary">
                                     Annuler
                                 </a>
                             </div>
@@ -156,7 +116,6 @@
         </div>
     </div>
 </div>
-
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Définir la date et heure actuelles par défaut
@@ -179,12 +138,6 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('montant').value = montant.replace(' ', '').replace(',', '.');
         }
     });
-    
-    // Si un montant est déjà défini dans l'URL, ne pas l'écraser avec le montant du type de frais
-    const montantFromUrl = new URLSearchParams(window.location.search).get('montant');
-    if (montantFromUrl && document.getElementById('montant').value === '') {
-        document.getElementById('montant').value = montantFromUrl;
-    }
 });
 </script>
 {% endblock %}

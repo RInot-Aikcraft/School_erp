@@ -123,21 +123,6 @@ def supprimer_type_frais(request, pk):
     
     return render(request, 'finance/type_frais/supprimer.html', {'type_frais': type_frais})
 
-@login_required
-def supprimer_type_frais(request, pk):
-    type_frais = get_object_or_404(TypeFrais, pk=pk)
-    
-    if request.method == 'POST':
-        try:
-            type_frais.delete()
-            messages.success(request, "Le type de frais a été supprimé avec succès.")
-            return redirect('finance:liste_type_frais')
-        except Exception as e:
-            messages.error(request, f"Une erreur s'est produite: {str(e)}")
-    
-    return render(request, 'finance/type_frais/supprimer.html', {'type_frais': type_frais})
-
-
 
 
 @login_required
@@ -301,6 +286,34 @@ def liste_paiements(request):
 
 @login_required
 def ajouter_paiement(request):
+    # Récupérer les paramètres de l'URL
+    eleve_id = request.GET.get('eleve_id')
+    mois = request.GET.get('mois')
+    montant = request.GET.get('montant')
+    inscription_id = request.GET.get('inscription_id')
+    type_paiement = request.GET.get('type_paiement')  # Nouveau paramètre pour distinguer les types de paiement
+    
+    # Récupérer l'inscription si un ID est fourni
+    inscription = None
+    if inscription_id:
+        try:
+            inscription = Inscription.objects.get(pk=inscription_id)
+        except Inscription.DoesNotExist:
+            pass
+    
+    # Récupérer l'élève si un ID est fourni
+    eleve = None
+    if eleve_id:
+        try:
+            eleve = User.objects.get(pk=eleve_id)
+        except User.DoesNotExist:
+            pass
+    
+    # Récupérer le nom du mois si un mois est fourni
+    mois_nom = None
+    if mois:
+        mois_nom = dict(Paiement.MOIS_CHOICES).get(int(mois), None)
+    
     if request.method == 'POST':
         eleve_id = request.POST.get('eleve')
         type_frais_id = request.POST.get('type_frais')
@@ -332,7 +345,12 @@ def ajouter_paiement(request):
             )
             paiement.save()
             messages.success(request, "Le paiement a été enregistré avec succès.")
-            return redirect('finance:liste_paiements')
+            
+            # Rediriger vers la page appropriée
+            if inscription:
+                return redirect('finance:detail_inscription', pk=inscription.pk)
+            else:
+                return redirect('finance:liste_paiements')
         except Exception as e:
             messages.error(request, f"Une erreur s'est produite: {str(e)}")
     
@@ -341,6 +359,30 @@ def ajouter_paiement(request):
     types_frais = TypeFrais.objects.all()
     types_caisse = TypeCaisse.objects.filter(est_active=True)
     
+    # Si une inscription est fournie, filtrer les types de frais pour cette classe
+    if inscription:
+        # Si c'est un paiement d'écolage (mois fourni)
+        if mois:
+            types_frais = TypeFrais.objects.filter(
+                classe=inscription.classe_demandee,
+                annee_scolaire=inscription.annee_scolaire,
+                frais_inscription=False,  # Exclure les frais d'inscription
+                periodicite='MENSUEL'  # Ne prendre que les frais mensuels
+            )
+        # Sinon, si c'est explicitement un paiement d'inscription
+        elif type_paiement == 'inscription':
+            types_frais = TypeFrais.objects.filter(
+                classe=inscription.classe_demandee,
+                annee_scolaire=inscription.annee_scolaire,
+                frais_inscription=True  # Ne prendre que les frais d'inscription
+            )
+        # Sinon, afficher tous les types de frais pour cette classe
+        else:
+            types_frais = TypeFrais.objects.filter(
+                classe=inscription.classe_demandee,
+                annee_scolaire=inscription.annee_scolaire
+            )
+    
     context = {
         'eleves': eleves,
         'types_frais': types_frais,
@@ -348,8 +390,20 @@ def ajouter_paiement(request):
         'statut_choices': Paiement.STATUT_CHOICES,
         'mode_paiement_choices': Paiement.MODE_PAIEMENT_CHOICES,
         'mois_choices': Paiement.MOIS_CHOICES,
+        'inscription': inscription,
+        'eleve': eleve,
+        'mois': mois,
+        'mois_nom': mois_nom,
+        'montant': montant,
     }
-    return render(request, 'finance/paiements/ajouter.html', context)
+    
+    # Déterminer quel template utiliser
+    if mois and eleve and inscription:
+        return render(request, 'finance/paiements/ajouter_ecolage.html', context)
+    else:
+        return render(request, 'finance/paiements/ajouter.html', context)
+
+
 @login_required
 def modifier_paiement(request, pk):
     paiement = get_object_or_404(Paiement, pk=pk)
@@ -500,11 +554,28 @@ def liste_inscriptions(request):
     # Récupérer les données pour les filtres
     classes = Class.objects.filter(school_year=selected_year) if selected_year else Class.objects.none()
     
-    # Calculer les statistiques
+    # Calculer les statistiques de base
     total_inscriptions = inscriptions.count()
     total_en_attente = inscriptions.filter(statut='EN_ATTENTE').count()
     total_acceptees = inscriptions.filter(statut='ACCEPTÉE').count()
     total_confirmees = inscriptions.filter(statut='CONFIRMÉE').count()
+    
+    # Calculer les statistiques financières
+    total_ecolages_impayes = 0
+    total_frais_inscription_impayes = 0
+    
+    # Pour chaque inscription, calculer les écolages impayés
+    for inscription in inscriptions:
+        # Récupérer les écolages impayés pour cette inscription
+        ecolages_impayes = inscription.get_ecolages_impayes()
+        # Compter les écolages impayés (statut temporel "passé" ou "en_cours" et non payés)
+        for mois in ecolages_impayes:
+            if mois['statut_temporel'] in ['passé', 'en_cours'] and not mois['est_paye']:
+                total_ecolages_impayes += 1
+        
+        # Vérifier si les frais d'inscription sont impayés
+        if inscription.get_solde() > 0:
+            total_frais_inscription_impayes += 1
     
     context = {
         'inscriptions': inscriptions,
@@ -521,6 +592,9 @@ def liste_inscriptions(request):
         'total_en_attente': total_en_attente,
         'total_acceptees': total_acceptees,
         'total_confirmees': total_confirmees,
+        # Ajouter les statistiques financières
+        'total_ecolages_impayes': total_ecolages_impayes,
+        'total_frais_inscription_impayes': total_frais_inscription_impayes,
     }
     return render(request, 'finance/inscriptions/liste.html', context)
 
@@ -533,12 +607,49 @@ def detail_inscription(request, pk):
     types_frais = inscription.get_types_frais()
     
     # Récupérer uniquement les paiements associés aux frais d'inscription
-    paiements = inscription.get_paiements()
+    paiements_inscription = inscription.get_paiements()
     
-    # Calculer les montants
-    frais_total = inscription.calculer_frais_inscription()
-    montant_paye = inscription.get_montant_paye()
-    solde = inscription.get_solde()
+    # Récupérer la liste de tous les mois avec leur statut de paiement
+    tous_les_mois = inscription.get_ecolages_impayes()
+    
+    # Filtrer pour ne compter que les mois passés ou en cours pour les totaux
+    mois_relevant = [mois for mois in tous_les_mois if mois['statut_temporel'] in ['passé', 'en_cours']]
+    
+    # Calculer les totaux pour l'écolage (uniquement pour les mois passés ou en cours)
+    total_ecolage_du = sum(mois['montant_du'] for mois in mois_relevant)
+    total_ecolage_paye = sum(mois['montant_paye'] for mois in mois_relevant)
+    solde_ecolage = total_ecolage_du - total_ecolage_paye
+    
+    # Calculer le nombre de mois payés et impayés (uniquement pour les mois passés ou en cours)
+    mois_payes_count = sum(1 for mois in mois_relevant if mois['est_paye'])
+    mois_impayes_count = sum(1 for mois in mois_relevant if not mois['est_paye'])
+    
+    # Calculer le nombre de mois à venir
+    mois_avenir_count = sum(1 for mois in tous_les_mois if mois['statut_temporel'] == 'à_venir')
+    
+    # Récupérer les autres paiements (ni inscription, ni écolage mensuel)
+    types_frais_ecolage = TypeFrais.objects.filter(
+        classe=inscription.classe_demandee,
+        annee_scolaire=inscription.annee_scolaire,
+        periodicite__in=['MENSUEL', 'TRIMESTRIEL', 'ANNUEL'],
+        frais_inscription=False
+    )
+    
+    autres_paiements = Paiement.objects.filter(
+        eleve=inscription.eleve
+    ).exclude(
+        type_frais__in=types_frais
+    )
+    
+    # Calculer les montants pour les frais d'inscription
+    frais_total_inscription = inscription.calculer_frais_inscription()
+    montant_paye_inscription = inscription.get_montant_paye()
+    solde_inscription = inscription.get_solde()
+    
+    # Calculer les montants pour les autres frais
+    total_autres_frais = sum(paiement.type_frais.montant for paiement in autres_paiements)
+    montant_paye_autres = sum(paiement.montant for paiement in autres_paiements if paiement.statut == 'VALIDE')
+    solde_autres = total_autres_frais - montant_paye_autres
     
     # Récupérer les types de caisse pour le formulaire de paiement
     types_caisse = TypeCaisse.objects.filter(est_active=True)
@@ -546,14 +657,26 @@ def detail_inscription(request, pk):
     context = {
         'inscription': inscription,
         'types_frais': types_frais,
-        'paiements': paiements,
-        'frais_total': frais_total,
-        'montant_paye': montant_paye,
-        'solde': solde,
+        'paiements_inscription': paiements_inscription,
+        'tous_les_mois': tous_les_mois,
+        'total_ecolage_du': total_ecolage_du,
+        'total_ecolage_paye': total_ecolage_paye,
+        'solde_ecolage': solde_ecolage,
+        'mois_payes_count': mois_payes_count,
+        'mois_impayes_count': mois_impayes_count,
+        'mois_avenir_count': mois_avenir_count,
+        'frais_total_inscription': frais_total_inscription,
+        'montant_paye_inscription': montant_paye_inscription,
+        'solde_inscription': solde_inscription,
+        'total_autres_frais': total_autres_frais,
+        'montant_paye_autres': montant_paye_autres,
+        'solde_autres': solde_autres,
         'types_caisse': types_caisse,
         'mode_paiement_choices': Paiement.MODE_PAIEMENT_CHOICES,
+        'mois_choices': Paiement.MOIS_CHOICES,
     }
     return render(request, 'finance/inscriptions/detail.html', context)
+
 
 @login_required
 @user_passes_test(is_admin)
@@ -829,3 +952,168 @@ def liste(request):
         'filtre_classe': classe_id,
     }
     return render(request, 'liste.html', context)
+
+
+@login_required
+@user_passes_test(is_admin)
+def liste_ecolages_impayes(request):
+    # Récupérer les paramètres de filtrage
+    annee_scolaire_id = request.GET.get('school_year')
+    classe_id = request.GET.get('classe')
+    mois_id = request.GET.get('mois')
+    
+    # Récupérer toutes les années scolaires
+    school_years = SchoolYear.objects.all().order_by('-start_date')
+    
+    # Récupérer l'année scolaire active
+    try:
+        active_school_year = SchoolYear.objects.get(current=True)
+    except SchoolYear.DoesNotExist:
+        active_school_year = None
+    
+    # Récupérer l'année sélectionnée (par défaut l'année active)
+    selected_year_id = request.GET.get('school_year')
+    if selected_year_id:
+        try:
+            selected_year = SchoolYear.objects.get(pk=selected_year_id)
+        except SchoolYear.DoesNotExist:
+            selected_year = active_school_year
+    else:
+        selected_year = active_school_year
+    
+    # Récupérer toutes les classes de l'année scolaire sélectionnée
+    classes = Class.objects.filter(school_year=selected_year) if selected_year else Class.objects.none()
+    
+    # Récupérer toutes les inscriptions de l'année scolaire sélectionnée
+    inscriptions = Inscription.objects.filter(annee_scolaire=selected_year) if selected_year else Inscription.objects.none()
+    
+    # Appliquer le filtre de classe si spécifié
+    if classe_id:
+        inscriptions = inscriptions.filter(classe_demandee_id=classe_id)
+    
+    # Liste pour stocker les résultats
+    resultats = []
+    
+    # Pour chaque inscription, récupérer les mois d'écolage impayés
+    for inscription in inscriptions:
+        ecolages_impayes = inscription.get_ecolages_impayes()
+        
+        # Filtrer pour ne garder que les mois impayés qui sont dans le passé ou en cours
+        mois_impayes = [
+            mois for mois in ecolages_impayes 
+            if mois['statut_temporel'] in ['passé', 'en_cours'] and not mois['est_paye']
+        ]
+        
+        # Filtrer par mois si spécifié
+        if mois_id:
+            mois_impayes = [mois for mois in mois_impayes if str(mois['mois']) == mois_id]
+        
+        # S'il y a des mois impayés, ajouter l'inscription aux résultats
+        if mois_impayes:
+            resultats.append({
+                'inscription': inscription,
+                'mois_impayes': mois_impayes,
+                'total_mois_impayes': len(mois_impayes)
+            })
+    
+    # Calculer le nombre total d'écolages impayés
+    total_ecolages_impayes = sum(resultat['total_mois_impayes'] for resultat in resultats)
+    
+    # Obtenir la date actuelle pour déterminer les mois passés et en cours
+    from datetime import date
+    aujourd_hui = date.today()
+    
+    # Créer une liste des mois passés et en cours pour le filtre
+    mois_disponibles = []
+    if selected_year:
+        current_date = selected_year.start_date
+        while current_date <= selected_year.end_date:
+            # Ne considérer que les mois passés ou en cours
+            if (current_date.year < aujourd_hui.year or 
+                (current_date.year == aujourd_hui.year and current_date.month <= aujourd_hui.month)):
+                mois_disponibles.append({
+                    'code': current_date.month,
+                    'nom': dict(Paiement.MOIS_CHOICES).get(current_date.month, ''),
+                    'annee': current_date.year
+                })
+            
+            # Passer au mois suivant
+            if current_date.month == 12:
+                current_date = date(current_date.year + 1, 1, 1)
+            else:
+                current_date = date(current_date.year, current_date.month + 1, 1)
+    
+    context = {
+        'resultats': resultats,
+        'school_years': school_years,
+        'selected_year': selected_year,
+        'active_school_year': active_school_year,
+        'classes': classes,
+        'mois_disponibles': mois_disponibles,
+        'total_ecolages_impayes': total_ecolages_impayes,
+        # Conserver les valeurs des filtres pour réaffichage
+        'filtre_classe': classe_id,
+        'filtre_mois': mois_id,
+    }
+    return render(request, 'finance/ecolages/liste_impayes.html', context)
+
+@login_required
+@user_passes_test(is_admin)
+def liste_frais_inscription_impayes(request):
+    # Récupérer les paramètres de filtrage
+    annee_scolaire_id = request.GET.get('school_year')
+    classe_id = request.GET.get('classe')
+    
+    # Récupérer toutes les années scolaires
+    school_years = SchoolYear.objects.all().order_by('-start_date')
+    
+    # Récupérer l'année scolaire active
+    try:
+        active_school_year = SchoolYear.objects.get(current=True)
+    except SchoolYear.DoesNotExist:
+        active_school_year = None
+    
+    # Récupérer l'année sélectionnée (par défaut l'année active)
+    selected_year_id = request.GET.get('school_year')
+    if selected_year_id:
+        try:
+            selected_year = SchoolYear.objects.get(pk=selected_year_id)
+        except SchoolYear.DoesNotExist:
+            selected_year = active_school_year
+    else:
+        selected_year = active_school_year
+    
+    # Récupérer toutes les classes de l'année scolaire sélectionnée
+    classes = Class.objects.filter(school_year=selected_year) if selected_year else Class.objects.none()
+    
+    # Récupérer toutes les inscriptions de l'année scolaire sélectionnée
+    inscriptions = Inscription.objects.filter(annee_scolaire=selected_year) if selected_year else Inscription.objects.none()
+    
+    # Appliquer le filtre de classe si spécifié
+    if classe_id:
+        inscriptions = inscriptions.filter(classe_demandee_id=classe_id)
+    
+    # Filtrer pour ne garder que les inscriptions avec des frais d'inscription impayés
+    inscriptions_impayees = [
+        inscription for inscription in inscriptions 
+        if inscription.get_solde() > 0
+    ]
+    
+    # Calculer le nombre total de frais d'inscription impayés
+    total_frais_inscription_impayes = len(inscriptions_impayees)
+    
+    # Calculer le montant total des frais d'inscription impayés
+    montant_total_impaye = sum(inscription.get_solde() for inscription in inscriptions_impayees)
+    
+    context = {
+        'inscriptions_impayees': inscriptions_impayees,
+        'school_years': school_years,
+        'selected_year': selected_year,
+        'active_school_year': active_school_year,
+        'classes': classes,
+        'total_frais_inscription_impayes': total_frais_inscription_impayes,
+        'montant_total_impaye': montant_total_impaye,
+        # Conserver les valeurs des filtres pour réaffichage
+        'filtre_classe': classe_id,
+    }
+    return render(request, 'finance/frais_inscription/liste_impayes.html', context)

@@ -52,7 +52,6 @@
                                     <th>Niveau</th>
                                     <th>Année scolaire</th>
                                     <th>Professeur principal</th>
-                                    <th>Élèves inscrits</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -68,7 +67,6 @@
                                         {% endif %}
                                     </td>
                                     <td>{{ class_obj.main_teacher.get_full_name|default:"Non assigné" }}</td>
-                                    <td>{{ class_obj.enrollments.count }}/{{ class_obj.max_students }}</td>
                                     <td>
                                         <div class="btn-group">
                                             <a href="{% url 'academics:class_detail' class_obj.pk %}" class="btn btn-sm btn-outline-primary" title="Voir">

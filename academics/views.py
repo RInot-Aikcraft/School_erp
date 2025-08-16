@@ -110,6 +110,7 @@ def class_list(request):
         'school_years': school_years,
         'selected_year': selected_year,
         'active_school_year': active_school_year,
+        
     }
     
     return render(request, 'academics/class_list.html', context)
@@ -473,32 +474,34 @@ def class_level_delete(request, pk):
 @login_required
 @user_passes_test(is_admin)
 def class_detail(request, pk):
-    class_obj = get_object_or_404(Class, pk=pk)
+    class_obj = get_object_or_404(
+        Class.objects.select_related('level', 'school_year', 'main_teacher__userprofile'),
+        pk=pk
+    )
     
-    # Récupérer les inscriptions depuis le modèle finance.Inscription
-    from finance.models import Inscription
+    # Récupérer les inscriptions avec les informations des élèves en une seule requête
     inscriptions = Inscription.objects.filter(
         classe_demandee=class_obj,
         annee_scolaire=class_obj.school_year
-    ).select_related('eleve')
+    ).select_related('eleve__userprofile') # Optimisation clé ici
     
-    # Calculer le nombre d'élèves inscrits
     enrolled_students_count = inscriptions.count()
     
-    # Calculer le pourcentage d'occupation
     if class_obj.max_students > 0:
         occupancy_percentage = (enrolled_students_count / class_obj.max_students) * 100
     else:
         occupancy_percentage = 0
     
-    # Récupérer les matières assignées à cette classe
-    all_subjects = Subject.objects.all()
-    teachers = User.objects.filter(userprofile__user_type='teacher')
+    # Récupérer les matières assignées avec les infos de la matière et de l'enseignant
     assigned_subjects = ClassSubject.objects.filter(
         class_obj=class_obj, 
         school_year=class_obj.school_year
-    ).select_related('subject', 'teacher').order_by('subject__name')
+    ).select_related('subject', 'teacher__userprofile').order_by('subject__name')
     
+    # Pour le formulaire d'ajout, on a besoin de toutes les matières et enseignants
+    all_subjects = Subject.objects.all()
+    teachers = User.objects.filter(userprofile__user_type='teacher').select_related('userprofile')
+
     context = {
         'class_obj': class_obj,
         'inscriptions': inscriptions,
@@ -510,7 +513,6 @@ def class_detail(request, pk):
     }
     
     return render(request, 'academics/class_detail.html', context)
-# Dans academics/views.py
 
 @login_required
 @user_passes_test(is_admin)
@@ -520,7 +522,7 @@ def add_subject_to_class(request, class_pk):
     if request.method == 'POST':
         subject_id = request.POST.get('subject')
         teacher_id = request.POST.get('teacher')
-        coefficient = request.POST.get('coefficient', 1) # Récupérer le coefficient
+        coefficient = request.POST.get('coefficient', 1) #
         
         subject = get_object_or_404(Subject, pk=subject_id)
         teacher = get_object_or_404(User, pk=teacher_id)

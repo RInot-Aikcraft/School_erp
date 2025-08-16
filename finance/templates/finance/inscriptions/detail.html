@@ -49,8 +49,8 @@
                                             <strong>{{ inscription.date_inscription|date:"d/m/Y H:i" }}</strong>
                                         </li>
                                         <li class="list-group-item d-flex justify-content-between align-items-center">
-                                            <span>type d'inscription:</span>
-                                            <strong>{{ inscription.type_inscription }}</strong>
+                                            <span>Type d'inscription:</span>
+                                            <strong>{{ inscription.get_type_inscription_display }}</strong>
                                         </li>
                                         <li class="list-group-item d-flex justify-content-between align-items-center">
                                             <span>Statut:</span>
@@ -111,7 +111,7 @@
                                                 {% endfor %}
                                                 <tr class="table-active">
                                                     <th>Total</th>
-                                                    <th>{{ frais_total|format_ariary }}</th>
+                                                    <th>{{ frais_total_inscription|format_ariary }}</th>
                                                 </tr>
                                             </tbody>
                                         </table>
@@ -135,7 +135,7 @@
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {% for paiement in paiements %}
+                                                {% for paiement in paiements_inscription %}
                                                 <tr>
                                                     <td>{{ paiement.id }}</td>
                                                     <td>{{ paiement.date_paiement|date:"d/m/Y H:i" }}</td>
@@ -143,17 +143,20 @@
                                                     <td>{{ paiement.get_mode_paiement_display }}</td>
                                                     <td>
                                                         {% if paiement.statut == 'VALIDE' %}
-                                                            <span class="badge bg-success">{{ paiement.get_statut_display }}</span>
+                                                            Payé
                                                         {% elif paiement.statut == 'EN_ATTENTE' %}
-                                                            <span class="badge bg-warning">{{ paiement.get_statut_display }}</span>
+                                                            En attente
                                                         {% elif paiement.statut == 'ANNULE' %}
-                                                            <span class="badge bg-danger">{{ paiement.get_statut_display }}</span>
+                                                            Annulé
                                                         {% endif %}
                                                     </td>
                                                     <td>
                                                         <div class="btn-group">
                                                             <a href="{% url 'finance:modifier_paiement' paiement.pk %}" class="btn btn-sm btn-outline-info" title="Modifier">
                                                                 <i class="fas fa-edit"></i>
+                                                            </a>
+                                                            <a href="{% url 'finance:detail_paiement' paiement.pk %}" class="btn btn-sm btn-outline-primary" title="Détails">
+                                                                <i class="fas fa-eye"></i>
                                                             </a>
                                                         </div>
                                                     </td>
@@ -165,11 +168,124 @@
                                                 {% endfor %}
                                                 <tr class="table-active">
                                                     <th>Total payé</th>
-                                                    <th colspan="5">{{ montant_paye|format_ariary }}</th>
+                                                    <th colspan="5">{{ montant_paye_inscription|format_ariary }}</th>
                                                 </tr>
-                                                <tr class="table-{% if solde > 0 %}danger{% else %}success{% endif %}">
+                                                <tr class="table-{% if solde_inscription > 0 %}danger{% else %}success{% endif %}">
                                                     <th>Solde</th>
-                                                    <th colspan="5">{{ solde|format_ariary }}</th>
+                                                    <th colspan="5">{{ solde_inscription|format_ariary }}</th>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="card mb-4">
+                                <div class="card-body">
+                                    <h5 class="card-title">Calendrier de paiement des écolages</h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>Mois</th>
+                                                    <th>Montant dû</th>
+                                                    <th>Montant payé</th>
+                                                    <th>Solde</th>
+                                                    <th>Statut</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for mois in tous_les_mois %}
+                                                <tr class="{% if mois.statut_temporel == 'à_venir' and not mois.est_paye %}table-info{% elif mois.est_paye %}table-success{% else %}table-danger{% endif %}">
+                                                    <td>{{ mois.nom_mois }} {{ mois.annee }}</td>
+                                                    <td>{{ mois.montant_du|format_ariary }}</td>
+                                                    <td>{{ mois.montant_paye|format_ariary }}</td>
+                                                    <td>{{ mois.solde|format_ariary }}</td>
+                                                    <td>
+                                                        {{ mois.statut_affiche }}
+                                                    </td>
+                                                    <td>
+                                                        {% if mois.est_paye %}
+                                                            <a href="{% url 'finance:ajouter_paiement' %}?eleve={{ inscription.eleve.id }}&mois={{ mois.mois }}" class="btn btn-sm btn-outline-secondary">
+                                                                <i class="fas fa-receipt me-1"></i>Détails
+                                                            </a>
+                                                        {% elif mois.statut_temporel == 'à_venir' %}
+                                                            <span class="text-muted">À venir</span>
+                                                        {% else %}
+                                                            <a href="{% url 'finance:ajouter_paiement' %}?eleve_id={{ inscription.eleve.id }}&mois={{ mois.mois }}&montant={{ mois.montant_du }}&inscription_id={{ inscription.id }}" class="btn btn-sm btn-outline-primary">
+                                                                <i class="fas fa-money-bill-wave me-1"></i>Payer
+                                                            </a>
+                                                        {% endif %}
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                                <tr class="table-active">
+                                                    <th>Total</th>
+                                                    <th>{{ mois_payes_count }} mois payés / {{ mois_impayes_count }} mois impayés / {{ mois_avenir_count }} mois à venir</th>
+                                                    <th>{{ total_ecolage_du|format_ariary }}</th>
+                                                    <th>{{ total_ecolage_paye|format_ariary }}</th>
+                                                    <th>{{ solde_ecolage|format_ariary }}</th>
+                                                    <th></th>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="card mb-4">
+                                <div class="card-body">
+                                    <h5 class="card-title">Autres paiements de l'élève</h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>ID</th>
+                                                    <th>Type de frais</th>
+                                                    <th>Date</th>
+                                                    <th>Montant</th>
+                                                    <th>Mode</th>
+                                                    <th>Statut</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for paiement in autres_paiements %}
+                                                <tr>
+                                                    <td>{{ paiement.id }}</td>
+                                                    <td>{{ paiement.type_frais.nom_frais }}</td>
+                                                    <td>{{ paiement.date_paiement|date:"d/m/Y H:i" }}</td>
+                                                    <td>{{ paiement.montant|format_ariary }}</td>
+                                                    <td>{{ paiement.get_mode_paiement_display }}</td>
+                                                    <td>
+                                                        {% if paiement.statut == 'VALIDE' %}
+                                                            Payé
+                                                        {% elif paiement.statut == 'EN_ATTENTE' %}
+                                                            En attente
+                                                        {% elif paiement.statut == 'ANNULE' %}
+                                                            Annulé
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>
+                                                        <div class="btn-group">
+                                                            <a href="{% url 'finance:modifier_paiement' paiement.pk %}" class="btn btn-sm btn-outline-info" title="Modifier">
+                                                                <i class="fas fa-edit"></i>
+                                                            </a>
+                                                            <a href="{% url 'finance:detail_paiement' paiement.pk %}" class="btn btn-sm btn-outline-primary" title="Détails">
+                                                                <i class="fas fa-eye"></i>
+                                                            </a>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                {% empty %}
+                                                <tr>
+                                                    <td colspan="7" class="text-center">Aucun autre paiement trouvé</td>
+                                                </tr>
+                                                {% endfor %}
+                                                <tr class="table-active">
+                                                    <th>Total payé</th>
+                                                    <th colspan="6">{{ montant_paye_autres|format_ariary }}</th>
                                                 </tr>
                                             </tbody>
                                         </table>
@@ -191,8 +307,11 @@
                                             <i class="fas fa-check me-2"></i>Confirmer
                                         </a>
                                         {% endif %}
-                                        <a href="{% url 'finance:ajouter_paiement_inscription' inscription.pk %}" class="btn btn-outline-primary">
-                                            <i class="fas fa-money-bill-wave me-2"></i>Ajouter un paiement
+                                        <a href="{% url 'finance:ajouter_paiement' %}?eleve_id={{ inscription.eleve.id }}&inscription_id={{ inscription.id }}&type_paiement=inscription" class="btn btn-outline-primary">
+                                            <i class="fas fa-money-bill-wave me-2"></i>Ajouter un paiement d'inscription
+                                        </a>
+                                        <a href="{% url 'finance:ajouter_paiement' %}?eleve={{ inscription.eleve.id }}" class="btn btn-outline-primary">
+                                            <i class="fas fa-money-bill-wave me-2"></i>Ajouter un autre paiement
                                         </a>
                                         {% if inscription.statut != 'ANNULÉE' %}
                                         <a href="{% url 'finance:supprimer_inscription' inscription.pk %}" class="btn btn-outline-danger">
@@ -209,22 +328,23 @@
                             <div class="card">
                                 <div class="card-body">
                                     <h5 class="card-title">Résumé financier</h5>
-                                    <ul class="list-group list-group-flush">
+                                    <h6 class="card-subtitle mb-3 text-muted">Frais d'inscription</h6>
+                                    <ul class="list-group list-group-flush mb-4">
                                         <li class="list-group-item d-flex justify-content-between align-items-center">
                                             <span>Total des frais d'inscription:</span>
-                                            <strong>{{ frais_total|format_ariary }}</strong>
+                                            <strong>{{ frais_total_inscription|format_ariary }}</strong>
                                         </li>
                                         <li class="list-group-item d-flex justify-content-between align-items-center">
                                             <span>Montant payé:</span>
-                                            <strong>{{ montant_paye|format_ariary }}</strong>
+                                            <strong>{{ montant_paye_inscription|format_ariary }}</strong>
                                         </li>
                                         <li class="list-group-item d-flex justify-content-between align-items-center">
                                             <span>Solde:</span>
                                             <strong>
-                                                {% if solde > 0 %}
-                                                    <span class="text-danger">{{ solde|format_ariary }}</span>
+                                                {% if solde_inscription > 0 %}
+                                                    <span class="text-danger">{{ solde_inscription|format_ariary }}</span>
                                                 {% else %}
-                                                    <span class="text-success">{{ solde|format_ariary }}</span>
+                                                    <span class="text-success">{{ solde_inscription|format_ariary }}</span>
                                                 {% endif %}
                                             </strong>
                                         </li>
@@ -232,10 +352,107 @@
                                             <span>Statut du paiement:</span>
                                             <strong>
                                                 {% if inscription.est_complettement_paye %}
-                                                    <span class="badge bg-success">Complètement payé</span>
+                                                    Payé
                                                 {% else %}
-                                                    <span class="badge bg-warning">Partiellement payé</span>
+                                                    Impayé
                                                 {% endif %}
+                                            </strong>
+                                        </li>
+                                    </ul>
+                                    
+                                    <h6 class="card-subtitle mb-3 text-muted">Frais d'écolage</h6>
+                                    <ul class="list-group list-group-flush mb-4">
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span>Total des frais d'écolage:</span>
+                                            <strong>{{ total_ecolage_du|format_ariary }}</strong>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span>Montant payé:</span>
+                                            <strong>{{ total_ecolage_paye|format_ariary }}</strong>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span>Solde:</span>
+                                            <strong>
+                                                {% if solde_ecolage > 0 %}
+                                                    <span class="text-danger">{{ solde_ecolage|format_ariary }}</span>
+                                                {% else %}
+                                                    <span class="text-success">{{ solde_ecolage|format_ariary }}</span>
+                                                {% endif %}
+                                            </strong>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span>Progression:</span>
+                                            <strong>
+                                                <div class="progress" style="height: 20px;">
+                                                    <div class="progress-bar" role="progressbar" style="width: {% widthratio total_ecolage_paye total_ecolage_du 100 %}%" 
+                                                        aria-valuenow="{{ total_ecolage_paye }}" aria-valuemin="0" aria-valuemax="{{ total_ecolage_du }}">
+                                                        {{ mois_payes_count }} / {{ mois_payes_count|add:mois_impayes_count }} mois
+                                                    </div>
+                                                </div>
+                                            </strong>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span>Mois à venir:</span>
+                                            <strong>{{ mois_avenir_count }} mois</strong>
+                                        </li>
+                                    </ul>
+                                    
+                                    <h6 class="card-subtitle mb-3 text-muted">Autres frais</h6>
+                                    <ul class="list-group list-group-flush mb-4">
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span>Total des autres frais:</span>
+                                            <strong>{{ total_autres_frais|format_ariary }}</strong>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span>Montant payé:</span>
+                                            <strong>{{ montant_paye_autres|format_ariary }}</strong>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span>Solde:</span>
+                                            <strong>
+                                                {% if solde_autres > 0 %}
+                                                    <span class="text-danger">{{ solde_autres|format_ariary }}</span>
+                                                {% else %}
+                                                    <span class="text-success">{{ solde_autres|format_ariary }}</span>
+                                                {% endif %}
+                                            </strong>
+                                        </li>
+                                    </ul>
+                                    
+                                    <hr class="my-4">
+                                    
+                                    <h6 class="card-subtitle mb-3 text-muted">Total général</h6>
+                                    <ul class="list-group list-group-flush">
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span>Total des frais:</span>
+                                            <strong>{{ frais_total_inscription|add:total_ecolage_du|add:total_autres_frais|format_ariary }}</strong>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span>Total payé:</span>
+                                            <strong>{{ montant_paye_inscription|add:total_ecolage_paye|add:montant_paye_autres|format_ariary }}</strong>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span>Total impayé:</span>
+                                            <strong>
+                                                {% with total_impaye=solde_inscription|add:solde_ecolage|add:solde_autres %}
+                                                    {% if total_impaye > 0 %}
+                                                        <span class="text-danger">{{ total_impaye|format_ariary }}</span>
+                                                    {% else %}
+                                                        <span class="text-success">{{ total_impaye|format_ariary }}</span>
+                                                    {% endif %}
+                                                {% endwith %}
+                                            </strong>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span>Solde total:</span>
+                                            <strong>
+                                                {% with solde_total=solde_inscription|add:solde_ecolage|add:solde_autres %}
+                                                    {% if solde_total > 0 %}
+                                                        <span class="text-danger">{{ solde_total|format_ariary }}</span>
+                                                    {% else %}
+                                                        <span class="text-success">{{ solde_total|format_ariary }}</span>
+                                                    {% endif %}
+                                                {% endwith %}
                                             </strong>
                                         </li>
                                     </ul>
