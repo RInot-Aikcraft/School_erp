@@ -1,6 +1,5 @@
 {% extends 'base.html' %}
 {% load static %}
-{% load custom_filters %}
 {% block title %}Emploi du temps - {{ class_obj.name }}{% endblock %}
 
 {% block content %}
@@ -59,22 +58,26 @@
                             </th>
                             {% for day_num, day_name in days_of_week %}
                             <td class="align-middle" style="height: 80px;">
-                                {% with day_data=schedule_by_day|get_item:day_num %}
-                                    {% with entry=day_data.slots|get_item:slot.start %}
-                                        {% if entry %}
-                                            <div class="p-2 h-100 d-flex flex-column rounded text-white" 
-                                                 style="background-color: {{ entry.class_subject.subject.color }};">
-                                                <strong class="small">{{ entry.class_subject.subject.name }}</strong>
-                                                <small class="text-white-50">{{ entry.class_subject.teacher.first_name }} {{ entry.class_subject.teacher.last_name }}</small>
-                                                <small class="text-white-50 mt-auto">
-                                                    {{ entry.time_slot.start_time|date:"H:i" }}-{{ entry.time_slot.end_time|date:"H:i" }}
-                                                </small>
-                                            </div>
-                                        {% else %}
-                                            <span class="text-muted">-</span>
-                                        {% endif %}
-                                    {% endwith %}
-                                {% endwith %}
+                                {% for day_key, day_data in schedule_by_day.items %}
+                                    {% if day_key == day_num %}
+                                        {% for time_key, entry in day_data.slots.items %}
+                                            {% if time_key == slot.start %}
+                                                {% if entry %}
+                                                    <div class="p-2 h-100 d-flex flex-column rounded text-white" 
+                                                         style="background-color: {{ entry.class_subject.subject.color }};">
+                                                        <strong class="small">{{ entry.class_subject.subject.name }}</strong>
+                                                        <small class="text-white-50">{{ entry.class_subject.teacher.first_name }} {{ entry.class_subject.teacher.last_name }}</small>
+                                                        <small class="text-white-50 mt-auto">
+                                                            {{ entry.time_slot.start_time|date:"H:i" }}-{{ entry.time_slot.end_time|date:"H:i" }}
+                                                        </small>
+                                                    </div>
+                                                {% else %}
+                                                    <span class="text-muted">-</span>
+                                                {% endif %}
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% endif %}
+                                {% endfor %}
                             </td>
                             {% endfor %}
                         </tr>

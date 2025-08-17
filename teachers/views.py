@@ -27,6 +27,7 @@ def teacher_dashboard(request):
     Vue pour le tableau de bord du professeur
     """
     teacher = request.user
+    today = timezone.now().date()
     
     # Récupérer l'année scolaire active
     active_school_year = SchoolYear.objects.filter(current=True).first()
@@ -51,21 +52,92 @@ def teacher_dashboard(request):
         annee_scolaire=active_school_year
     ).distinct().count()
     
+    # Calculer la moyenne d'élèves par classe
+    average_students_per_class = total_students / teacher_classes_count if teacher_classes_count > 0 else 0
+    
     # Compter le nombre total de cours du professeur
     total_courses = ScheduleEntry.objects.filter(
         class_subject__teacher=teacher,
         schedule__school_year=active_school_year
     ).count()
     
+    # Compter le nombre de cours cette semaine
+    start_of_week = today - timezone.timedelta(days=today.weekday())
+    end_of_week = start_of_week + timezone.timedelta(days=6)
+    courses_this_week = ScheduleEntry.objects.filter(
+        class_subject__teacher=teacher,
+        schedule__school_year=active_school_year,
+        day_of_week__in=[str(i) for i in range(1, 8)]
+    ).count()
+    
+    # Récupérer les prochains cours (pour les 7 prochains jours)
+    upcoming_classes = ScheduleEntry.objects.filter(
+        class_subject__teacher=teacher,
+        schedule__school_year=active_school_year,
+        day_of_week__in=[str((today.weekday() + i) % 7 + 1) for i in range(7)]
+    ).select_related(
+        'class_subject__subject',
+        'class_subject__class_obj',
+        'time_slot'
+    ).order_by('day_of_week', 'time_slot__start_time')
+    
+    # Ajouter le nom du jour de la semaine pour l'affichage
+    days_of_week = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche']
+    for class_item in upcoming_classes:
+        class_item.day_of_week_display = days_of_week[int(class_item.day_of_week) - 1]
+    
+    # Récupérer les interrogations à venir (pour les 30 prochains jours)
+    upcoming_interrogations = Interrogation.objects.filter(
+        class_subject__teacher=teacher,
+        date__gt=today,
+        date__lte=today + timezone.timedelta(days=30)
+    ).select_related(
+        'class_subject__subject',
+        'class_subject__class_obj',
+        'chapter'
+    ).order_by('date')
+    
+    # Récupérer l'emploi du temps du jour
+    today_day_of_week = str(today.weekday() + 1)  # Django utilise 1-7 pour lundi-dimanche
+    today_schedule = ScheduleEntry.objects.filter(
+        class_subject__teacher=teacher,
+        schedule__school_year=active_school_year,
+        day_of_week=today_day_of_week
+    ).select_related(
+        'class_subject__subject',
+        'class_subject__class_obj',
+        'time_slot'
+    ).order_by('time_slot__start_time')
+    
+    # Récupérer les dernières notes enregistrées
+    recent_grades = Grade.objects.filter(
+        assignment__teacher=teacher
+    ).select_related(
+        'student',
+        'assignment'
+    ).order_by('-graded_at')[:10]
+    
+    # Calculer les pourcentages pour chaque note
+    for grade in recent_grades:
+        grade.percentage = (grade.points_earned / grade.assignment.total_points) * 100 if grade.assignment.total_points > 0 else 0
+    
     context = {
+        'today': today,
         'teacher_classes_count': teacher_classes_count,
         'teacher_subjects_count': teacher_subjects_count,
         'total_students': total_students,
+        'average_students_per_class': average_students_per_class,
         'total_courses': total_courses,
+        'courses_this_week': courses_this_week,
+        'upcoming_classes': upcoming_classes,
+        'upcoming_interrogations': upcoming_interrogations,
+        'today_schedule': today_schedule,
+        'recent_grades': recent_grades,
         'active_school_year': active_school_year,
     }
     
     return render(request, 'teachers/dashboard.html', context)
+
 
 @login_required
 def teacher_classes_list(request):

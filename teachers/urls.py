@@ -30,4 +30,5 @@ urlpatterns = [
 
     # Ajoutez cette ligne à votre urlpatterns existant
     path('interrogation/<int:pk>/export-pdf/', views.teacher_interrogation_export_pdf, name='interrogation_export_pdf'),
+    path('assignments/', views.teacher_assignments, name='assignments'),
 ]
