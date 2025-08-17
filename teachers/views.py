@@ -5,7 +5,7 @@ from academics.models import ClassSubject, ScheduleEntry, Enrollment, Class, Sch
 from school.models import SchoolYear
 from finance.models import Inscription
 from django.db.models import Prefetch
-from .models import ProgramChapter, Subtitle,  Interrogation, InterrogationGrade
+from .models import ProgramChapter, Subtitle,  Interrogation, InterrogationGrade, Textbook
 from django.core.paginator import Paginator
 import io
 from reportlab.lib.pagesizes import letter, A4
@@ -225,6 +225,13 @@ def teacher_class_detail(request, pk):
     else:
         occupancy_percentage = 0
     
+    # Récupérer les entrées du cahier de texte pour chaque matière
+    for subject in teacher_subjects:
+        subject.textbook_entries = Textbook.objects.filter(
+            teacher=teacher,
+            class_subject=subject
+        ).order_by('-date')
+    
     # Récupérer les devoirs récents pour cette classe dans les matières du professeur
     recent_assignments = Assignment.objects.filter(
         class_obj=class_obj,
@@ -398,12 +405,37 @@ def teacher_class_detail(request, pk):
     else:
         occupancy_percentage = 0
     
+    # Récupérer les entrées du cahier de texte pour chaque matière, triées par date décroissante
+    for subject in teacher_subjects:
+        subject.textbook_entries = Textbook.objects.filter(
+            teacher=teacher,
+            class_subject=subject
+        ).order_by('-date')  # Tri par date décroissante
+    
+    # Récupérer les devoirs récents pour cette classe dans les matières du professeur
+    recent_assignments = Assignment.objects.filter(
+        class_obj=class_obj,
+        subject__in=teacher_subjects.values_list('subject', flat=True)
+    ).order_by('-due_date')[:5]
+    
+    # Récupérer les notes récentes données par ce professeur dans cette classe
+    recent_grades = Grade.objects.filter(
+        assignment__class_obj=class_obj,
+        assignment__teacher=teacher
+    ).select_related('student', 'assignment').order_by('-graded_at')[:10]
+    
+    # Calculer les pourcentages pour chaque note
+    for grade in recent_grades:
+        grade.percentage = (grade.points_earned / grade.assignment.total_points) * 100 if grade.assignment.total_points > 0 else 0
+    
     context = {
         'class_obj': class_obj,
         'teacher_subjects': teacher_subjects,
         'inscriptions': inscriptions,
         'enrolled_students_count': enrolled_students_count,
         'occupancy_percentage': occupancy_percentage,
+        'recent_assignments': recent_assignments,
+        'recent_grades': recent_grades,
         'active_school_year': active_school_year,
     }
     
@@ -1299,3 +1331,230 @@ def teacher_interrogation_export_pdf(request, pk):
     response['Content-Disposition'] = f'attachment; filename="notes_{interrogation.class_subject.class_obj.name}_{interrogation.class_subject.subject.name}_{interrogation.date.strftime("%Y%m%d")}.pdf"'
     
     return response
+
+
+@login_required
+def teacher_textbook_list(request):
+    """
+    Vue pour lister toutes les entrées du cahier de texte du professeur
+    """
+    teacher = request.user
+    
+    # Récupérer toutes les années scolaires
+    school_years = SchoolYear.objects.all().order_by('-start_date')
+    
+    # Récupérer l'année scolaire active ou la plus récente
+    active_school_year = SchoolYear.objects.filter(current=True).first()
+    if not active_school_year and school_years:
+        active_school_year = school_years.first()
+    
+    # Récupérer l'année scolaire sélectionnée (depuis les paramètres GET ou l'année active par défaut)
+    selected_year_id = request.GET.get('school_year')
+    if selected_year_id:
+        selected_year = get_object_or_404(SchoolYear, pk=selected_year_id)
+    else:
+        selected_year = active_school_year
+    
+    # Récupérer toutes les entrées du cahier de texte pour l'année scolaire sélectionnée
+    textbooks = Textbook.objects.filter(
+        teacher=teacher,
+        class_subject__school_year=selected_year
+    ).select_related(
+        'class_subject__subject',
+        'class_subject__class_obj'
+    ).order_by('-date')
+    
+    context = {
+        'textbooks': textbooks,
+        'school_years': school_years,
+        'selected_year': selected_year,
+        'active_school_year': active_school_year,
+    }
+    
+    return render(request, 'teachers/textbook/list.html', context)
+
+from django.http import JsonResponse
+
+@login_required
+def teacher_textbook_create(request):
+    """
+    Vue pour créer une nouvelle entrée dans le cahier de texte
+    """
+    teacher = request.user
+    
+    # Récupérer les classes où le professeur enseigne
+    teacher_classes = ClassSubject.objects.filter(
+        teacher=teacher
+    ).select_related('class_obj', 'subject')
+    
+    # Récupérer la classe pré-sélectionnée si elle existe
+    preselected_class = None
+    class_subject_id = request.GET.get('class_subject')
+    if class_subject_id:
+        try:
+            preselected_class = ClassSubject.objects.get(pk=class_subject_id, teacher=teacher)
+        except ClassSubject.DoesNotExist:
+            pass
+    
+    if request.method == 'POST':
+        class_subject_id = request.POST.get('class_subject')
+        content = request.POST.get('content')
+        
+        class_subject = get_object_or_404(ClassSubject, pk=class_subject_id)
+        
+        # Vérifier que le professeur enseigne bien dans cette classe
+        if class_subject.teacher != teacher:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': False,
+                    'message': "Vous n'êtes pas autorisé à créer une entrée pour cette classe."
+                })
+            messages.error(request, "Vous n'êtes pas autorisé à créer une entrée pour cette classe.")
+            return redirect('teachers:textbook_create')
+        
+        # Créer l'entrée du cahier de texte avec la date du jour
+        textbook = Textbook.objects.create(
+            teacher=teacher,
+            class_subject=class_subject,
+            content=content,
+            date=timezone.now().date()  # Date automatique du jour
+        )
+        
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': True,
+                'message': 'Entrée ajoutée au cahier de texte avec succès!',
+                'textbook_id': textbook.id
+            })
+        
+        messages.success(request, 'Entrée ajoutée au cahier de texte avec succès!')
+        
+        # Rediriger vers la page du cahier de texte pour cette matière
+        return redirect('teachers:textbook_subject', class_subject_pk=class_subject.pk)
+    
+    context = {
+        'teacher_classes': teacher_classes,
+        'preselected_class': preselected_class,
+    }
+    
+    return render(request, 'teachers/textbook/create.html', context)
+
+
+@login_required
+def teacher_textbook_detail(request, pk):
+    """
+    Vue pour afficher les détails d'une entrée du cahier de texte
+    """
+    teacher = request.user
+    textbook = get_object_or_404(Textbook, pk=pk)
+    
+    # Vérifier que le professeur est bien l'auteur de cette entrée
+    if textbook.teacher != teacher:
+        messages.error(request, "Vous n'êtes pas autorisé à voir cette entrée.")
+        return redirect('teachers:textbook_list')
+    
+    context = {
+        'textbook': textbook,
+    }
+    
+    return render(request, 'teachers/textbook/detail.html', context)
+
+@login_required
+def teacher_textbook_edit(request, pk):
+    """
+    Vue pour modifier une entrée du cahier de texte
+    """
+    teacher = request.user
+    textbook = get_object_or_404(Textbook, pk=pk)
+    
+    # Vérifier que le professeur est bien l'auteur de cette entrée
+    if textbook.teacher != teacher:
+        messages.error(request, "Vous n'êtes pas autorisé à modifier cette entrée.")
+        return redirect('teachers:textbook_list')
+    
+    # Récupérer les classes où le professeur enseigne
+    teacher_classes = ClassSubject.objects.filter(
+        teacher=teacher
+    ).select_related('class_obj', 'subject')
+    
+    if request.method == 'POST':
+        class_subject_id = request.POST.get('class_subject')
+        content = request.POST.get('content')
+        
+        class_subject = get_object_or_404(ClassSubject, pk=class_subject_id)
+        
+        # Vérifier que le professeur enseigne bien dans cette classe
+        if class_subject.teacher != teacher:
+            messages.error(request, "Vous n'êtes pas autorisé à modifier cette entrée pour cette classe.")
+            return redirect('teachers:textbook_edit', pk=textbook.pk)
+        
+        # Mettre à jour l'entrée du cahier de texte
+        textbook.class_subject = class_subject
+        textbook.content = content
+        textbook.save()
+        
+        messages.success(request, 'Entrée du cahier de texte mise à jour avec succès!')
+        return redirect('teachers:textbook_detail', pk=textbook.pk)
+    
+    context = {
+        'textbook': textbook,
+        'teacher_classes': teacher_classes,
+    }
+    
+    return render(request, 'teachers/textbook/edit.html', context)
+
+@login_required
+def teacher_textbook_delete(request, pk):
+    """
+    Vue pour supprimer une entrée du cahier de texte
+    """
+    teacher = request.user
+    textbook = get_object_or_404(Textbook, pk=pk)
+    
+    # Vérifier que le professeur est bien l'auteur de cette entrée
+    if textbook.teacher != teacher:
+        messages.error(request, "Vous n'êtes pas autorisé à supprimer cette entrée.")
+        return redirect('teachers:textbook_list')
+    
+    if request.method == 'POST':
+        textbook.delete()
+        messages.success(request, 'Entrée du cahier de texte supprimée avec succès!')
+        return redirect('teachers:textbook_list')
+    
+    context = {
+        'textbook': textbook,
+    }
+    
+    return render(request, 'teachers/textbook/delete.html', context)
+
+
+@login_required
+def teacher_textbook_subject(request, class_subject_pk):
+    """
+    Vue pour afficher le cahier de texte pour une matière spécifique
+    """
+    teacher = request.user
+    class_subject = get_object_or_404(ClassSubject, pk=class_subject_pk)
+    
+    # Vérifier que le professeur enseigne bien cette matière dans cette classe
+    if class_subject.teacher != teacher:
+        messages.error(request, "Vous n'êtes pas autorisé à accéder à ce cahier de texte.")
+        return redirect('teachers:class_detail', pk=class_subject.class_obj.pk)
+    
+    # Récupérer toutes les entrées du cahier de texte pour cette matière
+    textbook_entries = Textbook.objects.filter(
+        teacher=teacher,
+        class_subject=class_subject
+    ).order_by('-date')
+    
+    # Pagination
+    paginator = Paginator(textbook_entries, 10)
+    page_number = request.GET.get('page')
+    entries = paginator.get_page(page_number)
+    
+    context = {
+        'class_subject': class_subject,
+        'entries': entries,
+    }
+    
+    return render(request, 'teachers/textbook/subject.html', context)

@@ -1,5 +1,4 @@
-<!-- teachers/templates/teachers/dashboard.html -->
-{% extends 'teachers/base.html' %}
+{% extends 'base.html' %}
 {% load static %}
 {% block title %}Tableau de bord - Professeur{% endblock %}
 {% block content %}
@@ -258,11 +257,6 @@
                     <div class="col-md-3 mb-3">
                         <a href="{% url 'teachers:schedule' %}" class="btn btn-outline-success w-100">
                             <i class="fas fa-calendar-alt me-2"></i> Emploi du temps
-                        </a>
-                    </div>
-                    <div class="col-md-3 mb-3">
-                        <a href="{% url 'teachers:assignments' %}" class="btn btn-outline-warning w-100">
-                            <i class="fas fa-tasks me-2"></i> Devoirs
                         </a>
                     </div>
                     <div class="col-md-3 mb-3">

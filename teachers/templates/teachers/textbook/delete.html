@@ -1,0 +1,43 @@
+{% extends 'teachers/base.html' %}
+{% load static %}
+{% block title %}Supprimer - Cahier de texte{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Supprimer - Cahier de texte</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <a href="{% url 'teachers:textbook_detail' textbook.pk %}" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Retour aux détails
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            Êtes-vous sûr de vouloir supprimer cette entrée du cahier de texte ? Cette action est irréversible.
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5>{{ textbook.class_subject.subject.name }} - {{ textbook.class_subject.class_obj.name }}</h5>
+                <p class="text-muted mb-0">{{ textbook.date|date:"d/m/Y" }}</p>
+                <hr>
+                <p>{{ textbook.content|truncatechars:200 }}</p>
+            </div>
+        </div>
+        
+        <form method="post">
+            {% csrf_token %}
+            <div class="d-flex justify-content-end">
+                <a href="{% url 'teachers:textbook_detail' textbook.pk %}" class="btn btn-secondary me-2">Annuler</a>
+                <button type="submit" class="btn btn-danger">
+                    <i class="fas fa-trash me-1"></i> Supprimer
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

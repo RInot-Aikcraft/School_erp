@@ -1,0 +1,50 @@
+{% extends 'teachers/base.html' %}
+{% load static %}
+{% block title %}Détails - Cahier de texte{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <div>
+        <h1 class="h2">Détails - Cahier de texte</h1>
+        <p class="text-muted mb-0">
+            {{ textbook.class_subject.subject.name }} - {{ textbook.class_subject.class_obj.name }}
+        </p>
+    </div>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <a href="{% url 'teachers:textbook_edit' textbook.pk %}" class="btn btn-sm btn-warning">
+                <i class="fas fa-edit me-1"></i> Modifier
+            </a>
+            <a href="{% url 'teachers:textbook_delete' textbook.pk %}" class="btn btn-sm btn-danger">
+                <i class="fas fa-trash me-1"></i> Supprimer
+            </a>
+            <a href="{% url 'teachers:textbook_list' %}" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Retour à la liste
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <p><strong>Date:</strong> {{ textbook.date|date:"d/m/Y" }}</p>
+                <p><strong>Classe:</strong> {{ textbook.class_subject.class_obj.name }}</p>
+            </div>
+            <div class="col-md-6">
+                <p><strong>Matière:</strong> {{ textbook.class_subject.subject.name }}</p>
+                <p><strong>Créé le:</strong> {{ textbook.created_at|date:"d/m/Y H:i" }}</p>
+            </div>
+        </div>
+        
+        <div class="mb-4">
+            <h5>Contenu du cours</h5>
+            <div class="card">
+                <div class="card-body bg-light">
+                    <p class="mb-0">{{ textbook.content|linebreaks }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

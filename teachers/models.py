@@ -92,3 +92,21 @@ class InterrogationGrade(models.Model):
         if self.interrogation.total_points > 0:
             return (self.points_earned / self.interrogation.total_points) * 100
         return 0
+    
+
+class Textbook(models.Model):
+    """Modèle pour le cahier de texte numérique"""
+    teacher = models.ForeignKey(User, on_delete=models.CASCADE, related_name='textbooks')
+    class_subject = models.ForeignKey(ClassSubject, on_delete=models.CASCADE, related_name='textbooks')
+    date = models.DateField(auto_now_add=True)
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Cahier de texte"
+        verbose_name_plural = "Cahiers de texte"
+        ordering = ['-date']
+    
+    def __str__(self):
+        return f"Cahier de texte - {self.class_subject.subject.name} - {self.class_subject.class_obj.name} - {self.date}"

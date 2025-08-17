@@ -1,0 +1,50 @@
+{% extends 'teachers/base.html' %}
+{% load static %}
+{% block title %}Nouvelle entrée - Cahier de texte{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Nouvelle entrée - Cahier de texte</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            {% if preselected_class %}
+                <a href="{% url 'teachers:textbook_subject' preselected_class.pk %}" class="btn btn-sm btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i> Retour au cahier
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="class_subject" class="form-label">Classe et matière</label>
+                <select class="form-select" id="class_subject" name="class_subject" required>
+                    <option value="" disabled>Choisir une classe et une matière</option>
+                    {% for class_subject in teacher_classes %}
+                        <option value="{{ class_subject.pk }}" {% if preselected_class and class_subject.pk == preselected_class.pk %}selected{% endif %}>
+                            {{ class_subject.class_obj.name }} - {{ class_subject.subject.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="content" class="form-label">Contenu du cours</label>
+                <textarea class="form-control" id="content" name="content" rows="10" required placeholder="Décrivez ce que vous avez fait pendant le cours..."></textarea>
+            </div>
+            <div class="mb-3">
+                <div class="form-text">
+                    <i class="fas fa-info-circle me-1"></i> La date sera automatiquement enregistrée comme date d'aujourd'hui.
+                </div>
+            </div>
+            <div class="d-flex justify-content-end">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-1"></i> Enregistrer
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

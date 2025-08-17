@@ -1,0 +1,48 @@
+{% extends 'teachers/base.html' %}
+{% load static %}
+{% block title %}Modifier - Cahier de texte{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Modifier - Cahier de texte</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <a href="{% url 'teachers:textbook_detail' textbook.pk %}" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Retour aux détails
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="class_subject" class="form-label">Classe et matière</label>
+                <select class="form-select" id="class_subject" name="class_subject" required>
+                    <option value="" disabled>Choisir une classe et une matière</option>
+                    {% for class_subject in teacher_classes %}
+                        <option value="{{ class_subject.pk }}" {% if class_subject.pk == textbook.class_subject.pk %}selected{% endif %}>
+                            {{ class_subject.class_obj.name }} - {{ class_subject.subject.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="content" class="form-label">Contenu du cours</label>
+                <textarea class="form-control" id="content" name="content" rows="10" required>{{ textbook.content }}</textarea>
+            </div>
+            <div class="mb-3">
+                <div class="form-text">
+                    <i class="fas fa-info-circle me-1"></i> Date originale: {{ textbook.date|date:"d/m/Y" }}
+                </div>
+            </div>
+            <div class="d-flex justify-content-end">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-1"></i> Enregistrer les modifications
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

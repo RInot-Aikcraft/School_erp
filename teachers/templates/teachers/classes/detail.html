@@ -1,8 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
-
 {% block title %}Détails de la classe - {{ class_obj.name }}{% endblock %}
-
 {% block content %}
 <div class="container-fluid py-4">
     <!-- En-tête de la page -->
@@ -188,48 +186,11 @@
         <!-- Section : Matières enseignées -->
         <div class="col-md-6 mb-4">
             <div class="card border-0 shadow-sm h-100">
-                <!-- Dans la section "Matières enseignées" -->
-                <div class="col-md-6 mb-4">
-                    <div class="card border-0 shadow-sm h-100">
-                        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0"><i class="fas fa-book me-2 text-primary"></i>Matières enseignées ({{ teacher_subjects|length }})</h5>
-                            <a href="{% url 'teachers:schedule' %}" class="btn btn-sm btn-outline-primary" title="Voir l'emploi du temps">
-                                <i class="fas fa-calendar-alt me-1"></i> Emploi du temps
-                            </a>
-                        </div>
-                        <div class="card-body">
-                            {% if teacher_subjects %}
-                                <div class="list-group">
-                                    {% for subject in teacher_subjects %}
-                                        <div class="list-group-item list-group-item-action">
-                                            <div class="d-flex w-100 justify-content-between">
-                                                <h6 class="mb-1">{{ subject.subject.name }}</h6>
-                                                <span class="badge bg-secondary">Coeff: {{ subject.coefficient }}</span>
-                                            </div>
-                                            <p class="mb-1">Matière que vous enseignez dans cette classe</p>
-                                            <div class="d-flex justify-content-between mt-2">
-                                                <small class="text-muted">{{ subject.subject.description|truncatewords:10 }}</small>
-                                                <div class="btn-group">
-                                                    <a href="{% url 'teachers:program' subject.pk %}" class="btn btn-sm btn-outline-primary">
-                                                        <i class="fas fa-book-open me-1"></i> Programme
-                                                    </a>
-                                                    <a href="{% url 'teachers:interrogations' subject.pk %}" class="btn btn-sm btn-outline-info">
-                                                        <i class="fas fa-clipboard-list me-1"></i> Interrogations
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    {% endfor %}
-                                </div>
-                            {% else %}
-                                <div class="text-center py-5">
-                                    <i class="fas fa-book fa-3x text-muted mb-3"></i>
-                                    <h5 class="text-muted">Aucune matière assignée</h5>
-                                    <p class="text-muted">Vous n'avez aucune matière assignée dans cette classe.</p>
-                                </div>
-                            {% endif %}
-                        </div>
-                    </div>
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-book me-2 text-primary"></i>Matières enseignées ({{ teacher_subjects|length }})</h5>
+                    <a href="{% url 'teachers:schedule' %}" class="btn btn-sm btn-outline-primary" title="Voir l'emploi du temps">
+                        <i class="fas fa-calendar-alt me-1"></i> Emploi du temps
+                    </a>
                 </div>
                 <div class="card-body">
                     {% if teacher_subjects %}
@@ -241,6 +202,20 @@
                                         <span class="badge bg-secondary">Coeff: {{ subject.coefficient }}</span>
                                     </div>
                                     <p class="mb-1">Matière que vous enseignez dans cette classe</p>
+                                    <div class="d-flex justify-content-between mt-2">
+                                        <small class="text-muted">{{ subject.subject.description|truncatewords:10 }}</small>
+                                        <div class="btn-group">
+                                            <a href="{% url 'teachers:program' subject.pk %}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-book-open me-1"></i> Programme
+                                            </a>
+                                            <a href="{% url 'teachers:interrogations' subject.pk %}" class="btn btn-sm btn-outline-info">
+                                                <i class="fas fa-clipboard-list me-1"></i> Interrogations
+                                            </a>
+                                            <a href="{% url 'teachers:textbook_subject' subject.pk %}" class="btn btn-sm btn-outline-warning">
+                                                <i class="fas fa-book me-1"></i> Cahier de texte
+                                            </a>
+                                        </div>
+                                    </div>
                                 </div>
                             {% endfor %}
                         </div>
@@ -276,7 +251,6 @@
     </div>
 </div>
 {% endblock %}
-
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
