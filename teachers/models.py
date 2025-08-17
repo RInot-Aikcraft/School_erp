@@ -1,3 +1,94 @@
 from django.db import models
+from django.contrib.auth.models import User
+from academics.models import ClassSubject
+from django.core.validators import FileExtensionValidator
 
-# Create your models here.
+class ProgramChapter(models.Model):
+    """
+    Modèle pour représenter les chapitres du programme scolaire
+    pour une matière spécifique dans une classe.
+    """
+    class_subject = models.ForeignKey(ClassSubject, on_delete=models.CASCADE, related_name='program_chapters')
+    title = models.CharField(max_length=200, verbose_name="Titre du chapitre")
+    order = models.PositiveIntegerField(default=1, verbose_name="Ordre")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Chapitre du programme"
+        verbose_name_plural = "Chapitres du programme"
+        ordering = ['order', 'title']
+        unique_together = ('class_subject', 'title')
+    
+    def __str__(self):
+        return f"{self.title} - {self.class_subject.subject.name} ({self.class_subject.class_obj.name})"
+
+class Subtitle(models.Model):
+    """
+    Modèle pour représenter les sous-titres d'un chapitre
+    """
+    chapter = models.ForeignKey(ProgramChapter, on_delete=models.CASCADE, related_name='subtitles')
+    title = models.CharField(max_length=300, verbose_name="Titre du sous-titre")
+    order = models.PositiveIntegerField(default=1, verbose_name="Ordre")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Sous-titre"
+        verbose_name_plural = "Sous-titres"
+        ordering = ['order', 'title']
+        unique_together = ('chapter', 'title')
+    
+    def __str__(self):
+        return f"{self.title} - {self.chapter.title}"
+
+class Interrogation(models.Model):
+    """
+    Modèle pour représenter une interrogation (examen)
+    """
+    class_subject = models.ForeignKey(ClassSubject, on_delete=models.CASCADE, related_name='interrogations')
+    chapter = models.ForeignKey(ProgramChapter, on_delete=models.SET_NULL, null=True, blank=True, related_name='interrogations')
+    title = models.CharField(max_length=200, verbose_name="Titre de l'interrogation")
+    description = models.TextField(blank=True, verbose_name="Description")
+    date = models.DateField(verbose_name="Date de l'interrogation")
+    subject_pdf = models.FileField(
+        upload_to='interrogation_subjects/%Y/%m/', 
+        verbose_name="Sujet PDF",
+        validators=[FileExtensionValidator(allowed_extensions=['pdf'])]
+    )
+    total_points = models.PositiveIntegerField(default=20, verbose_name="Total des points")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Interrogation"
+        verbose_name_plural = "Interrogations"
+        ordering = ['-date', 'title']
+    
+    def __str__(self):
+        return f"{self.title} - {self.class_subject.subject.name} ({self.date})"
+
+class InterrogationGrade(models.Model):
+    """
+    Modèle pour représenter les notes des élèves à une interrogation
+    """
+    interrogation = models.ForeignKey(Interrogation, on_delete=models.CASCADE, related_name='grades')
+    student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='interrogation_grades')
+    points_earned = models.FloatField(verbose_name="Points obtenus")
+    comments = models.TextField(blank=True, verbose_name="Commentaires")
+    graded_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = "Note d'interrogation"
+        verbose_name_plural = "Notes d'interrogation"
+        unique_together = ('interrogation', 'student')
+    
+    def __str__(self):
+        return f"{self.student.get_full_name() or self.student.username} - {self.interrogation.title}: {self.points_earned}/{self.interrogation.total_points}"
+    
+    @property
+    def percentage(self):
+        """Calcule le pourcentage de la note"""
+        if self.interrogation.total_points > 0:
+            return (self.points_earned / self.interrogation.total_points) * 100
+        return 0

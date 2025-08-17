@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Modifier une interrogation - {{ interrogation.title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Modifier une interrogation</h4>
+                    <p class="text-muted mb-0">
+                        {{ interrogation.class_subject.subject.name }} - {{ interrogation.class_subject.class_obj.name }}
+                    </p>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="title" class="form-label">Titre de l'interrogation</label>
+                                <input type="text" class="form-control" id="title" name="title" value="{{ interrogation.title }}" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="date" class="form-label">Date</label>
+                                <input type="date" class="form-control" id="date" name="date" value="{{ interrogation.date|date:'Y-m-d' }}" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="total_points" class="form-label">Total des points</label>
+                                <input type="number" class="form-control" id="total_points" name="total_points" value="{{ interrogation.total_points }}" min="1" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="chapter" class="form-label">Chapitre (optionnel)</label>
+                            <select class="form-select" id="chapter" name="chapter">
+                                <option value="">-- Sélectionner un chapitre --</option>
+                                {% for chapter in chapters %}
+                                <option value="{{ chapter.pk }}" {% if interrogation.chapter and interrogation.chapter.pk == chapter.pk %}selected{% endif %}>{{ chapter.title }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="3">{{ interrogation.description }}</textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="subject_pdf" class="form-label">Sujet PDF</label>
+                            <input type="file" class="form-control" id="subject_pdf" name="subject_pdf" accept=".pdf">
+                            <div class="form-text">
+                                {% if interrogation.subject_pdf %}
+                                    Fichier actuel : <a href="{{ interrogation.subject_pdf.url }}" target="_blank">{{ interrogation.subject_pdf.name }}</a>
+                                {% endif %}
+                                Laissez vide pour conserver le fichier actuel.
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'teachers:interrogation_detail' interrogation.pk %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-1"></i> Annuler
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i> Enregistrer
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

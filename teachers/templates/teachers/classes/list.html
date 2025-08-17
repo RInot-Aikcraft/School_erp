@@ -1,130 +1,72 @@
-<!-- teachers/templates/teachers/classes/list.html -->
-{% extends 'teachers/base.html' %}
+{% extends 'base.html' %}
 {% load static %}
+
 {% block title %}Mes Classes{% endblock %}
 
 {% block content %}
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body bg-info bg-opacity-10 p-4">
-                <div class="d-flex align-items-center">
-                    <div class="flex-shrink-0">
-                        <div class="icon-box bg-info bg-opacity-20 text-info rounded-circle p-3">
-                            <i class="fas fa-chalkboard-teacher fa-2x"></i>
-                        </div>
-                    </div>
-                    <div class="flex-grow-1 ms-4">
-                        <h2 class="mb-0">Mes Classes</h2>
-                        <p class="text-muted mb-0">
-                            Bienvenue, {{ user.get_full_name|default:user.username }} | 
-                            {% if selected_year == active_school_year %}
-                            Année scolaire active: {{ selected_year.name }}
-                            {% else %}
-                            Année scolaire: {{ selected_year.name }}
-                            {% endif %}
-                        </p>
-                    </div>
-                </div>
+<div class="container-fluid">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Mes Classes</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <!-- Boutons pour les actions -->
             </div>
         </div>
     </div>
-</div>
 
-<!-- Filtre par année scolaire -->
-<div class="row mb-4">
-    <div class="col-md-6">
-        <form method="get" id="schoolYearFilter">
-            <div class="input-group">
-                <span class="input-group-text">Année scolaire</span>
-                <select class="form-select" name="school_year" id="schoolYearSelect" onchange="document.getElementById('schoolYearFilter').submit();">
-                    {% for year in school_years %}
-                        <option value="{{ year.pk }}" 
-                                {% if year == selected_year %}selected{% endif %}
-                                {% if year == active_school_year %}data-active="true"{% endif %}>
-                            {{ year.name }}
-                            {% if year == active_school_year %}(Active){% endif %}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-        </form>
-    </div>
-    <div class="col-md-6 text-end">
-        {% if selected_year != active_school_year %}
-            <a href="?school_year={{ active_school_year.pk }}" class="btn btn-outline-secondary">
-                <i class="fas fa-sync-alt me-1"></i> Voir l'année active
-            </a>
-        {% endif %}
-    </div>
-</div>
-
-<!-- Liste des classes -->
-<div class="row">
-    {% for class_id, class_info in classes_data.items %}
-    <div class="col-lg-6 col-xl-4 mb-4">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-primary text-white py-3">
-                <h5 class="mb-0">{{ class_info.class_obj.name }}</h5>
-                <small>{{ class_info.class_obj.level.name }}</small>
-            </div>
-            <div class="card-body">
-                <div class="mb-3">
-                    <h6 class="text-muted">Matières enseignées:</h6>
-                    <ul class="list-group list-group-flush">
-                        {% for subject in class_info.subjects %}
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <div>
-                                <strong>{{ subject.subject.name }}</strong>
-                                <br>
-                                <small class="text-muted">Coefficient: {{ subject.coefficient }}</small>
-                            </div>
-                            <div class="btn-group btn-group-sm">
-                                <a href="{% url 'academics:class_schedule' class_info.class_obj.pk %}" class="btn btn-outline-primary" title="Voir l'emploi du temps">
-                                    <i class="fas fa-calendar-alt"></i>
-                                </a>
-                                <a href="{% url 'teachers:class_detail' class_info.class_obj.pk %}" class="btn btn-outline-secondary" title="Voir les détails">
-                                    <i class="fas fa-info-circle"></i>
-                                </a>
-                            </div>
-                        </li>
+    <!-- Filtre par année scolaire -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <form method="get" class="form-inline">
+                <div class="form-group mr-2">
+                    <label for="school_year" class="mr-2">Année scolaire:</label>
+                    <select name="school_year" id="school_year" class="form-control" onchange="this.form.submit()">
+                        {% for year in school_years %}
+                            <option value="{{ year.id }}" {% if year.id == selected_year.id %}selected{% endif %}>
+                                {{ year.name }}
+                            </option>
                         {% endfor %}
-                    </ul>
+                    </select>
                 </div>
-                
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <small class="text-muted">
-                            Élèves: {{ class_info.class_obj.enrollments.count }}/{{ class_info.class_obj.max_students }}
-                        </small>
-                    </div>
-                    <div>
-                        <small class="text-muted">
-                            Prof. principal: {{ class_info.class_obj.main_teacher.get_full_name|default:"Non assigné" }}
-                        </small>
-                    </div>
-                </div>
-            </div>
-            <div class="card-footer bg-white">
-                <div class="d-flex justify-content-between">
-                    <span class="badge bg-secondary">{{ class_info.class_obj.school_year.name }}</span>
-                    {% if class_info.class_obj.school_year == active_school_year %}
-                        <span class="badge bg-success">Active</span>
-                    {% endif %}
-                </div>
-            </div>
+            </form>
         </div>
     </div>
-    {% empty %}
-    <div class="col-12">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body text-center py-5">
-                <i class="fas fa-chalkboard-teacher fa-3x text-muted mb-3"></i>
-                <h5 class="text-muted">Aucune classe assignée</h5>
-                <p class="text-muted">Vous n'êtes assigné à aucune classe pour cette année scolaire.</p>
+
+    <!-- Liste des classes -->
+    <div class="row">
+        {% for class_id, class_data in classes_data.items %}
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">{{ class_data.class_obj.name }}</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">
+                            <strong>Niveau:</strong> {{ class_data.class_obj.level.name }}<br>
+                            <strong>Année scolaire:</strong> {{ class_data.class_obj.school_year.name }}<br>
+                            <strong>Nombre de matières:</strong> {{ class_data.subjects|length }}
+                        </p>
+                        <h6 class="mt-3">Matières enseignées:</h6>
+                        <ul class="list-group list-group-flush">
+                            {% for subject in class_data.subjects %}
+                                <li class="list-group-item px-0">{{ subject.subject.name }}</li>
+                            {% empty %}
+                                <li class="list-group-item px-0">Aucune matière assignée</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <div class="card-footer bg-white">
+                        <a href="{% url 'teachers:class_detail' pk=class_data.class_obj.pk %}" class="btn btn-primary btn-block">Voir les détails</a>
+                    </div>
+                </div>
             </div>
-        </div>
+        {% empty %}
+            <div class="col-12">
+                <div class="alert alert-info">
+                    Vous n'avez aucune classe assignée pour cette année scolaire.
+                </div>
+            </div>
+        {% endfor %}
     </div>
-    {% endfor %}
 </div>
 {% endblock %}

@@ -1,0 +1,574 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load dict_extras %}
+{% block title %}Détails de l'interrogation - {{ interrogation.title }}{% endblock %}
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <div>
+            <h1 class="h2">{{ interrogation.title }}</h1>
+            <p class="text-muted mb-0">
+                {{ interrogation.class_subject.subject.name }} - {{ interrogation.class_subject.class_obj.name }}
+            </p>
+        </div>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <a href="{{ interrogation.subject_pdf.url }}" class="btn btn-sm btn-info" target="_blank">
+                    <i class="fas fa-file-pdf me-1"></i> Voir le sujet
+                </a>
+                <a href="{% url 'teachers:interrogation_stats' interrogation.pk %}" class="btn btn-sm btn-info">
+                    <i class="fas fa-chart-bar me-1"></i> Statistiques
+                </a>
+                <a href="{% url 'teachers:interrogation_export_pdf' interrogation.pk %}" class="btn btn-sm btn-success">
+                    <i class="fas fa-file-export me-1"></i> Exporter PDF
+                </a>
+                <a href="{% url 'teachers:edit_interrogation' interrogation.pk %}" class="btn btn-sm btn-warning">
+                    <i class="fas fa-edit me-1"></i> Modifier
+                </a>
+                <a href="{% url 'teachers:delete_interrogation' interrogation.pk %}" class="btn btn-sm btn-danger">
+                    <i class="fas fa-trash me-1"></i> Supprimer
+                </a>
+                <a href="{% url 'teachers:interrogations' interrogation.class_subject.pk %}" class="btn btn-sm btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i> Retour
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Informations sur l'interrogation</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Date:</strong> {{ interrogation.date|date:"d/m/Y" }}</p>
+                            <p><strong>Total des points:</strong> {{ interrogation.total_points }}</p>
+                            {% if interrogation.chapter %}
+                            <p><strong>Chapitre:</strong> {{ interrogation.chapter.title }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Matière:</strong> {{ interrogation.class_subject.subject.name }}</p>
+                            <p><strong>Classe:</strong> {{ interrogation.class_subject.class_obj.name }}</p>
+                            <p><strong>Créé le:</strong> {{ interrogation.created_at|date:"d/m/Y H:i" }}</p>
+                        </div>
+                    </div>
+                    {% if interrogation.description %}
+                    <div class="mt-3">
+                        <h6>Description:</h6>
+                        <p>{{ interrogation.description }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Sujet de l'interrogation</h5>
+                </div>
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-file-pdf fa-3x text-danger"></i>
+                    </div>
+                    <a href="{{ interrogation.subject_pdf.url }}" class="btn btn-danger" target="_blank">
+                        <i class="fas fa-download me-1"></i> Télécharger le sujet PDF
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Notes des élèves</h5>
+                    <div class="d-flex">
+                        <div class="input-group me-2" style="width: 300px;">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            <input type="text" class="form-control" id="searchStudent" placeholder="Rechercher un élève...">
+                        </div>
+                        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#saveAllGradesModal">
+                            <i class="fas fa-save me-1"></i> Enregistrer tout
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <form id="gradesForm" method="post" action="{% url 'teachers:save_grades' interrogation.pk %}">
+                        {% csrf_token %}
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Élève</th>
+                                        <th>Note</th>
+                                        <th>Pourcentage</th>
+                                        <th>Commentaires</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="studentsTableBody">
+                                    {% for inscription in inscriptions %}
+                                    <tr class="student-row" data-student-name="{{ inscription.eleve.get_full_name|default:inscription.eleve.username|lower }}">
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="avatar-circle me-3">
+                                                    {% if inscription.eleve.profile.photo %}
+                                                        <img src="{{ inscription.eleve.profile.photo.url }}" alt="{{ inscription.eleve.get_full_name }}" class="rounded-circle" width="40" height="40">
+                                                    {% else %}
+                                                        <div class="avatar-placeholder rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                                            {{ inscription.eleve.first_name|slice:":1"|upper }}{{ inscription.eleve.last_name|slice:":1"|upper }}
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-0">{{ inscription.eleve.get_full_name|default:inscription.eleve.username }}</h6>
+                                                    <small class="text-muted">{{ inscription.eleve.email }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            {% if inscription.eleve.id in existing_grades %}
+                                                {% with grade=existing_grades|getitem:inscription.eleve.id %}
+                                                    <div id="grade-display-{{ inscription.eleve.id }}" class="grade-display">
+                                                        {{ grade.points_earned }} / {{ interrogation.total_points }}
+                                                    </div>
+                                                    <div id="grade-edit-{{ inscription.eleve.id }}" class="grade-edit" style="display: none;">
+                                                        <div class="input-group input-group-sm">
+                                                            <input type="number" class="form-control grade-input" 
+                                                                   id="points_{{ inscription.eleve.id }}"
+                                                                   name="points_{{ inscription.eleve.id }}" 
+                                                                   value="{{ grade.points_earned }}" 
+                                                                   min="0" max="{{ interrogation.total_points }}" step="0.25">
+                                                            <span class="input-group-text">/ {{ interrogation.total_points }}</span>
+                                                        </div>
+                                                    </div>
+                                                {% endwith %}
+                                            {% else %}
+                                                <div id="grade-display-{{ inscription.eleve.id }}" class="grade-display">
+                                                    -
+                                                </div>
+                                                <div id="grade-edit-{{ inscription.eleve.id }}" class="grade-edit" style="display: none;">
+                                                    <div class="input-group input-group-sm">
+                                                        <input type="number" class="form-control grade-input" 
+                                                               id="points_{{ inscription.eleve.id }}"
+                                                               name="points_{{ inscription.eleve.id }}" 
+                                                               value="" 
+                                                               min="0" max="{{ interrogation.total_points }}" step="0.25">
+                                                        <span class="input-group-text">/ {{ interrogation.total_points }}</span>
+                                                    </div>
+                                                </div>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if inscription.eleve.id in existing_grades %}
+                                                {% with grade=existing_grades|getitem:inscription.eleve.id %}
+                                                    <div id="percentage-display-{{ inscription.eleve.id }}" class="percentage-display">
+                                                        {% if grade.percentage >= 60 %}
+                                                            <span class="badge bg-success">{{ grade.percentage|floatformat:1 }}%</span>
+                                                        {% elif grade.percentage >= 40 %}
+                                                            <span class="badge bg-warning">{{ grade.percentage|floatformat:1 }}%</span>
+                                                        {% else %}
+                                                            <span class="badge bg-danger">{{ grade.percentage|floatformat:1 }}%</span>
+                                                        {% endif %}
+                                                    </div>
+                                                    <div id="percentage-edit-{{ inscription.eleve.id }}" class="percentage-edit" style="display: none;">
+                                                        <span class="badge bg-secondary">-</span>
+                                                    </div>
+                                                {% endwith %}
+                                            {% else %}
+                                                <div id="percentage-display-{{ inscription.eleve.id }}" class="percentage-display">
+                                                    <span class="badge bg-secondary">-</span>
+                                                </div>
+                                                <div id="percentage-edit-{{ inscription.eleve.id }}" class="percentage-edit" style="display: none;">
+                                                    <span class="badge bg-secondary">-</span>
+                                                </div>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if inscription.eleve.id in existing_grades %}
+                                                {% with grade=existing_grades|getitem:inscription.eleve.id %}
+                                                    <div id="comments-display-{{ inscription.eleve.id }}" class="comments-display">
+                                                        {{ grade.comments|default:"-"|truncatechars:30 }}
+                                                    </div>
+                                                    <div id="comments-edit-{{ inscription.eleve.id }}" class="comments-edit" style="display: none;">
+                                                        <textarea class="form-control form-control-sm" 
+                                                                  id="comments_{{ inscription.eleve.id }}"
+                                                                  name="comments_{{ inscription.eleve.id }}" 
+                                                                  rows="1">{{ grade.comments }}</textarea>
+                                                    </div>
+                                                {% endwith %}
+                                            {% else %}
+                                                <div id="comments-display-{{ inscription.eleve.id }}" class="comments-display">
+                                                    -
+                                                </div>
+                                                <div id="comments-edit-{{ inscription.eleve.id }}" class="comments-edit" style="display: none;">
+                                                    <textarea class="form-control form-control-sm" 
+                                                              id="comments_{{ inscription.eleve.id }}"
+                                                              name="comments_{{ inscription.eleve.id }}" 
+                                                              rows="1"></textarea>
+                                                </div>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if inscription.eleve.id in existing_grades %}
+                                                <div id="actions-display-{{ inscription.eleve.id }}" class="actions-display">
+                                                    <button type="button" class="btn btn-sm btn-outline-primary edit-grade-btn" 
+                                                            data-student-id="{{ inscription.eleve.id }}" 
+                                                            title="Modifier la note">
+                                                        <i class="fas fa-edit"></i> Modifier
+                                                    </button>
+                                                    <a href="{% url 'teachers:delete_grade' interrogation.pk inscription.eleve.id %}" class="btn btn-sm btn-outline-danger" 
+                                                       title="Supprimer la note" data-student-name="{{ inscription.eleve.get_full_name|default:inscription.eleve.username }}">
+                                                        <i class="fas fa-trash"></i>
+                                                    </a>
+                                                </div>
+                                                <div id="actions-edit-{{ inscription.eleve.id }}" class="actions-edit" style="display: none;">
+                                                    <button type="button" class="btn btn-sm btn-success save-grade-btn" 
+                                                            data-student-id="{{ inscription.eleve.id }}" 
+                                                            title="Enregistrer la note">
+                                                        <i class="fas fa-save"></i> Enregistrer
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-secondary cancel-edit-btn" 
+                                                            data-student-id="{{ inscription.eleve.id }}" 
+                                                            title="Annuler">
+                                                        <i class="fas fa-times"></i> Annuler
+                                                    </button>
+                                                </div>
+                                            {% else %}
+                                                <div id="actions-display-{{ inscription.eleve.id }}" class="actions-display">
+                                                    <button type="button" class="btn btn-sm btn-primary add-grade-btn" 
+                                                            data-student-id="{{ inscription.eleve.id }}" 
+                                                            title="Ajouter une note">
+                                                        <i class="fas fa-plus"></i> Saisir
+                                                    </button>
+                                                </div>
+                                                <div id="actions-edit-{{ inscription.eleve.id }}" class="actions-edit" style="display: none;">
+                                                    <button type="button" class="btn btn-sm btn-success save-grade-btn" 
+                                                            data-student-id="{{ inscription.eleve.id }}" 
+                                                            title="Enregistrer la note">
+                                                        <i class="fas fa-save"></i> Enregistrer
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-secondary cancel-edit-btn" 
+                                                            data-student-id="{{ inscription.eleve.id }}" 
+                                                            title="Annuler">
+                                                        <i class="fas fa-times"></i> Annuler
+                                                    </button>
+                                                </div>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour confirmer l'enregistrement de toutes les notes -->
+<div class="modal fade" id="saveAllGradesModal" tabindex="-1" aria-labelledby="saveAllGradesModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="saveAllGradesModalLabel">Enregistrer toutes les notes</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Êtes-vous sûr de vouloir enregistrer toutes les notes modifiées ?</p>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Seules les notes qui ont été modifiées seront enregistrées.
+                </div>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Assurez-vous que toutes les notes sont comprises entre 0 et {{ interrogation.total_points }}.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-primary" id="confirmSaveAllGrades">Enregistrer tout</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation de suppression -->
+<div class="modal fade" id="deleteGradeModal" tabindex="-1" aria-labelledby="deleteGradeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteGradeModalLabel">Supprimer la note</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Êtes-vous sûr de vouloir supprimer la note de <span id="studentName"></span> ?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteGrade">Supprimer</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Fonction pour récupérer la valeur d'un cookie
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                // Est-ce que ce cookie commence par le nom que nous voulons?
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Fonctionnalité de recherche d'élèves
+    const searchInput = document.getElementById('searchStudent');
+    const studentRows = document.querySelectorAll('.student-row');
+    
+    searchInput.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        
+        studentRows.forEach(row => {
+            const studentName = row.getAttribute('data-student-name');
+            if (studentName.includes(searchTerm)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+    
+    // Gestion de l'ajout d'une note
+    const addGradeButtons = document.querySelectorAll('.add-grade-btn');
+    addGradeButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const studentId = this.getAttribute('data-student-id');
+            
+            // Afficher les champs d'édition
+            document.getElementById(`grade-edit-${studentId}`).style.display = 'block';
+            document.getElementById(`comments-edit-${studentId}`).style.display = 'block';
+            document.getElementById(`actions-edit-${studentId}`).style.display = 'block';
+            
+            // Masquer les champs d'affichage
+            document.getElementById(`grade-display-${studentId}`).style.display = 'none';
+            document.getElementById(`percentage-display-${studentId}`).style.display = 'none';
+            document.getElementById(`comments-display-${studentId}`).style.display = 'none';
+            document.getElementById(`actions-display-${studentId}`).style.display = 'none';
+            
+            // Mettre le focus sur le champ de saisie de la note
+            document.getElementById(`points_${studentId}`).focus();
+        });
+    });
+    
+    // Gestion de la modification d'une note
+    const editGradeButtons = document.querySelectorAll('.edit-grade-btn');
+    editGradeButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const studentId = this.getAttribute('data-student-id');
+            
+            // Afficher les champs d'édition
+            document.getElementById(`grade-edit-${studentId}`).style.display = 'block';
+            document.getElementById(`comments-edit-${studentId}`).style.display = 'block';
+            document.getElementById(`actions-edit-${studentId}`).style.display = 'block';
+            
+            // Masquer les champs d'affichage
+            document.getElementById(`grade-display-${studentId}`).style.display = 'none';
+            document.getElementById(`percentage-display-${studentId}`).style.display = 'none';
+            document.getElementById(`comments-display-${studentId}`).style.display = 'none';
+            document.getElementById(`actions-display-${studentId}`).style.display = 'none';
+            
+            // Mettre le focus sur le champ de saisie de la note
+            document.getElementById(`points_${studentId}`).focus();
+        });
+    });
+    
+    // Gestion de l'annulation de l'édition
+    const cancelEditButtons = document.querySelectorAll('.cancel-edit-btn');
+    cancelEditButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const studentId = this.getAttribute('data-student-id');
+            
+            // Masquer les champs d'édition
+            document.getElementById(`grade-edit-${studentId}`).style.display = 'none';
+            document.getElementById(`comments-edit-${studentId}`).style.display = 'none';
+            document.getElementById(`actions-edit-${studentId}`).style.display = 'none';
+            
+            // Afficher les champs d'affichage
+            document.getElementById(`grade-display-${studentId}`).style.display = 'block';
+            document.getElementById(`percentage-display-${studentId}`).style.display = 'block';
+            document.getElementById(`comments-display-${studentId}`).style.display = 'block';
+            document.getElementById(`actions-display-${studentId}`).style.display = 'block';
+        });
+    });
+    
+    // Gestion de l'enregistrement d'une note
+    const saveGradeButtons = document.querySelectorAll('.save-grade-btn');
+    saveGradeButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const studentId = this.getAttribute('data-student-id');
+            const pointsInput = document.getElementById(`points_${studentId}`);
+            const commentsInput = document.getElementById(`comments_${studentId}`);
+            
+            // Validation simple avant soumission
+            const pointsValue = parseFloat(pointsInput.value);
+            const maxPoints = parseFloat(pointsInput.getAttribute('max'));
+            
+            if (isNaN(pointsValue) || pointsValue < 0 || pointsValue > maxPoints) {
+                alert(`Veuillez vérifier que la note est dans la plage valide (0 à ${maxPoints}).`);
+                return;
+            }
+            
+            // Utiliser le formulaire existant
+            const form = document.getElementById('gradesForm');
+            
+            // Soumettre le formulaire
+            form.submit();
+        });
+    });
+    
+    // Gestion de l'enregistrement de toutes les notes
+    const confirmSaveAllGradesBtn = document.getElementById('confirmSaveAllGrades');
+    if (confirmSaveAllGradesBtn) {
+        confirmSaveAllGradesBtn.addEventListener('click', function() {
+            // Validation simple avant soumission
+            let isValid = true;
+            const gradeInputs = document.querySelectorAll('.grade-input');
+            
+            gradeInputs.forEach(input => {
+                if (input.style.display !== 'none') {  // Ne valider que les champs visibles
+                    const value = parseFloat(input.value);
+                    const max = parseFloat(input.getAttribute('max'));
+                    
+                    if (input.value !== '' && (!isNaN(value) && (value < 0 || value > max))) {
+                        isValid = false;
+                        input.classList.add('is-invalid');
+                    } else {
+                        input.classList.remove('is-invalid');
+                    }
+                }
+            });
+            
+            if (isValid) {
+                document.getElementById('gradesForm').submit();
+            } else {
+                alert('Veuillez vérifier que toutes les notes sont dans la plage valide (0 à ' + gradeInputs[0].getAttribute('max') + ').');
+            }
+        });
+    }
+    
+    // Gestion de la suppression d'une note
+    const deleteGradeButtons = document.querySelectorAll('.btn-outline-danger');
+    const confirmDeleteGradeBtn = document.getElementById('confirmDeleteGrade');
+    const studentNameSpan = document.getElementById('studentName');
+    
+    deleteGradeButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            if (this.classList.contains('delete-grade') || this.getAttribute('title') === 'Supprimer la note') {
+                e.preventDefault();
+                const studentName = this.getAttribute('data-student-name');
+                studentNameSpan.textContent = studentName;
+                
+                const modal = new bootstrap.Modal(document.getElementById('deleteGradeModal'));
+                modal.show();
+                
+                // Stocker l'URL de suppression pour l'utiliser plus tard
+                confirmDeleteGradeBtn.setAttribute('data-delete-url', this.getAttribute('href'));
+            }
+        });
+    });
+    
+    if (confirmDeleteGradeBtn) {
+        confirmDeleteGradeBtn.addEventListener('click', function() {
+            const deleteUrl = this.getAttribute('data-delete-url');
+            if (deleteUrl) {
+                window.location.href = deleteUrl;
+            }
+        });
+    }
+    
+    // Ajout d'indications visuelles lors de la saisie des notes
+    const gradeInputs = document.querySelectorAll('.grade-input');
+    gradeInputs.forEach(input => {
+        // Ajouter un écouteur pour la touche "Entrée"
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();  // Empêcher le comportement par défaut
+                
+                const studentId = this.id.split('_')[1];
+                const commentsInput = document.getElementById(`comments_${studentId}`);
+                
+                // Validation simple avant soumission
+                const pointsValue = parseFloat(this.value);
+                const maxPoints = parseFloat(this.getAttribute('max'));
+                
+                if (isNaN(pointsValue) || pointsValue < 0 || pointsValue > maxPoints) {
+                    alert(`Veuillez vérifier que la note est dans la plage valide (0 à ${maxPoints}).`);
+                    return;
+                }
+                
+                // Utiliser le formulaire existant
+                const form = document.getElementById('gradesForm');
+                
+                // Soumettre le formulaire
+                form.submit();
+            }
+        });
+        
+        // Ajouter un écouteur pour la saisie en temps réel
+        input.addEventListener('input', function() {
+            const value = parseFloat(this.value);
+            const max = parseFloat(this.getAttribute('max'));
+            const studentId = this.id.split('_')[1];
+            const percentageCell = document.getElementById(`percentage-edit-${studentId}`).querySelector('span');
+            
+            if (!isNaN(value) && value >= 0 && max > 0) {
+                const percentage = (value / max) * 100;
+                
+                // Mettre à jour le badge de pourcentage
+                if (percentageCell) {
+                    percentageCell.textContent = percentage.toFixed(1) + '%';
+                    
+                    // Mettre à jour la classe du badge en fonction du pourcentage
+                    percentageCell.className = 'badge';
+                    if (percentage >= 60) {
+                        percentageCell.classList.add('bg-success');
+                    } else if (percentage >= 40) {
+                        percentageCell.classList.add('bg-warning');
+                    } else {
+                        percentageCell.classList.add('bg-danger');
+                    }
+                }
+            } else if (percentageCell && this.value === '') {
+                percentageCell.textContent = '-';
+                percentageCell.className = 'badge bg-secondary';
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

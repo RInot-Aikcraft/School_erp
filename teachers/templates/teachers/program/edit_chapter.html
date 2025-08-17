@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Modifier un chapitre - {{ chapter.title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Modifier un chapitre</h4>
+                    <p class="text-muted mb-0">
+                        {{ class_subject.subject.name }} - {{ class_subject.class_obj.name }}
+                    </p>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="row mb-3">
+                            <div class="col-md-8">
+                                <label for="title" class="form-label">Titre du chapitre</label>
+                                <input type="text" class="form-control" id="title" name="title" value="{{ chapter.title }}" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="order" class="form-label">Ordre</label>
+                                <input type="number" class="form-control" id="order" name="order" value="{{ chapter.order }}" min="1">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="subtitle" class="form-label">Sous-titre (optionnel)</label>
+                            <input type="text" class="form-control" id="subtitle" name="subtitle" value="{{ chapter.subtitle }}">
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'teachers:program' class_subject.pk %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-1"></i> Annuler
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i> Enregistrer
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
