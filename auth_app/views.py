@@ -689,3 +689,137 @@ def delete_parent_student_relationship(request, relationship_pk):
     })
 
 
+@login_required
+@user_passes_test(is_admin)
+def admin_dashboard(request):
+    # Importer tous les modèles nécessaires en haut de la fonction
+    from django.utils import timezone
+    from django.db.models import Sum, Count
+    from finance.models import Inscription, Paiement
+    from teachers.models import Textbook, Attendance
+    from academics.models import ClassSubject
+    
+    total_users = User.objects.count()
+    admin_count = UserProfile.objects.filter(user_type='admin').count()
+    teacher_count = UserProfile.objects.filter(user_type='teacher').count()
+    student_count = UserProfile.objects.filter(user_type='student').count()
+    parent_count = UserProfile.objects.filter(user_type='parent').count()
+    
+    # Récupérer l'année scolaire en cours
+    current_school_year = SchoolYear.objects.filter(current=True).first()
+    
+    context_data = {
+        'total_users': total_users,
+        'admin_count': admin_count,
+        'teacher_count': teacher_count,
+        'student_count': student_count,
+        'parent_count': parent_count,
+        'users': User.objects.all().order_by('-date_joined')[:5],
+        'current_school_year': current_school_year,
+    }
+    
+    if current_school_year:
+        # Nombre de classes cette année
+        class_count = Class.objects.filter(school_year=current_school_year).count()
+        
+        # Nombre de matières enseignées (on compte les ClassSubject uniques pour l'année en cours)
+        subject_count = ClassSubject.objects.filter(
+            school_year=current_school_year
+        ).values('subject').distinct().count()
+        
+        # Nombre d'élèves inscrits cette année
+        enrollment_count = Inscription.objects.filter(
+            annee_scolaire=current_school_year,
+            statut__in=['CONFIRMÉE', 'ACCEPTÉE']
+        ).count()
+        
+        # Prochains devoirs à rendre (à partir d'aujourd'hui)
+        upcoming_assignments = Assignment.objects.filter(
+            due_date__gte=timezone.now()
+        ).select_related('subject', 'class_obj', 'teacher').order_by('due_date')[:5]
+        
+        # Inscriptions en attente
+        inscriptions_en_attente = Inscription.objects.filter(
+            annee_scolaire=current_school_year, 
+            statut='EN_ATTENTE'
+        ).select_related('eleve', 'classe_demandee').order_by('-date_inscription')[:5]
+        total_en_attente = Inscription.objects.filter(
+            annee_scolaire=current_school_year, 
+            statut='EN_ATTENTE'
+        ).count()
+        
+        # Statistiques financières
+        total_montant = Paiement.objects.filter(statut='VALIDE').aggregate(total=Sum('montant'))['total'] or 0
+        count_en_attente = Paiement.objects.filter(statut='EN_ATTENTE').count()
+        count_valide = Paiement.objects.filter(statut='VALIDE').count()
+        
+        # Écolages impayés
+        total_ecolages_impayes = 0
+        for inscription in Inscription.objects.filter(annee_scolaire=current_school_year):
+            ecolages_impayes = inscription.get_ecolages_impayes()
+            for mois in ecolages_impayes:
+                if mois['statut_temporel'] in ['passé', 'en_cours'] and not mois['est_paye']:
+                    total_ecolages_impayes += 1
+        
+        # Taux de présence du jour
+        today = timezone.now().date()
+        # Récupérer tous les cahiers de texte pour aujourd'hui
+        today_textbooks = Textbook.objects.filter(date=today)
+        
+        # Calculer les statistiques de présence
+        today_total_students = 0
+        today_present_students = 0
+        
+        for textbook in today_textbooks:
+            attendances = textbook.attendances.all()
+            today_total_students += attendances.count()
+            today_present_students += attendances.filter(status='PRESENT').count()
+        
+        # Calculer le taux de présence
+        today_attendance_rate = 0
+        if today_total_students > 0:
+            today_attendance_rate = round((today_present_students / today_total_students) * 100, 1)
+        
+        # Statistiques sur les enseignants et leurs matières
+        teacher_subject_stats = ClassSubject.objects.filter(
+            school_year=current_school_year
+        ).values('teacher__id', 'teacher__first_name', 'teacher__last_name', 'subject__name').annotate(
+            count=Count('id')
+        ).order_by('-count')[:5]
+        
+        context_data.update({
+            'class_count': class_count,
+            'subject_count': subject_count,
+            'enrollment_count': enrollment_count,
+            'upcoming_assignments': upcoming_assignments,
+            'inscriptions_en_attente': inscriptions_en_attente,
+            'total_en_attente': total_en_attente,
+            'total_montant': total_montant,
+            'count_en_attente': count_en_attente,
+            'count_valide': count_valide,
+            'total_ecolages_impayes': total_ecolages_impayes,
+            'today_total_students': today_total_students,
+            'today_present_students': today_present_students,
+            'today_attendance_rate': today_attendance_rate,
+            'teacher_subject_stats': teacher_subject_stats,
+        })
+    else:
+        # Si aucune année n'est définie, on met des valeurs nulles ou des messages
+        context_data.update({
+            'class_count': 0,
+            'subject_count': 0,
+            'enrollment_count': 0,
+            'upcoming_assignments': [],
+            'inscriptions_en_attente': [],
+            'total_en_attente': 0,
+            'total_montant': 0,
+            'count_en_attente': 0,
+            'count_valide': 0,
+            'total_ecolages_impayes': 0,
+            'today_total_students': 0,
+            'today_present_students': 0,
+            'today_attendance_rate': 0,
+            'teacher_subject_stats': [],
+        })
+    
+    return render(request, 'auth_app/admin/dashboard.html', context_data)

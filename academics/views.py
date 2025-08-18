@@ -736,7 +736,7 @@ def class_textbooks(request, pk):
     ).select_related('subject', 'teacher')
     
     # Récupérer tous les cahiers de texte pour cette classe
-    textbooks = Textbook.objects.filter(
+    textbooks_list = Textbook.objects.filter(
         class_subject__in=class_subjects
     ).select_related(
         'teacher', 
@@ -745,14 +745,26 @@ def class_textbooks(request, pk):
         'attendances__student'
     ).order_by('-date')
     
+    # Calculer les statistiques de présence pour chaque cahier de texte
+    for textbook in textbooks_list:
+        attendances = textbook.attendances.all()
+        textbook.total_attendances = attendances.count()
+        textbook.present_attendances = attendances.filter(status='PRESENT').count()
+        
+        # Calculer le pourcentage de présences
+        if textbook.total_attendances > 0:
+            textbook.attendance_percentage = (textbook.present_attendances / textbook.total_attendances) * 100
+        else:
+            textbook.attendance_percentage = 0
+    
     # Pagination
-    paginator = Paginator(textbooks, 10)  # 10 entrées par page
+    paginator = Paginator(textbooks_list, 10)  # 10 entrées par page
     page_number = request.GET.get('page')
-    textbooks_page = paginator.get_page(page_number)
+    textbooks = paginator.get_page(page_number)
     
     context = {
         'class_obj': class_obj,
-        'textbooks': textbooks_page,
+        'textbooks': textbooks,
         'class_subjects': class_subjects,
     }
     

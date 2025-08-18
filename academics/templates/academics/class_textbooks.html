@@ -119,18 +119,12 @@
                                         <td>
                                             <div class="d-flex align-items-center">
                                                 <span class="me-2">
-                                                    {{ textbook.attendances.all|length }} élèves
+                                                    {{ textbook.present_attendances }}/{{ textbook.total_attendances }}
                                                 </span>
                                                 <div class="progress" style="height: 10px; width: 60px;">
-                                                    {% with present_count=textbook.attendances.filter(status='PRESENT').count %}
-                                                    {% with total_count=textbook.attendances.all|length %}
-                                                    {% if total_count > 0 %}
-                                                        {% with percentage=present_count|div:total_count|mul:100 %}
-                                                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ percentage|floatformat:0 }}%;" aria-valuenow="{{ percentage|floatformat:0 }}" aria-valuemin="0" aria-valuemax="100"></div>
-                                                        {% endwith %}
+                                                    {% if textbook.total_attendances > 0 %}
+                                                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ textbook.attendance_percentage|floatformat:0 }}%;" aria-valuenow="{{ textbook.attendance_percentage|floatformat:0 }}" aria-valuemin="0" aria-valuemax="100"></div>
                                                     {% endif %}
-                                                    {% endwith %}
-                                                    {% endwith %}
                                                 </div>
                                             </div>
                                         </td>
@@ -169,7 +163,7 @@
                                 
                                 {% if textbooks.has_next %}
                                 <li class="page-item">
-                                    <a class="page-link" href="?page={{ textbooks.next_page_number }}{% if request.GET.subject %}&subject={{ request.GET.subject }}{% endif %}{% if request.GET.teacher %}&teacher={{ request_GET.teacher }}{% endif %}" aria-label="Suivant">
+                                    <a class="page-link" href="?page={{ textbooks.next_page_number }}{% if request.GET.subject %}&subject={{ request.GET.subject }}{% endif %}{% if request.GET.teacher %}&teacher={{ request.GET.teacher }}{% endif %}" aria-label="Suivant">
                                         <span aria-hidden="true">&raquo;</span>
                                     </a>
                                 </li>

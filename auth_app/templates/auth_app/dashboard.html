@@ -1,25 +1,30 @@
-<!-- auth_app/templates/auth_app/dashboard.html -->
+<!-- auth_app/templates/auth_app/admin/dashboard.html -->
 {% extends 'base.html' %}
 {% load bootstrap5 %}
 {% load static %}
-
-{% block title %}Dashboard - Gestion d'École{% endblock %}
+{% block title %}Dashboard Administrateur - Gestion d'École{% endblock %}
 
 {% block content %}
 <div class="container-fluid py-4">
+    <!-- En-tête du tableau de bord -->
     <div class="row">
         <div class="col-12">
             <div class="card border-0 shadow-sm">
                 <div class="card-body p-4">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-shrink-0">
-                            <div class="icon-box bg-primary bg-opacity-10 text-primary rounded-circle p-3">
-                                <i class="fas fa-tachometer-alt fa-2x"></i>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <div class="icon-box bg-primary bg-opacity-10 text-primary rounded-circle p-3">
+                                    <i class="fas fa-tachometer-alt fa-2x"></i>
+                                </div>
                             </div>
-                        </div>
-                        <div class="flex-grow-1 ms-4">
-                            <h2 class="mb-1">Tableau de bord</h2>
-                            <p class="text-muted mb-0">Bienvenue, {{ user.get_full_name|default:user.username }}!</p>
+                            <div class="flex-grow-1 ms-4">
+                                <h2 class="mb-1">Tableau de bord Administrateur</h2>
+                                <p class="text-muted mb-0">Bienvenue, {{ user.get_full_name|default:user.username }}!</p>
+                                {% if current_school_year %}
+                                <p class="text-muted mb-0">Année scolaire en cours: <span class="badge bg-primary">{{ current_school_year.name }}</span></p>
+                                {% endif %}
+                            </div>
                         </div>
                         <div class="flex-shrink-0">
                             <span class="badge bg-primary fs-6">{{ user.date_joined|date:"d/m/Y" }}</span>
@@ -30,21 +35,27 @@
         </div>
     </div>
 
+    <!-- Cartes de statistiques -->
     <div class="row mt-4">
         <div class="col-xl-3 col-md-6 mb-4">
             <div class="card border-0 shadow-sm h-100 card-hover">
                 <div class="card-body p-4">
                     <div class="d-flex align-items-center">
                         <div class="icon-box bg-danger bg-opacity-10 text-danger rounded-circle p-3 me-3">
-                            <i class="fas fa-user-graduate fa-lg"></i>
+                            <i class="fas fa-users fa-lg"></i>
                         </div>
                         <div>
-                            <h6 class="text-muted mb-1">Étudiants</h6>
-                            <h3 class="mb-0">1,250</h3>
+                            <h6 class="text-muted mb-1">Utilisateurs</h6>
+                            <h3 class="mb-0">{{ total_users }}</h3>
+                            <div class="small text-muted">
+                                <span class="text-danger">{{ student_count }} étudiants</span>, 
+                                <span class="text-primary">{{ teacher_count }} professeurs</span>, 
+                                <span class="text-info">{{ parent_count }} parents</span>
+                            </div>
                         </div>
                     </div>
                     <div class="mt-3">
-                        <a href="#" class="btn btn-sm btn-outline-danger">Voir tous</a>
+                        <a href="{% url 'auth_app:user_list' %}" class="btn btn-sm btn-outline-danger">Voir tous</a>
                     </div>
                 </div>
             </div>
@@ -59,11 +70,14 @@
                         </div>
                         <div>
                             <h6 class="text-muted mb-1">Professeurs</h6>
-                            <h3 class="mb-0">85</h3>
+                            <h3 class="mb-0">{{ teacher_count }}</h3>
+                            <div class="small text-muted">
+                                {% if subject_count %}{{ subject_count }} matières enseignées{% endif %}
+                            </div>
                         </div>
                     </div>
                     <div class="mt-3">
-                        <a href="#" class="btn btn-sm btn-outline-primary">Voir tous</a>
+                        <a href="{% url 'auth_app:teacher_list' %}" class="btn btn-sm btn-outline-primary">Voir tous</a>
                     </div>
                 </div>
             </div>
@@ -78,11 +92,14 @@
                         </div>
                         <div>
                             <h6 class="text-muted mb-1">Classes</h6>
-                            <h3 class="mb-0">42</h3>
+                            <h3 class="mb-0">{{ class_count }}</h3>
+                            <div class="small text-muted">
+                                {% if enrollment_count %}{{ enrollment_count }} inscriptions{% endif %}
+                            </div>
                         </div>
                     </div>
                     <div class="mt-3">
-                        <a href="#" class="btn btn-sm btn-outline-info">Voir toutes</a>
+                        <a href="{% url 'academics:class_list' %}" class="btn btn-sm btn-outline-info">Voir toutes</a>
                     </div>
                 </div>
             </div>
@@ -96,59 +113,103 @@
                             <i class="fas fa-book fa-lg"></i>
                         </div>
                         <div>
-                            <h6 class="text-muted mb-1">Cours</h6>
-                            <h3 class="mb-0">128</h3>
+                            <h6 class="text-muted mb-1">Matières</h6>
+                            <h3 class="mb-0">{{ subject_count }}</h3>
+                            <div class="small text-muted">
+                                Enseignées cette année
+                            </div>
                         </div>
                     </div>
                     <div class="mt-3">
-                        <a href="#" class="btn btn-sm btn-outline-warning">Voir tous</a>
+                        <a href="{% url 'academics:subject_list' %}" class="btn btn-sm btn-outline-warning">Voir toutes</a>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Deuxième ligne de cartes -->
+    <div class="row mt-2">
+        <div class="col-xl-6 col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100 card-hover">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center">
+                        <div class="icon-box bg-success bg-opacity-10 text-success rounded-circle p-3 me-3">
+                            <i class="fas fa-user-graduate fa-lg"></i>
+                        </div>
+                        <div>
+                            <h6 class="text-muted mb-1">Étudiants</h6>
+                            <h3 class="mb-0">{{ student_count }}</h3>
+                            <div class="small text-muted">
+                                Inscrits cette année
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <a href="{% url 'auth_app:student_list' %}" class="btn btn-sm btn-outline-success">Voir tous</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-6 col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100 card-hover">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center">
+                        <div class="icon-box bg-secondary bg-opacity-10 text-secondary rounded-circle p-3 me-3">
+                            <i class="fas fa-user-friends fa-lg"></i>
+                        </div>
+                        <div>
+                            <h6 class="text-muted mb-1">Parents</h6>
+                            <h3 class="mb-0">{{ parent_count }}</h3>
+                            <div class="small text-muted">
+                                Enregistrés dans le système
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <a href="{% url 'auth_app:parent_list' %}" class="btn btn-sm btn-outline-secondary">Voir tous</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section des informations détaillées -->
     <div class="row mt-4">
         <div class="col-xl-8 mb-4">
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white py-3">
-                    <h5 class="mb-0">Activités récentes</h5>
+                    <h5 class="mb-0">Prochains devoirs à rendre</h5>
                 </div>
                 <div class="card-body">
-                    <div class="timeline">
-                        <div class="timeline-item">
-                            <div class="timeline-point timeline-point-danger"></div>
-                            <div class="timeline-content">
-                                <div class="d-flex justify-content-between">
-                                    <h6 class="mb-1">Nouvel étudiant inscrit</h6>
-                                    <small class="text-muted">Il y a 10 minutes</small>
+                    {% if upcoming_assignments %}
+                        <div class="list-group list-group-flush">
+                            {% for assignment in upcoming_assignments %}
+                            <div class="list-group-item px-0">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">{{ assignment.title }}</h6>
+                                        <p class="text-muted mb-0">
+                                            <i class="fas fa-book me-1"></i> {{ assignment.subject.name }} | 
+                                            <i class="fas fa-users me-1"></i> {{ assignment.class_obj.name }}
+                                        </p>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="badge bg-primary">{{ assignment.due_date|date:"d/m/Y" }}</span>
+                                        <div class="small text-muted">{{ assignment.teacher.get_full_name|default:assignment.teacher.username }}</div>
+                                    </div>
                                 </div>
-                                <p class="text-muted mb-0">Jean Dupont a été inscrit en classe de 3ème A</p>
                             </div>
+                            {% endfor %}
                         </div>
-                        
-                        <div class="timeline-item">
-                            <div class="timeline-point timeline-point-primary"></div>
-                            <div class="timeline-content">
-                                <div class="d-flex justify-content-between">
-                                    <h6 class="mb-1">Nouveau professeur</h6>
-                                    <small class="text-muted">Il y a 2 heures</small>
-                                </div>
-                                <p class="text-muted mb-0">Marie Martin a rejoint l'équipe pédagogique</p>
-                            </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-tasks fa-3x text-muted mb-3"></i>
+                            <h6 class="text-muted">Aucun devoir à venir</h6>
+                            <p class="text-muted">Tous les devoirs ont été rendus ou aucun n'a été programmé.</p>
                         </div>
-                        
-                        <div class="timeline-item">
-                            <div class="timeline-point timeline-point-info"></div>
-                            <div class="timeline-content">
-                                <div class="d-flex justify-content-between">
-                                    <h6 class="mb-1">Examen programmé</h6>
-                                    <small class="text-muted">Hier</small>
-                                </div>
-                                <p class="text-muted mb-0">Examen de mathématiques pour la classe de 2nde B</p>
-                            </div>
-                        </div>
-                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -156,79 +217,92 @@
         <div class="col-xl-4 mb-4">
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white py-3">
-                    <h5 class="mb-0">Calendrier</h5>
+                    <h5 class="mb-0">Derniers utilisateurs inscrits</h5>
                 </div>
                 <div class="card-body">
-                    <div id="calendar" class="calendar-container">
-                        <div class="calendar-header d-flex justify-content-between align-items-center mb-3">
-                            <h6 class="mb-0">Novembre 2023</h6>
-                            <div>
-                                <button class="btn btn-sm btn-light"><i class="fas fa-chevron-left"></i></button>
-                                <button class="btn btn-sm btn-light"><i class="fas fa-chevron-right"></i></button>
-                            </div>
-                        </div>
-                        <div class="calendar-grid">
-                            <div class="calendar-day text-muted text-center">Dim</div>
-                            <div class="calendar-day text-muted text-center">Lun</div>
-                            <div class="calendar-day text-muted text-center">Mar</div>
-                            <div class="calendar-day text-muted text-center">Mer</div>
-                            <div class="calendar-day text-muted text-center">Jeu</div>
-                            <div class="calendar-day text-muted text-center">Ven</div>
-                            <div class="calendar-day text-muted text-center">Sam</div>
-                            
-                            <!-- Exemple de jours -->
-                            <div class="calendar-date text-center">29</div>
-                            <div class="calendar-date text-center">30</div>
-                            <div class="calendar-date text-center">31</div>
-                            <div class="calendar-date text-center">1</div>
-                            <div class="calendar-date text-center">2</div>
-                            <div class="calendar-date text-center">3</div>
-                            <div class="calendar-date text-center">4</div>
-                            <div class="calendar-date text-center">5</div>
-                            <div class="calendar-date text-center">6</div>
-                            <div class="calendar-date text-center">7</div>
-                            <div class="calendar-date text-center">8</div>
-                            <div class="calendar-date text-center">9</div>
-                            <div class="calendar-date text-center">10</div>
-                            <div class="calendar-date text-center">11</div>
-                            <div class="calendar-date text-center">12</div>
-                            <div class="calendar-date text-center">13</div>
-                            <div class="calendar-date text-center">14</div>
-                            <div class="calendar-date text-center bg-danger bg-opacity-10 text-danger rounded-circle">15</div>
-                            <div class="calendar-date text-center">16</div>
-                            <div class="calendar-date text-center">17</div>
-                            <div class="calendar-date text-center">18</div>
-                        </div>
-                    </div>
-                    
-                    <div class="mt-4">
-                        <h6 class="mb-3">Événements à venir</h6>
-                        <div class="event-item mb-2 pb-2 border-bottom">
-                            <div class="d-flex">
-                                <div class="event-date bg-danger bg-opacity-10 text-danger rounded p-2 me-3">
-                                    <div class="text-center">
-                                        <div class="fw-bold">15</div>
-                                        <div class="small">Nov</div>
+                    {% if users %}
+                        <div class="list-group list-group-flush">
+                            {% for user in users %}
+                            <div class="list-group-item px-0">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0">
+                                        {% if user.userprofile.profile_picture %}
+                                            <img src="{{ user.userprofile.profile_picture.url }}" alt="{{ user.get_full_name }}" class="rounded-circle" width="40" height="40">
+                                        {% else %}
+                                            <div class="avatar-placeholder rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                                {{ user.first_name|slice:":1"|upper }}{{ user.last_name|slice:":1"|upper }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="mb-0">{{ user.get_full_name|default:user.username }}</h6>
+                                        <div class="small text-muted">
+                                            <span class="badge bg-{{ user.userprofile.user_type|yesno:'primary,info,warning,secondary' }}">{{ user.userprofile.get_user_type_display }}</span>
+                                            <span class="text-muted ms-2">{{ user.date_joined|date:"d/m/Y" }}</span>
+                                        </div>
                                     </div>
                                 </div>
-                                <div>
-                                    <h6 class="mb-0">Réunion des parents</h6>
-                                    <p class="text-muted small mb-0">15:00 - 17:00</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                            <h6 class="text-muted">Aucun utilisateur récent</h6>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section des informations sur l'année scolaire -->
+    {% if current_school_year %}
+    <div class="row mt-4">
+        <div class="col-12 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">Informations sur l'année scolaire en cours</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <div class="card border-0 bg-light">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title text-primary">{{ current_school_year.name }}</h5>
+                                    <p class="card-text">
+                                        <small class="text-muted">Du {{ current_school_year.start_date|date:"d/m/Y" }} au {{ current_school_year.end_date|date:"d/m/Y" }}</small>
+                                    </p>
                                 </div>
                             </div>
                         </div>
-                        
-                        <div class="event-item">
-                            <div class="d-flex">
-                                <div class="event-date bg-primary bg-opacity-10 text-primary rounded p-2 me-3">
-                                    <div class="text-center">
-                                        <div class="fw-bold">22</div>
-                                        <div class="small">Nov</div>
-                                    </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card border-0 bg-light">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title text-info">{{ class_count }}</h5>
+                                    <p class="card-text">
+                                        <small class="text-muted">Classes ouvertes</small>
+                                    </p>
                                 </div>
-                                <div>
-                                    <h6 class="mb-0">Journée sportive</h6>
-                                    <p class="text-muted small mb-0">09:00 - 16:00</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card border-0 bg-light">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title text-warning">{{ subject_count }}</h5>
+                                    <p class="card-text">
+                                        <small class="text-muted">Matières enseignées</small>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card border-0 bg-light">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title text-success">{{ enrollment_count }}</h5>
+                                    <p class="card-text">
+                                        <small class="text-muted">Inscriptions actives</small>
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -237,5 +311,51 @@
             </div>
         </div>
     </div>
+    {% endif %}
+
+    <!-- Section des actions rapides -->
+    <div class="row mt-4">
+        <div class="col-12 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">Actions rapides</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'auth_app:user_create' %}" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-user-plus me-2"></i>Ajouter un utilisateur
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'academics:class_create' %}" class="btn btn-outline-info w-100">
+                                <i class="fas fa-plus-circle me-2"></i>Créer une classe
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'academics:subject_create' %}" class="btn btn-outline-warning w-100">
+                                <i class="fas fa-book-medical me-2"></i>Ajouter une matière
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'school:school_year_create' %}" class="btn btn-outline-success w-100">
+                                <i class="fas fa-calendar-plus me-2"></i>Nouvelle année scolaire
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Script pour rafraîchir périodiquement les données du tableau de bord
+    document.addEventListener('DOMContentLoaded', function() {
+        // Ajoutez ici du JavaScript supplémentaire si nécessaire
+        console.log('Dashboard administrateur chargé');
+    });
+</script>
 {% endblock %}

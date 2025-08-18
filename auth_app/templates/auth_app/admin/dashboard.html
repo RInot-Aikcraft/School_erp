@@ -1,6 +1,9 @@
+<!-- auth_app/templates/auth_app/admin/dashboard.html -->
 {% extends 'base.html' %}
+{% load bootstrap5 %}
 {% load static %}
-{% block title %}Tableau de bord Administrateur{% endblock %}
+{% block title %}Dashboard Administrateur - Gestion d'École{% endblock %}
+
 {% block content %}
 <div class="container-fluid py-4">
     <!-- En-tête du tableau de bord -->
@@ -11,22 +14,20 @@
                     <div class="d-flex align-items-center justify-content-between">
                         <div class="d-flex align-items-center">
                             <div class="flex-shrink-0">
-                                <div class="icon-box bg-danger bg-opacity-10 text-danger rounded-circle p-3">
-                                    <i class="fas fa-user-shield fa-2x"></i>
+                                <div class="icon-box bg-primary bg-opacity-10 text-primary rounded-circle p-3">
+                                    <i class="fas fa-tachometer-alt fa-2x"></i>
                                 </div>
                             </div>
                             <div class="flex-grow-1 ms-4">
                                 <h2 class="mb-1">Tableau de bord Administrateur</h2>
                                 <p class="text-muted mb-0">Bienvenue, {{ user.get_full_name|default:user.username }}!</p>
                                 {% if current_school_year %}
-                                <p class="text-muted"><small>Année scolaire en cours : <strong>{{ current_school_year.name }}</strong></small></p>
-                                {% else %}
-                                <p class="text-warning"><small><i class="fas fa-exclamation-triangle me-1"></i>Aucune année scolaire n'est définie comme "actuelle".</small></p>
+                                <p class="text-muted mb-0">Année scolaire en cours: <span class="badge bg-primary">{{ current_school_year.name }}</span></p>
                                 {% endif %}
                             </div>
                         </div>
                         <div class="flex-shrink-0">
-                            <span class="badge bg-danger fs-6">Administrateur</span>
+                            <span class="badge bg-primary fs-6">{{ user.date_joined|date:"d/m/Y" }}</span>
                         </div>
                     </div>
                 </div>
@@ -34,7 +35,7 @@
         </div>
     </div>
 
-    <!-- Statistiques principales -->
+    <!-- Cartes de statistiques principales -->
     <div class="row mt-4">
         <div class="col-xl-3 col-md-6 mb-4">
             <div class="card border-0 shadow-sm h-100 card-hover">
@@ -44,8 +45,13 @@
                             <i class="fas fa-users fa-lg"></i>
                         </div>
                         <div>
-                            <h6 class="text-muted mb-1">Total Utilisateurs</h6>
+                            <h6 class="text-muted mb-1">Utilisateurs</h6>
                             <h3 class="mb-0">{{ total_users }}</h3>
+                            <div class="small text-muted">
+                                <span class="text-danger">{{ student_count }} étudiants</span>, 
+                                <span class="text-primary">{{ teacher_count }} professeurs</span>, 
+                                <span class="text-info">{{ parent_count }} parents</span>
+                            </div>
                         </div>
                     </div>
                     <div class="mt-3">
@@ -63,12 +69,14 @@
                             <i class="fas fa-chalkboard-teacher fa-lg"></i>
                         </div>
                         <div>
-                            <h6 class="text-muted mb-1">Enseignants</h6>
+                            <h6 class="text-muted mb-1">Professeurs</h6>
                             <h3 class="mb-0">{{ teacher_count }}</h3>
+                            <div class="small text-muted">
+                                {% if subject_count %}{{ subject_count }} matières enseignées{% endif %}
+                            </div>
                         </div>
                     </div>
                     <div class="mt-3">
-                        {# CORRECTION : Lien vers la liste des enseignants #}
                         <a href="{% url 'auth_app:teacher_list' %}" class="btn btn-sm btn-outline-primary">Voir tous</a>
                     </div>
                 </div>
@@ -80,16 +88,18 @@
                 <div class="card-body p-4">
                     <div class="d-flex align-items-center">
                         <div class="icon-box bg-info bg-opacity-10 text-info rounded-circle p-3 me-3">
-                            <i class="fas fa-user-graduate fa-lg"></i>
+                            <i class="fas fa-door-open fa-lg"></i>
                         </div>
                         <div>
-                            <h6 class="text-muted mb-1">Élèves</h6>
-                            <h3 class="mb-0">{{ student_count }}</h3>
+                            <h6 class="text-muted mb-1">Classes</h6>
+                            <h3 class="mb-0">{{ class_count }}</h3>
+                            <div class="small text-muted">
+                                {% if enrollment_count %}{{ enrollment_count }} inscriptions{% endif %}
+                            </div>
                         </div>
                     </div>
                     <div class="mt-3">
-                        {# LIEN (à créer plus tard) #}
-                        <a href="#" class="btn btn-sm btn-outline-info">Voir tous</a>
+                        <a href="{% url 'academics:class_list' %}" class="btn btn-sm btn-outline-info">Voir toutes</a>
                     </div>
                 </div>
             </div>
@@ -100,78 +110,352 @@
                 <div class="card-body p-4">
                     <div class="d-flex align-items-center">
                         <div class="icon-box bg-warning bg-opacity-10 text-warning rounded-circle p-3 me-3">
-                            <i class="fas fa-user-friends fa-lg"></i>
+                            <i class="fas fa-book fa-lg"></i>
                         </div>
                         <div>
-                            <h6 class="text-muted mb-1">Parents</h6>
-                            <h3 class="mb-0">{{ parent_count }}</h3>
+                            <h6 class="text-muted mb-1">Matières</h6>
+                            <h3 class="mb-0">{{ subject_count }}</h3>
+                            <div class="small text-muted">
+                                Enseignées cette année
+                            </div>
                         </div>
                     </div>
                     <div class="mt-3">
-                        {# LIEN (à créer plus tard) #}
-                        <a href="#" class="btn btn-sm btn-outline-warning">Voir tous</a>
+                        <a href="{% url 'academics:subject_list' %}" class="btn btn-sm btn-outline-warning">Voir toutes</a>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- NOUVELLE SECTION : Statistiques Contextuelles -->
-    {% if current_school_year %}
+    <!-- Deuxième ligne de cartes -->
     <div class="row mt-2">
-        <div class="col-xl-4 col-md-6 mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
             <div class="card border-0 shadow-sm h-100 card-hover">
                 <div class="card-body p-4">
                     <div class="d-flex align-items-center">
                         <div class="icon-box bg-success bg-opacity-10 text-success rounded-circle p-3 me-3">
-                            <i class="fas fa-door-open fa-lg"></i>
+                            <i class="fas fa-user-graduate fa-lg"></i>
                         </div>
                         <div>
-                            <h6 class="text-muted mb-1">Classes cette année</h6>
-                            <h3 class="mb-0">{{ class_count }}</h3>
+                            <h6 class="text-muted mb-1">Étudiants</h6>
+                            <h3 class="mb-0">{{ student_count }}</h3>
+                            <div class="small text-muted">
+                                Inscrits cette année
+                            </div>
                         </div>
                     </div>
                     <div class="mt-3">
-                        <a href="{% url 'academics:class_list' %}" class="btn btn-sm btn-outline-success">Voir toutes</a>
+                        <a href="{% url 'auth_app:student_list' %}" class="btn btn-sm btn-outline-success">Voir tous</a>
                     </div>
                 </div>
             </div>
         </div>
         
-        <div class="col-xl-4 col-md-6 mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
             <div class="card border-0 shadow-sm h-100 card-hover">
                 <div class="card-body p-4">
                     <div class="d-flex align-items-center">
-                        <div class="icon-box bg-purple bg-opacity-10 text-purple rounded-circle p-3 me-3">
-                            <i class="fas fa-book-open fa-lg"></i>
+                        <div class="icon-box bg-secondary bg-opacity-10 text-secondary rounded-circle p-3 me-3">
+                            <i class="fas fa-user-friends fa-lg"></i>
                         </div>
                         <div>
-                            <h6 class="text-muted mb-1">Matières enseignées</h6>
-                            <h3 class="mb-0">{{ subject_count }}</h3>
+                            <h6 class="text-muted mb-1">Parents</h6>
+                            <h3 class="mb-0">{{ parent_count }}</h3>
+                            <div class="small text-muted">
+                                Enregistrés dans le système
+                            </div>
                         </div>
                     </div>
                     <div class="mt-3">
-                        <a href="{% url 'academics:subject_list' %}" class="btn btn-sm btn-outline-purple">Voir toutes</a>
+                        <a href="{% url 'auth_app:parent_list' %}" class="btn btn-sm btn-outline-secondary">Voir tous</a>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-xl-4 col-md-6 mb-4">
+        <!-- Carte pour les taux de présence du jour -->
+        <div class="col-xl-3 col-md-6 mb-4">
             <div class="card border-0 shadow-sm h-100 card-hover">
                 <div class="card-body p-4">
                     <div class="d-flex align-items-center">
-                        <div class="icon-box bg-teal bg-opacity-10 text-teal rounded-circle p-3 me-3">
+                        <div class="icon-box bg-purple bg-opacity-10 text-purple rounded-circle p-3 me-3">
                             <i class="fas fa-user-check fa-lg"></i>
                         </div>
                         <div>
-                            <h6 class="text-muted mb-1">Élèves inscrits</h6>
-                            <h3 class="mb-0">{{ enrollment_count }}</h3>
+                            <h6 class="text-muted mb-1">Présence du jour</h6>
+                            <h3 class="mb-0">{{ today_attendance_rate|default:"N/A" }}%</h3>
+                            <div class="small text-muted">
+                                {% if today_total_students %}{{ today_present_students }}/{{ today_total_students }} étudiants{% endif %}
+                            </div>
                         </div>
                     </div>
                     <div class="mt-3">
-                        {# LIEN (à créer plus tard) #}
-                        <a href="#" class="btn btn-sm btn-outline-teal">Voir toutes</a>
+                        <div class="progress" style="height: 5px;">
+                            {% if today_attendance_rate %}
+                                <div class="progress-bar bg-purple" role="progressbar" style="width: {{ today_attendance_rate }}%;" aria-valuenow="{{ today_attendance_rate }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Carte pour les finances -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100 card-hover">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center">
+                        <div class="icon-box bg-green bg-opacity-10 text-green rounded-circle p-3 me-3">
+                            <i class="fas fa-money-bill-wave fa-lg"></i>
+                        </div>
+                        <div>
+                            <h6 class="text-muted mb-1">Finances</h6>
+                            <h3 class="mb-0">{{ total_montant|default:"0"|floatformat:0 }}Ar</h3>
+                            <div class="small text-muted">
+                                Total des paiements enregistrés
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <a href="{% url 'finance:liste_paiements' %}" class="btn btn-sm btn-outline-green">Voir détails</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section des informations détaillées -->
+    <div class="row mt-4">
+        <div class="col-xl-8 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">Prochains devoirs à rendre</h5>
+                </div>
+                <div class="card-body">
+                    {% if upcoming_assignments %}
+                        <div class="list-group list-group-flush">
+                            {% for assignment in upcoming_assignments %}
+                            <div class="list-group-item px-0">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">{{ assignment.title }}</h6>
+                                        <p class="text-muted mb-0">
+                                            <i class="fas fa-book me-1"></i> {{ assignment.subject.name }} | 
+                                            <i class="fas fa-users me-1"></i> {{ assignment.class_obj.name }}
+                                        </p>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="badge bg-primary">{{ assignment.due_date|date:"d/m/Y" }}</span>
+                                        <div class="small text-muted">{{ assignment.teacher.get_full_name|default:assignment.teacher.username }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-tasks fa-3x text-muted mb-3"></i>
+                            <h6 class="text-muted">Aucun devoir à venir</h6>
+                            <p class="text-muted">Tous les devoirs ont été rendus ou aucun n'a été programmé.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-4 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">Derniers utilisateurs inscrits</h5>
+                </div>
+                <div class="card-body">
+                    {% if users %}
+                        <div class="list-group list-group-flush">
+                            {% for user in users %}
+                            <div class="list-group-item px-0">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0">
+                                        {% if user.userprofile.profile_picture %}
+                                            <img src="{{ user.userprofile.profile_picture.url }}" alt="{{ user.get_full_name }}" class="rounded-circle" width="40" height="40">
+                                        {% else %}
+                                            <div class="avatar-placeholder rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                                {{ user.first_name|slice:":1"|upper }}{{ user.last_name|slice:":1"|upper }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="mb-0">{{ user.get_full_name|default:user.username }}</h6>
+                                        <div class="small text-muted">
+                                            <span class="badge bg-{{ user.userprofile.user_type|yesno:'primary,info,warning,secondary' }}">{{ user.userprofile.get_user_type_display }}</span>
+                                            <span class="text-muted ms-2">{{ user.date_joined|date:"d/m/Y" }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                            <h6 class="text-muted">Aucun utilisateur récent</h6>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section financière -->
+    <div class="row mt-4">
+        <div class="col-xl-6 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">Situation financière</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-0 bg-light">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title text-success">{{ total_montant|default:"0"|floatformat:0 }}€</h5>
+                                    <p class="card-text">
+                                        <small class="text-muted">Total des paiements enregistrés</small>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-0 bg-light">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title text-warning">{{ count_en_attente|default:"0" }}</h5>
+                                    <p class="card-text">
+                                        <small class="text-muted">Paiements en attente</small>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-0 bg-light">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title text-info">{{ count_valide|default:"0" }}</h5>
+                                    <p class="card-text">
+                                        <small class="text-muted">Paiements validés</small>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-0 bg-light">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title text-danger">{{ total_ecolages_impayes|default:"0" }}</h5>
+                                    <p class="card-text">
+                                        <small class="text-muted">Écolages impayés</small>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-6 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">Inscriptions en attente</h5>
+                </div>
+                <div class="card-body">
+                    {% if total_en_attente > 0 %}
+                        <div class="alert alert-warning d-flex align-items-center" role="alert">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <div>
+                                <strong>{{ total_en_attente }}</strong> inscription(s) en attente de validation
+                            </div>
+                        </div>
+                        <div class="list-group list-group-flush mt-3">
+                            {% for inscription in inscriptions_en_attente|slice:":5" %}
+                            <div class="list-group-item px-0">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-0">{{ inscription.eleve.get_full_name|default:inscription.eleve.username }}</h6>
+                                        <p class="text-muted mb-0">
+                                            <i class="fas fa-door-open me-1"></i> {{ inscription.classe_demandee.name }}
+                                        </p>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="badge bg-warning">{{ inscription.get_statut_display }}</span>
+                                        <div class="small text-muted">{{ inscription.date_inscription|date:"d/m/Y" }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="mt-3 text-center">
+                            <a href="{% url 'finance:liste_inscriptions' %}?statut=EN_ATTENTE" class="btn btn-sm btn-outline-warning">Voir toutes les inscriptions en attente</a>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                            <h6 class="text-muted">Aucune inscription en attente</h6>
+                            <p class="text-muted">Toutes les inscriptions ont été traitées.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section des informations sur l'année scolaire -->
+    {% if current_school_year %}
+    <div class="row mt-4">
+        <div class="col-12 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">Informations sur l'année scolaire en cours</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <div class="card border-0 bg-light">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title text-primary">{{ current_school_year.name }}</h5>
+                                    <p class="card-text">
+                                        <small class="text-muted">Du {{ current_school_year.start_date|date:"d/m/Y" }} au {{ current_school_year.end_date|date:"d/m/Y" }}</small>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card border-0 bg-light">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title text-info">{{ class_count }}</h5>
+                                    <p class="card-text">
+                                        <small class="text-muted">Classes ouvertes</small>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card border-0 bg-light">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title text-warning">{{ subject_count }}</h5>
+                                    <p class="card-text">
+                                        <small class="text-muted">Matières enseignées</small>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card border-0 bg-light">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title text-success">{{ enrollment_count }}</h5>
+                                    <p class="card-text">
+                                        <small class="text-muted">Inscriptions actives</small>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -179,165 +463,54 @@
     </div>
     {% endif %}
 
-    <!-- Actions rapides -->
+    <!-- Section des actions rapides -->
     <div class="row mt-4">
-        <div class="col-12">
+        <div class="col-12 mb-4">
             <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <div class="card-header bg-white py-3">
                     <h5 class="mb-0">Actions rapides</h5>
                 </div>
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-3 mb-3">
-                            <a href="{% url 'auth_app:user_create' %}" class="btn btn-danger w-100 h-100 d-flex flex-column align-items-center justify-content-center p-4">
-                                <i class="fas fa-user-plus fa-2x mb-2"></i>
-                                <span>Créer un utilisateur</span>
+                            <a href="{% url 'auth_app:user_create' %}" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-user-plus me-2"></i>Ajouter un utilisateur
                             </a>
                         </div>
                         <div class="col-md-3 mb-3">
-                            <a href="{% url 'auth_app:teacher_create' %}" class="btn btn-primary w-100 h-100 d-flex flex-column align-items-center justify-content-center p-4">
-                                <i class="fas fa-chalkboard-teacher fa-2x mb-2"></i>
-                                <span>Créer un enseignant</span>
+                            <a href="{% url 'academics:class_create' %}" class="btn btn-outline-info w-100">
+                                <i class="fas fa-plus-circle me-2"></i>Créer une classe
                             </a>
                         </div>
                         <div class="col-md-3 mb-3">
-                            <a href="{% url 'academics:class_create' %}" class="btn btn-info w-100 h-100 d-flex flex-column align-items-center justify-content-center p-4">
-                                <i class="fas fa-door-open fa-2x mb-2"></i>
-                                <span>Créer une classe</span>
+                            <a href="{% url 'academics:subject_create' %}" class="btn btn-outline-warning w-100">
+                                <i class="fas fa-book-medical me-2"></i>Ajouter une matière
                             </a>
                         </div>
                         <div class="col-md-3 mb-3">
-                            <a href="{% url 'academics:subject_create' %}" class="btn btn-warning w-100 h-100 d-flex flex-column align-items-center justify-content-center p-4">
-                                <i class="fas fa-book-open fa-2x mb-2"></i>
-                                <span>Créer une matière</span>
+                            <a href="{% url 'school:school_year_create' %}" class="btn btn-outline-success w-100">
+                                <i class="fas fa-calendar-plus me-2"></i>Nouvelle année scolaire
                             </a>
                         </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="row mt-4">
-        <!-- Utilisateurs récents -->
-        <div class="col-xl-8 mb-4">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Utilisateurs récents</h5>
-                    <a href="{% url 'auth_app:user_list' %}" class="btn btn-sm btn-outline-danger">Voir tous</a>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Nom</th>
-                                    <th>Type</th>
-                                    <th>Email</th>
-                                    <th>Date d'inscription</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for user in users|slice:":5" %}
-                                <tr>
-                                    <td>{{ user.get_full_name|default:user.username }}</td>
-                                    <td>
-                                        <span class="badge 
-                                            {% if user.userprofile.user_type == 'admin' %}bg-danger
-                                            {% elif user.userprofile.user_type == 'teacher' %}bg-primary
-                                            {% elif user.userprofile.user_type == 'student' %}bg-info
-                                            {% elif user.userprofile.user_type == 'parent' %}bg-warning
-                                            {% endif %}">
-                                            {{ user.userprofile.get_user_type_display }}
-                                        </span>
-                                    </td>
-                                    <td>{{ user.email }}</td>
-                                    <td>{{ user.date_joined|date:"d/m/Y" }}</td>
-                                    <td>
-                                        <div class="btn-group" role="group">
-                                            <a href="{% url 'auth_app:user_detail' user.pk %}" class="btn btn-sm btn-outline-primary" title="Voir">
-                                                <i class="fas fa-eye"></i>
-                                            </a>
-                                            <a href="{% url 'auth_app:user_update' user.pk %}" class="btn btn-sm btn-outline-info" title="Modifier">
-                                                <i class="fas fa-edit"></i>
-                                            </a>
-                                            <a href="{% url 'auth_app:user_delete' user.pk %}" class="btn btn-sm btn-outline-danger" title="Supprimer">
-                                                <i class="fas fa-trash"></i>
-                                            </a>
-                                        </div>
-                                    </td>
-                                </tr>
-                                {% empty %}
-                                <tr>
-                                    <td colspan="5" class="text-center">Aucun utilisateur trouvé</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- NOUVELLE SECTION : Prochains devoirs -->
-        <div class="col-xl-4 mb-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Prochains devoirs</h5>
-                    <a href="{% url 'academics:assignment_list' %}" class="btn btn-sm btn-outline-primary">Voir tous</a>
-                </div>
-                <div class="card-body">
-                    {% if upcoming_assignments %}
-                    <ul class="list-group list-group-flush">
-                        {% for assignment in upcoming_assignments %}
-                        <li class="list-group-item px-0">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">{{ assignment.title }}</h6>
-                                <small class="text-muted">{{ assignment.due_date|date:"d/m" }}</small>
-                            </div>
-                            <p class="mb-1 small text-muted">{{ assignment.subject.name }} - {{ assignment.class_obj.name }}</p>
-                            <small>par {{ assignment.teacher.get_full_name|default:assignment.teacher.username }}</small>
-                        </li>
-                        {% endfor %}
-                    </ul>
-                    {% else %}
-                    <p class="text-muted text-center">Aucun devoir à venir.</p>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Répartition des utilisateurs (Graphique) -->
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white py-3">
-                    <h5 class="mb-0">Répartition des utilisateurs</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-8">
-                            <canvas id="userChart" height="100"></canvas>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'finance:ajouter_inscription' %}" class="btn btn-outline-danger w-100">
+                                <i class="fas fa-user-graduate me-2"></i>Nouvelle inscription
+                            </a>
                         </div>
-                        <div class="col-md-4">
-                            <div class="d-flex align-items-center mb-3">
-                                <span class="badge bg-danger me-2" style="width: 20px; height: 20px;"></span>
-                                <span>Admins ({{ admin_count }})</span>
-                            </div>
-                            <div class="d-flex align-items-center mb-3">
-                                <span class="badge bg-primary me-2" style="width: 20px; height: 20px;"></span>
-                                <span>Enseignants ({{ teacher_count }})</span>
-                            </div>
-                            <div class="d-flex align-items-center mb-3">
-                                <span class="badge bg-info me-2" style="width: 20px; height: 20px;"></span>
-                                <span>Élèves ({{ student_count }})</span>
-                            </div>
-                            <div class="d-flex align-items-center">
-                                <span class="badge bg-warning me-2" style="width: 20px; height: 20px;"></span>
-                                <span>Parents ({{ parent_count }})</span>
-                            </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'finance:ajouter_paiement' %}" class="btn btn-outline-green w-100">
+                                <i class="fas fa-money-bill-wave me-2"></i>Enregistrer un paiement
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'finance:liste_ecolages_impayes' %}" class="btn btn-outline-purple w-100">
+                                <i class="fas fa-exclamation-circle me-2"></i>Écolages impayés
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'finance:liste_frais_inscription_impayes' %}" class="btn btn-outline-secondary w-100">
+                                <i class="fas fa-file-invoice-dollar me-2"></i>Frais d'inscription impayés
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -345,49 +518,14 @@
         </div>
     </div>
 </div>
+{% endblock %}
 
-<!-- Scripts pour le graphique -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% block extra_js %}
 <script>
+    // Script pour rafraîchir périodiquement les données du tableau de bord
     document.addEventListener('DOMContentLoaded', function() {
-        const ctx = document.getElementById('userChart').getContext('2d');
-        const userChart = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Admins', 'Enseignants', 'Élèves', 'Parents'],
-                datasets: [{
-                    data: [{{ admin_count }}, {{ teacher_count }}, {{ student_count }}, {{ parent_count }}],
-                    backgroundColor: [
-                        '#c62828', // Rouge danger
-                        '#3949ab', // Bleu primary
-                        '#039be5', // Bleu info
-                        '#fdd835'  // Jaune warning
-                    ],
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false, // On cache la légende car on l'affiche à côté
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                let label = context.label || '';
-                                if (label) {
-                                    label += ': ';
-                                }
-                                label += context.parsed + ' utilisateur(s)';
-                                return label;
-                            }
-                        }
-                    }
-                }
-            }
-        });
+        // Ajoutez ici du JavaScript supplémentaire si nécessaire
+        console.log('Dashboard administrateur chargé');
     });
 </script>
 {% endblock %}
