@@ -15,10 +15,11 @@
     </div>
 </div>
 
-<div class="card">
-    <div class="card-body">
-        <form method="post">
-            {% csrf_token %}
+<!-- Le formulaire principal ENGLOBE MAINTENANT TOUT -->
+<form method="post" id="textbookForm">
+    {% csrf_token %}
+    <div class="card mb-4">
+        <div class="card-body">
             <div class="mb-3">
                 <label for="class_subject" class="form-label">Classe et matière</label>
                 <select class="form-select" id="class_subject" name="class_subject" required>
@@ -39,12 +40,152 @@
                     <i class="fas fa-info-circle me-1"></i> La date sera automatiquement enregistrée comme date d'aujourd'hui.
                 </div>
             </div>
-            <div class="d-flex justify-content-end">
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-save me-1"></i> Enregistrer
-                </button>
-            </div>
-        </form>
+        </div>
     </div>
-</div>
+
+    <!-- Section pour la gestion des présences, MAINTENANT À L'INTÉRIEUR DU FORMULAIRE -->
+    <div id="attendanceSection" class="card" {% if not preselected_class %}style="display: none;"{% endif %}>
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Suivi des présences</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Élève</th>
+                            <th>Présent</th>
+                            <th>Absent</th>
+                            <th>En retard</th>
+                            <th>Commentaires</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student in students %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ student.get_full_name|default:student.username }}</td>
+                            <td class="text-center">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="attendance_{{ student.id }}" id="attendance_present_{{ student.id }}" value="PRESENT" checked>
+                                    <label class="form-check-label" for="attendance_present_{{ student.id }}">
+                                        <i class="fas fa-check-circle text-success"></i>
+                                    </label>
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="attendance_{{ student.id }}" id="attendance_absent_{{ student.id }}" value="ABSENT">
+                                    <label class="form-check-label" for="attendance_absent_{{ student.id }}">
+                                        <i class="fas fa-times-circle text-danger"></i>
+                                    </label>
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="attendance_{{ student.id }}" id="attendance_late_{{ student.id }}" value="LATE">
+                                    <label class="form-check-label" for="attendance_late_{{ student.id }}">
+                                        <i class="fas fa-clock text-warning"></i>
+                                    </label>
+                                </div>
+                            </td>
+                            <td>
+                                <input type="text" class="form-control form-control-sm" name="attendance_comments_{{ student.id }}" placeholder="Commentaires...">
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center">Aucun élève trouvé pour cette classe</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Le bouton submit est aussi déplacé à la fin du formulaire -->
+    <div class="d-flex justify-content-end mt-3">
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-save me-1"></i> Enregistrer
+        </button>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gérer le changement de classe/matière pour mettre à jour la liste des élèves
+    const classSubjectSelect = document.getElementById('class_subject');
+    const attendanceSection = document.getElementById('attendanceSection');
+    
+    classSubjectSelect.addEventListener('change', function() {
+        const classSubjectId = this.value;
+        
+        if (classSubjectId) {
+            // Charger les élèves pour cette classe via AJAX
+            fetch(`/teachers/api/students-by-class/?class_subject=${classSubjectId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.students && data.students.length > 0) {
+                        // Mettre à jour le tableau des présences
+                        const tbody = document.querySelector('#attendanceSection tbody');
+                        tbody.innerHTML = '';
+                        
+                        data.students.forEach((student, index) => {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td>${index + 1}</td>
+                                <td>${student.full_name || student.username}</td>
+                                <td class="text-center">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="attendance_${student.id}" id="attendance_present_${student.id}" value="PRESENT" checked>
+                                        <label class="form-check-label" for="attendance_present_${student.id}">
+                                            <i class="fas fa-check-circle text-success"></i>
+                                        </label>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="attendance_${student.id}" id="attendance_absent_${student.id}" value="ABSENT">
+                                        <label class="form-check-label" for="attendance_absent_${student.id}">
+                                            <i class="fas fa-times-circle text-danger"></i>
+                                        </label>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="attendance_${student.id}" id="attendance_late_${student.id}" value="LATE">
+                                        <label class="form-check-label" for="attendance_late_${student.id}">
+                                            <i class="fas fa-clock text-warning"></i>
+                                        </label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <input type="text" class="form-control form-control-sm" name="attendance_comments_${student.id}" placeholder="Commentaires...">
+                                </td>
+                            `;
+                            tbody.appendChild(row);
+                        });
+                        
+                        // Afficher la section des présences
+                        attendanceSection.style.display = 'block';
+                    } else {
+                        // Cacher la section des présences s'il n'y a pas d'élèves
+                        attendanceSection.style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    attendanceSection.style.display = 'none';
+                });
+        } else {
+            // Cacher la section des présences si aucune classe n'est sélectionnée
+            attendanceSection.style.display = 'none';
+        }
+    });
+});
+</script>
 {% endblock %}

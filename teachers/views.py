@@ -1,23 +1,35 @@
 from django.shortcuts import render, get_object_or_404, redirect
+from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from academics.models import ClassSubject, ScheduleEntry, Enrollment, Class, Schedule, TimeSlot, Assignment, Grade
+from django.http import HttpResponse, JsonResponse
+from django.urls import reverse 
+from django.conf import settings
+from django.utils import timezone
+from django.db import transaction
+from django.db.models import Prefetch
+
+from academics.models import (
+    ClassSubject, ScheduleEntry, Enrollment, Class,
+    Schedule, TimeSlot, Assignment, Grade
+)
 from school.models import SchoolYear
 from finance.models import Inscription
-from django.db.models import Prefetch
-from .models import ProgramChapter, Subtitle,  Interrogation, InterrogationGrade, Textbook
+from .models import (
+    ProgramChapter, Subtitle, Interrogation, InterrogationGrade,
+    Textbook, AttendanceStatus, Attendance
+)
+
 from django.core.paginator import Paginator
 import io
 from reportlab.lib.pagesizes import letter, A4
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
+from reportlab.platypus import (
+    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
+)
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
-from django.http import HttpResponse
-from django.conf import settings
-from django.utils import timezone
-
 import os
 
 
@@ -1333,53 +1345,12 @@ def teacher_interrogation_export_pdf(request, pk):
     return response
 
 
-@login_required
-def teacher_textbook_list(request):
-    """
-    Vue pour lister toutes les entrées du cahier de texte du professeur
-    """
-    teacher = request.user
-    
-    # Récupérer toutes les années scolaires
-    school_years = SchoolYear.objects.all().order_by('-start_date')
-    
-    # Récupérer l'année scolaire active ou la plus récente
-    active_school_year = SchoolYear.objects.filter(current=True).first()
-    if not active_school_year and school_years:
-        active_school_year = school_years.first()
-    
-    # Récupérer l'année scolaire sélectionnée (depuis les paramètres GET ou l'année active par défaut)
-    selected_year_id = request.GET.get('school_year')
-    if selected_year_id:
-        selected_year = get_object_or_404(SchoolYear, pk=selected_year_id)
-    else:
-        selected_year = active_school_year
-    
-    # Récupérer toutes les entrées du cahier de texte pour l'année scolaire sélectionnée
-    textbooks = Textbook.objects.filter(
-        teacher=teacher,
-        class_subject__school_year=selected_year
-    ).select_related(
-        'class_subject__subject',
-        'class_subject__class_obj'
-    ).order_by('-date')
-    
-    context = {
-        'textbooks': textbooks,
-        'school_years': school_years,
-        'selected_year': selected_year,
-        'active_school_year': active_school_year,
-    }
-    
-    return render(request, 'teachers/textbook/list.html', context)
 
-from django.http import JsonResponse
+
+
 
 @login_required
 def teacher_textbook_create(request):
-    """
-    Vue pour créer une nouvelle entrée dans le cahier de texte
-    """
     teacher = request.user
     
     # Récupérer les classes où le professeur enseigne
@@ -1389,54 +1360,130 @@ def teacher_textbook_create(request):
     
     # Récupérer la classe pré-sélectionnée si elle existe
     preselected_class = None
+    students_for_preselected_class = []
     class_subject_id = request.GET.get('class_subject')
     if class_subject_id:
         try:
             preselected_class = ClassSubject.objects.get(pk=class_subject_id, teacher=teacher)
+            inscriptions = Inscription.objects.filter(
+                classe_demandee=preselected_class.class_obj,
+                annee_scolaire=preselected_class.school_year
+            ).select_related('eleve').order_by('eleve__last_name', 'eleve__first_name')
+            students_for_preselected_class = [inscription.eleve for inscription in inscriptions]
         except ClassSubject.DoesNotExist:
             pass
-    
+
     if request.method == 'POST':
-        class_subject_id = request.POST.get('class_subject')
-        content = request.POST.get('content')
-        
-        class_subject = get_object_or_404(ClassSubject, pk=class_subject_id)
-        
-        # Vérifier que le professeur enseigne bien dans cette classe
-        if class_subject.teacher != teacher:
+        # --- DÉBOGAGE : Afficher toutes les données reçues du formulaire ---
+        print("\n--- DONNÉES POST REÇUES ---")
+        for key, value in request.POST.items():
+            print(f"{key}: {value}")
+        print("---------------------------\n")
+
+        try:
+            with transaction.atomic():
+                class_subject_id = request.POST.get('class_subject')
+                content = request.POST.get('content')
+
+                if not class_subject_id or not content:
+                    messages.error(request, "Veuillez remplir tous les champs obligatoires.")
+                    # ... (contexte pour réafficher le formulaire) ...
+                    return render(request, 'teachers/textbook/create.html', {
+                        'teacher_classes': teacher_classes,
+                        'preselected_class': preselected_class,
+                        'students': students_for_preselected_class,
+                        'attendance_statuses': AttendanceStatus.choices,
+                    })
+
+                class_subject = get_object_or_404(ClassSubject, pk=class_subject_id)
+                if class_subject.teacher != teacher:
+                    messages.error(request, "Vous n'êtes pas autorisé à créer une entrée pour cette classe.")
+                    return redirect('teachers:textbook_list')
+                
+                textbook = Textbook.objects.create(
+                    teacher=teacher,
+                    class_subject=class_subject,
+                    content=content,
+                    date=timezone.now().date()
+                )
+                
+                inscriptions = Inscription.objects.filter(
+                    classe_demandee=class_subject.class_obj,
+                    annee_scolaire=class_subject.school_year
+                ).select_related('eleve')
+
+                if not inscriptions.exists():
+                    messages.warning(request, "Aucun élève n'est inscrit dans cette classe.")
+                else:
+                    attendance_records_to_create = []
+                    for inscription in inscriptions:
+                        student = inscription.eleve
+                        student_id = student.id
+                        
+                        # --- DÉBOGAGE : Vérifier ce qui est récupéré pour chaque élève ---
+                        raw_status_from_post = request.POST.get(f'attendance_{student_id}')
+                        print(f"Élève ID {student_id} ({student.username}): Statut brut reçu = '{raw_status_from_post}'")
+                        
+                        # Déterminer le statut de manière robuste
+                        if raw_status_from_post == 'ABSENT':
+                            final_status = AttendanceStatus.ABSENT
+                        elif raw_status_from_post == 'LATE':
+                            final_status = AttendanceStatus.LATE
+                        elif raw_status_from_post == 'PRESENT':
+                            final_status = AttendanceStatus.PRESENT
+                        else:
+                            # Si rien n'est coché (ne devrait pas arriver avec des radios)
+                            # ou si la valeur est inattendue, on peut choisir une valeur par défaut
+                            # ou lever une erreur. Ici, on met "Présent" par défaut.
+                            final_status = AttendanceStatus.PRESENT
+                            print(f"ATTENTION: Statut non reconnu pour l'élève {student_id}, mise par défaut sur 'PRESENT'.")
+
+                        comments = request.POST.get(f'attendance_comments_{student_id}', '')
+                        
+                        print(f"Élève ID {student_id}: Statut final qui sera sauvegardé = '{final_status}'")
+                        
+                        attendance_records_to_create.append(
+                            Attendance(
+                                textbook_entry=textbook,
+                                student=student,
+                                status=final_status, # On utilise la variable finale
+                                comments=comments
+                            )
+                        )
+                    
+                    Attendance.objects.bulk_create(attendance_records_to_create)
+                    print(f"\n{len(attendance_records_to_create)} enregistrements de présence créés.")
+
+                if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                    return JsonResponse({
+                        'success': True,
+                        'message': 'Entrée ajoutée avec succès!',
+                        'textbook_id': textbook.id,
+                        'redirect_url': reverse('teachers:textbook_subject', kwargs={'class_subject_pk': class_subject.pk})
+                    })
+                
+                messages.success(request, 'Entrée ajoutée au cahier de texte avec les présences!')
+                return redirect('teachers:textbook_subject', class_subject_pk=class_subject.pk)
+
+        except Exception as e:
+            print(f"ERREUR LORS DE LA CRÉATION: {e}")
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                return JsonResponse({
-                    'success': False,
-                    'message': "Vous n'êtes pas autorisé à créer une entrée pour cette classe."
-                })
-            messages.error(request, "Vous n'êtes pas autorisé à créer une entrée pour cette classe.")
-            return redirect('teachers:textbook_create')
-        
-        # Créer l'entrée du cahier de texte avec la date du jour
-        textbook = Textbook.objects.create(
-            teacher=teacher,
-            class_subject=class_subject,
-            content=content,
-            date=timezone.now().date()  # Date automatique du jour
-        )
-        
-        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return JsonResponse({
-                'success': True,
-                'message': 'Entrée ajoutée au cahier de texte avec succès!',
-                'textbook_id': textbook.id
+                return JsonResponse({'success': False, 'message': f"Une erreur est survenue : {str(e)}"}, status=500)
+            messages.error(request, f"Une erreur est survenue : {str(e)}")
+            return render(request, 'teachers/textbook/create.html', {
+                'teacher_classes': teacher_classes,
+                'preselected_class': preselected_class,
+                'students': students_for_preselected_class,
+                'attendance_statuses': AttendanceStatus.choices,
             })
-        
-        messages.success(request, 'Entrée ajoutée au cahier de texte avec succès!')
-        
-        # Rediriger vers la page du cahier de texte pour cette matière
-        return redirect('teachers:textbook_subject', class_subject_pk=class_subject.pk)
-    
+
+    # Pour une requête GET
     context = {
         'teacher_classes': teacher_classes,
         'preselected_class': preselected_class,
+        'students': students_for_preselected_class,
+        'attendance_statuses': AttendanceStatus.choices,
     }
-    
     return render(request, 'teachers/textbook/create.html', context)
 
 
@@ -1462,7 +1509,7 @@ def teacher_textbook_detail(request, pk):
 @login_required
 def teacher_textbook_edit(request, pk):
     """
-    Vue pour modifier une entrée du cahier de texte
+    Vue pour modifier une entrée du cahier de texte avec les présences
     """
     teacher = request.user
     textbook = get_object_or_404(Textbook, pk=pk)
@@ -1476,6 +1523,9 @@ def teacher_textbook_edit(request, pk):
     teacher_classes = ClassSubject.objects.filter(
         teacher=teacher
     ).select_related('class_obj', 'subject')
+    
+    # Récupérer les présences existantes
+    attendances = textbook.attendances.all()
     
     if request.method == 'POST':
         class_subject_id = request.POST.get('class_subject')
@@ -1493,45 +1543,109 @@ def teacher_textbook_edit(request, pk):
         textbook.content = content
         textbook.save()
         
-        messages.success(request, 'Entrée du cahier de texte mise à jour avec succès!')
+        # Mettre à jour les présences
+        for attendance in attendances:
+            student_id = attendance.student.id
+            status_key = f'attendance_{student_id}'
+            comments_key = f'attendance_comments_{student_id}'
+            
+            # Récupérer le statut depuis le formulaire
+            status = request.POST.get(status_key, AttendanceStatus.PRESENT)
+            comments = request.POST.get(comments_key, '')
+            
+            # S'assurer que le statut est valide
+            if status not in [choice[0] for choice in AttendanceStatus.choices]:
+                status = AttendanceStatus.PRESENT
+            
+            # Mettre à jour l'enregistrement de présence
+            attendance.status = status
+            attendance.comments = comments
+            attendance.save()
+            
+            # Pour le débogage - imprimer les valeurs reçues
+            print(f"Élève: {attendance.student.username}, Statut: {status}, Commentaires: {comments}")
+        
+        messages.success(request, 'Entrée du cahier de texte et présences mises à jour avec succès!')
         return redirect('teachers:textbook_subject', class_subject_pk=textbook.class_subject.pk)
     
     context = {
         'textbook': textbook,
         'teacher_classes': teacher_classes,
+        'attendances': attendances,
+        'attendance_statuses': AttendanceStatus.choices,
     }
     
     return render(request, 'teachers/textbook/edit.html', context)
 
 
-
 @login_required
 def teacher_textbook_subject(request, class_subject_pk):
     """
-    Vue pour afficher le cahier de texte pour une matière spécifique
+    Vue pour afficher le cahier de texte pour une matière spécifique.
+    
+    Fonctionnalités :
+    - Vérifie les permissions de l'utilisateur.
+    - Affiche les entrées triées de la plus récente à la plus ancienne.
+    - Gère la pagination (10 entrées par page).
+    - Optimise les performances avec prefetch_related.
     """
     teacher = request.user
     class_subject = get_object_or_404(ClassSubject, pk=class_subject_pk)
     
-    # Vérifier que le professeur enseigne bien cette matière dans cette classe
     if class_subject.teacher != teacher:
         messages.error(request, "Vous n'êtes pas autorisé à accéder à ce cahier de texte.")
         return redirect('teachers:class_detail', pk=class_subject.class_obj.pk)
     
-    # Récupérer toutes les entrées du cahier de texte pour cette matière
     textbook_entries = Textbook.objects.filter(
         teacher=teacher,
         class_subject=class_subject
-    ).order_by('-date')
+    ).prefetch_related('attendances').order_by('-date') 
     
-    # Pagination
-    paginator = Paginator(textbook_entries, 10)
+    paginator = Paginator(textbook_entries, 5)
+
     page_number = request.GET.get('page')
     entries = paginator.get_page(page_number)
     
     context = {
         'class_subject': class_subject,
-        'entries': entries,
+        'entries': entries,  
     }
     
+
     return render(request, 'teachers/textbook/subject.html', context)
+
+
+
+
+
+@login_required
+@csrf_exempt
+def get_students_by_class(request):
+    """
+    Vue API pour récupérer les élèves d'une classe spécifique
+    """
+    class_subject_id = request.GET.get('class_subject')
+    
+    if not class_subject_id:
+        return JsonResponse({'error': 'Paramètre class_subject manquant'}, status=400)
+    
+    try:
+        class_subject = ClassSubject.objects.get(pk=class_subject_id, teacher=request.user)
+    except ClassSubject.DoesNotExist:
+        return JsonResponse({'error': 'Classe non trouvée ou non autorisée'}, status=404)
+    
+    # Récupérer les élèves inscrits dans la classe
+    inscriptions = Inscription.objects.filter(
+        classe_demandee=class_subject.class_obj,
+        annee_scolaire=class_subject.school_year
+    ).select_related('eleve')
+    
+    students = []
+    for inscription in inscriptions:
+        students.append({
+            'id': inscription.eleve.id,
+            'username': inscription.eleve.username,
+            'full_name': inscription.eleve.get_full_name()
+        })
+    
+    return JsonResponse({'students': students})

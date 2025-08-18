@@ -1,118 +1,163 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block title %}Détails de la classe - {{ class_obj.name }}{% endblock %}
+
 {% block content %}
-<div class="container-fluid py-4">
-    <!-- En-tête de la page -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body bg-success bg-opacity-10 p-4">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div class="d-flex align-items-center">
-                            <div class="flex-shrink-0">
-                                <div class="icon-box bg-success bg-opacity-20 text-success rounded-circle p-3">
-                                    <i class="fas fa-door-open fa-2x"></i>
-                                </div>
-                            </div>
-                            <div class="flex-grow-1 ms-4">
-                                <h2 class="mb-0">{{ class_obj.name }}</h2>
-                                <p class="text-muted mb-0">
-                                    Niveau: {{ class_obj.level.name }} | Année Scolaire: {{ class_obj.school_year.name }}
-                                </p>
-                            </div>
-                        </div>
-                        <div class="flex-shrink-0">
-                            <a href="{% url 'teachers:classes_list' %}" class="btn btn-outline-secondary" title="Retour à la liste">
-                                <i class="fas fa-arrow-left"></i> Retour
-                            </a>
-                        </div>
-                    </div>
-                </div>
+<div class="container-fluid px-4">
+
+    <!-- =============================================
+         EN-TÊTE DE LA CLASSE
+         ============================================= -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap py-4 mb-4 border-bottom">
+        <div class="d-flex align-items-center">
+            <div class="icon-box bg-primary bg-opacity-10 text-primary rounded-3 p-3 me-3">
+                <i class="fas fa-chalkboard fa-2x"></i>
+            </div>
+            <div>
+                <h1 class="h2 fw-bold mb-0">{{ class_obj.name }}</h1>
+                <p class="text-muted mb-0">
+                    Niveau: {{ class_obj.level.name }} | Année Scolaire: {{ class_obj.school_year.name }}
+                </p>
             </div>
         </div>
+        <a href="{% url 'teachers:classes_list' %}" class="btn btn-outline-secondary d-flex align-items-center">
+            <i class="fas fa-arrow-left me-2"></i> Retour aux classes
+        </a>
     </div>
-    
-    <!-- Cartes d'information clés -->
-    <div class="row mb-4">
-        <div class="col-md-4 mb-3">
-            <div class="card border-0 shadow-sm h-100 card-hover">
+
+    <!-- =============================================
+         CARTES D'INFORMATION CLÉS
+         ============================================= -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100 hover-card">
                 <div class="card-body text-center">
-                    <i class="fas fa-chalkboard-teacher fa-2x text-primary mb-3"></i>
-                    <h6 class="card-title">Professeur Principal</h6>
-                    <p class="card-text">
+                    <i class="fas fa-chalkboard-teacher fa-3x text-primary mb-3"></i>
+                    <h6 class="card-title fw-semibold">Professeur Principal</h6>
+                    <p class="card-text fs-5">
                         {% if class_obj.main_teacher %}
                             {{ class_obj.main_teacher.get_full_name|default:class_obj.main_teacher.username }}
                         {% else %}
-                            <span class="text-warning">Non assigné</span>
+                            <span class="text-warning fst-italic">Non assigné</span>
                         {% endif %}
                     </p>
                 </div>
             </div>
         </div>
-        <div class="col-md-4 mb-3">
-            <div class="card border-0 shadow-sm h-100 card-hover">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100 hover-card">
                 <div class="card-body text-center">
-                    <i class="fas fa-users fa-2x text-info mb-3"></i>
-                    <h6 class="card-title">Capacité</h6>
-                    <p class="card-text">{{ class_obj.max_students }} élèves</p>
+                    <i class="fas fa-users fa-3x text-info mb-3"></i>
+                    <h6 class="card-title fw-semibold">Capacité</h6>
+                    <p class="card-text fs-5">{{ class_obj.max_students }} élèves</p>
                 </div>
             </div>
         </div>
-        <div class="col-md-4 mb-3">
-            <div class="card border-0 shadow-sm h-100 card-hover">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100 hover-card">
                 <div class="card-body text-center">
-                    <i class="fas fa-user-check fa-2x text-success mb-3"></i>
-                    <h6 class="card-title">Inscrits</h6>
-                    <p class="card-text">{{ enrolled_students_count }} élèves</p>
+                    <i class="fas fa-user-check fa-3x text-success mb-3"></i>
+                    <h6 class="card-title fw-semibold">Inscrits</h6>
+                    <p class="card-text fs-5">{{ enrolled_students_count }} élèves</p>
                 </div>
             </div>
         </div>
     </div>
-    
-    <!-- Section : Élèves inscrits -->
+
+    <!-- =============================================
+         SECTION : MATIÈRES ENSEIGNÉES
+         ============================================= -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white py-3">
-                    <h5 class="mb-0"><i class="fas fa-user-graduate me-2 text-warning"></i>Élèves inscrits ({{ enrolled_students_count }})</h5>
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center border-0">
+                    <h5 class="mb-0 fw-bold"><i class="fas fa-book me-2 text-primary"></i>Matières enseignées ({{ teacher_subjects|length }})</h5>
+                    <a href="{% url 'teachers:schedule' %}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-calendar-alt me-1"></i> Voir l'emploi du temps
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if teacher_subjects %}
+                        <div class="row g-3">
+                            {% for subject in teacher_subjects %}
+                                <div class="col-lg-6">
+                                    <div class="card border-light shadow-sm h-100">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <h6 class="fw-bold">{{ subject.subject.name }}</h6>
+                                                <span class="badge bg-secondary">Coeff: {{ subject.coefficient }}</span>
+                                            </div>
+                                            <p class="text-muted small mb-3">{{ subject.subject.description|truncatewords:15 }}</p>
+                                            <div class="d-flex flex-wrap gap-1">
+                                                <a href="{% url 'teachers:program' subject.pk %}" class="btn btn-sm btn-outline-primary" title="Programme">
+                                                    <i class="fas fa-book-open"></i>
+                                                </a>
+                                                <a href="{% url 'teachers:interrogations' subject.pk %}" class="btn btn-sm btn-outline-info" title="Interrogations">
+                                                    <i class="fas fa-clipboard-list"></i>
+                                                </a>
+                                                <a href="{% url 'teachers:textbook_subject' subject.pk %}" class="btn btn-sm btn-outline-warning" title="Cahier de texte">
+                                                    <i class="fas fa-book"></i>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-book fa-4x text-muted mb-3"></i>
+                            <h5 class="text-muted fw-bold">Aucune matière assignée</h5>
+                            <p class="text-muted">Vous n'avez aucune matière assignée dans cette classe.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =============================================
+         SECTION : ÉLÈVES INSCRITS (EN BAS)
+         ============================================= -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center border-bottom">
+                    <h5 class="mb-0 fw-bold"><i class="fas fa-user-graduate me-2 text-warning"></i>Élèves inscrits ({{ enrolled_students_count }})</h5>
+                    <button class="btn btn-sm btn-success" id="exportStudentList">
+                        <i class="fas fa-download me-1"></i> Exporter la liste
+                    </button>
                 </div>
                 <div class="card-body">
                     {% if inscriptions %}
                         <!-- Barre de progression -->
-                        <div class="mb-3">
+                        <div class="mb-4">
                             <div class="d-flex justify-content-between mb-1">
-                                <span class="text-muted">Taux d'occupation</span>
-                                <span class="text-muted">{{ enrolled_students_count }} / {{ class_obj.max_students }}</span>
+                                <span class="text-muted fw-semibold">Taux d'occupation</span>
+                                <span class="text-muted fw-semibold">{{ enrolled_students_count }} / {{ class_obj.max_students }}</span>
                             </div>
                             <div class="progress" style="height: 10px;">
-                                {% if occupancy_percentage < 70 %}
-                                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ occupancy_percentage|floatformat:0 }}%;" aria-valuenow="{{ occupancy_percentage|floatformat:0 }}" aria-valuemin="0" aria-valuemax="100"></div>
-                                {% elif occupancy_percentage < 90 %}
-                                    <div class="progress-bar bg-warning" role="progressbar" style="width: {{ occupancy_percentage|floatformat:0 }}%;" aria-valuenow="{{ occupancy_percentage|floatformat:0 }}" aria-valuemin="0" aria-valuemax="100"></div>
-                                {% else %}
-                                    <div class="progress-bar bg-danger" role="progressbar" style="width: {{ occupancy_percentage|floatformat:0 }}%;" aria-valuenow="{{ occupancy_percentage|floatformat:0 }}" aria-valuemin="0" aria-valuemax="100"></div>
-                                {% endif %}
+                                <div class="progress-bar {% if occupancy_percentage < 70 %}bg-success{% elif occupancy_percentage < 90 %}bg-warning{% else %}bg-danger{% endif %}" role="progressbar" style="width: {{ occupancy_percentage|floatformat:0 }}%;" aria-valuenow="{{ occupancy_percentage|floatformat:0 }}" aria-valuemin="0" aria-valuemax="100"></div>
                             </div>
                         </div>
                         
                         <!-- Champ de recherche -->
-                        <div class="mb-3">
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-search"></i></span>
-                                <input type="text" class="form-control" id="studentSearch" placeholder="Rechercher un élève...">
+                        <div class="mb-4">
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text bg-light border-end-0"><i class="fas fa-search text-muted"></i></span>
+                                <input type="text" class="form-control border-start-0" id="studentSearch" placeholder="Rechercher un élève par nom, email ou type...">
                             </div>
                         </div>
                         
                         <!-- Tableau des élèves -->
                         <div class="table-responsive">
-                            <table class="table table-striped table-hover">
-                                <thead>
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
                                     <tr>
-                                        <th>Élève</th>
-                                        <th>Type d'inscription</th>
-                                        <th>Date d'inscription</th>
-                                        <th>Statut</th>
+                                        <th scope="col" class="text-nowrap">Élève</th>
+                                        <th scope="col" class="text-nowrap">Type d'inscription</th>
+                                        <th scope="col" class="text-nowrap">Date d'inscription</th>
+                                        <th scope="col" class="text-nowrap">Statut</th>
                                     </tr>
                                 </thead>
                                 <tbody class="student-list">
@@ -120,18 +165,18 @@
                                     <tr class="student-item">
                                         <td>
                                             <div class="d-flex align-items-center">
-                                                <div class="avatar-circle me-3">
+                                                <div class="flex-shrink-0 me-3">
                                                     {% if inscription.eleve.profile.photo %}
-                                                        <img src="{{ inscription.eleve.profile.photo.url }}" alt="{{ inscription.eleve.get_full_name }}" class="rounded-circle" width="40" height="40">
+                                                        <img src="{{ inscription.eleve.profile.photo.url }}" alt="{{ inscription.eleve.get_full_name }}" class="rounded-circle border" width="45" height="45">
                                                     {% else %}
-                                                        <div class="avatar-placeholder rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                                        <div class="avatar-placeholder rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; font-size: 1.2rem;">
                                                             {{ inscription.eleve.first_name|slice:":1"|upper }}{{ inscription.eleve.last_name|slice:":1"|upper }}
                                                         </div>
                                                     {% endif %}
                                                 </div>
-                                                <div>
-                                                    <h6 class="mb-0">{{ inscription.eleve.get_full_name|default:inscription.eleve.username }}</h6>
-                                                    <small class="text-muted">{{ inscription.eleve.email }}</small>
+                                                <div class="flex-grow-1">
+                                                    <h6 class="mb-0 fw-semibold">{{ inscription.eleve.get_full_name|default:inscription.eleve.username }}</h6>
+                                                    <small class="text-muted d-none d-md-block">{{ inscription.eleve.email }}</small>
                                                 </div>
                                             </div>
                                         </td>
@@ -139,17 +184,17 @@
                                             {% if inscription.type_inscription == 'PASSANT' %}
                                                 <span class="badge bg-info">Passant</span>
                                             {% else %}
-                                                <span class="badge bg-warning">Redoublant</span>
+                                                <span class="badge bg-warning text-dark">Redoublant</span>
                                             {% endif %}
                                         </td>
-                                        <td>{{ inscription.date_inscription|date:"d/m/Y" }}</td>
+                                        <td class="text-nowrap">{{ inscription.date_inscription|date:"d/m/Y" }}</td>
                                         <td>
                                             {% if inscription.statut == 'CONFIRMÉE' %}
                                                 <span class="badge bg-success">Confirmé</span>
                                             {% elif inscription.statut == 'ACCEPTÉE' %}
                                                 <span class="badge bg-info">Accepté</span>
                                             {% elif inscription.statut == 'EN_ATTENTE' %}
-                                                <span class="badge bg-warning">En attente</span>
+                                                <span class="badge bg-warning text-dark">En attente</span>
                                             {% elif inscription.statut == 'REFUSÉE' %}
                                                 <span class="badge bg-danger">Refusé</span>
                                             {% elif inscription.statut == 'ANNULÉE' %}
@@ -163,17 +208,10 @@
                                 </tbody>
                             </table>
                         </div>
-                        
-                        <!-- Bouton pour exporter la liste -->
-                        <div class="mt-3 text-center">
-                            <button class="btn btn-sm btn-outline-primary" id="exportStudentList">
-                                <i class="fas fa-download me-1"></i> Exporter la liste
-                            </button>
-                        </div>
                     {% else %}
                         <div class="text-center py-5">
-                            <i class="fas fa-user-friends fa-3x text-muted mb-3"></i>
-                            <h5 class="text-muted">Aucun élève inscrit</h5>
+                            <i class="fas fa-user-friends fa-4x text-muted mb-3"></i>
+                            <h5 class="text-muted fw-bold">Aucun élève inscrit</h5>
                             <p class="text-muted">Il n'y a aucun élève dans cette classe pour le moment.</p>
                         </div>
                     {% endif %}
@@ -181,57 +219,10 @@
             </div>
         </div>
     </div>
-    
-    <div class="row">
-        <!-- Section : Matières enseignées -->
-        <div class="col-md-6 mb-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0"><i class="fas fa-book me-2 text-primary"></i>Matières enseignées ({{ teacher_subjects|length }})</h5>
-                    <a href="{% url 'teachers:schedule' %}" class="btn btn-sm btn-outline-primary" title="Voir l'emploi du temps">
-                        <i class="fas fa-calendar-alt me-1"></i> Emploi du temps
-                    </a>
-                </div>
-                <div class="card-body">
-                    {% if teacher_subjects %}
-                        <div class="list-group">
-                            {% for subject in teacher_subjects %}
-                                <div class="list-group-item list-group-item-action">
-                                    <div class="d-flex w-100 justify-content-between">
-                                        <h6 class="mb-1">{{ subject.subject.name }}</h6>
-                                        <span class="badge bg-secondary">Coeff: {{ subject.coefficient }}</span>
-                                    </div>
-                                    <p class="mb-1">Matière que vous enseignez dans cette classe</p>
-                                    <div class="d-flex justify-content-between mt-2">
-                                        <small class="text-muted">{{ subject.subject.description|truncatewords:10 }}</small>
-                                        <div class="btn-group">
-                                            <a href="{% url 'teachers:program' subject.pk %}" class="btn btn-sm btn-outline-primary">
-                                                <i class="fas fa-book-open me-1"></i> Programme
-                                            </a>
-                                            <a href="{% url 'teachers:interrogations' subject.pk %}" class="btn btn-sm btn-outline-info">
-                                                <i class="fas fa-clipboard-list me-1"></i> Interrogations
-                                            </a>
-                                            <a href="{% url 'teachers:textbook_subject' subject.pk %}" class="btn btn-sm btn-outline-warning">
-                                                <i class="fas fa-book me-1"></i> Cahier de texte
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <div class="text-center py-5">
-                            <i class="fas fa-book fa-3x text-muted mb-3"></i>
-                            <h5 class="text-muted">Aucune matière assignée</h5>
-                            <p class="text-muted">Vous n'avez aucune matière assignée dans cette classe.</p>
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
+
 {% endblock %}
+
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -244,11 +235,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const searchTerm = this.value.toLowerCase();
             
             studentItems.forEach(item => {
-                const studentName = item.querySelector('h6').textContent.toLowerCase();
-                const studentEmail = item.querySelector('small').textContent.toLowerCase();
-                const studentType = item.querySelector('td:nth-child(2) span').textContent.toLowerCase();
+                // Crée une chaîne de texte avec toutes les informations recherchables
+                const searchableText = item.textContent.toLowerCase();
                 
-                if (studentName.includes(searchTerm) || studentEmail.includes(searchTerm) || studentType.includes(searchTerm)) {
+                if (searchableText.includes(searchTerm)) {
                     item.style.display = '';
                 } else {
                     item.style.display = 'none';
@@ -261,36 +251,27 @@ document.addEventListener('DOMContentLoaded', function() {
     const exportButton = document.getElementById('exportStudentList');
     if (exportButton) {
         exportButton.addEventListener('click', function() {
-            // Créer un tableau avec les données des élèves
             const studentsData = [];
-            document.querySelectorAll('.student-item').forEach(item => {
-                const nameElement = item.querySelector('h6');
-                const emailElement = item.querySelector('small');
-                const typeInscriptionElement = item.querySelector('td:nth-child(2) span');
-                const dateElement = item.querySelector('td:nth-child(3)');
-                const statusElement = item.querySelector('td:nth-child(4) span');
+            const rows = document.querySelectorAll('.student-item');
+            
+            rows.forEach(row => {
+                const name = row.querySelector('h6').textContent.trim();
+                const email = row.querySelector('small').textContent.trim();
+                const typeInscription = row.querySelector('td:nth-child(2) span').textContent.trim();
+                const date = row.querySelector('td:nth-child(3)').textContent.trim();
+                const status = row.querySelector('td:nth-child(4) span').textContent.trim();
                 
-                if (nameElement && emailElement) {
-                    studentsData.push({
-                        name: nameElement.textContent.trim(),
-                        email: emailElement.textContent.trim(),
-                        typeInscription: typeInscriptionElement ? typeInscriptionElement.textContent.trim() : '',
-                        date: dateElement ? dateElement.textContent.trim() : '',
-                        status: statusElement ? statusElement.textContent.trim() : ''
-                    });
-                }
+                studentsData.push({ name, email, typeInscription, date, status });
             });
             
-            // Créer un contenu CSV
             let csvContent = "Nom,Email,Type d'inscription,Date d'inscription,Statut\n";
             studentsData.forEach(student => {
                 csvContent += `"${student.name}","${student.email}","${student.typeInscription}","${student.date}","${student.status}"\n`;
             });
             
-            // Créer un blob et télécharger le fichier
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a");
             const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
             link.setAttribute("href", url);
             link.setAttribute("download", `liste_eleves_{{ class_obj.name }}_{{ class_obj.school_year.name }}.csv`);
             link.style.visibility = 'hidden';
@@ -302,3 +283,19 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 {% endblock %}
+
+<!-- =============================================
+     STYLE SUPPLÉMENTAIRE POUR LES EFFETS
+     ============================================= -->
+<style>
+.hover-card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+.hover-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+}
+.avatar-placeholder {
+    font-weight: bold;
+}
+</style>

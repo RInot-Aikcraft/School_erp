@@ -38,4 +38,6 @@ urlpatterns = [
     path('textbook/<int:pk>/edit/', views.teacher_textbook_edit, name='textbook_edit'),
     # URLs pour le cahier de texte par matière
     path('textbook/subject/<int:class_subject_pk>/', views.teacher_textbook_subject, name='textbook_subject'),
+
+    path('api/students-by-class/', views.get_students_by_class, name='api_students_by_class'),
 ]

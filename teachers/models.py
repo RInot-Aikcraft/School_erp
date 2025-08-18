@@ -110,3 +110,34 @@ class Textbook(models.Model):
     
     def __str__(self):
         return f"Cahier de texte - {self.class_subject.subject.name} - {self.class_subject.class_obj.name} - {self.date}"
+    
+
+
+
+class AttendanceStatus(models.TextChoices):
+    PRESENT = 'PRESENT', 'Présent'
+    ABSENT = 'ABSENT', 'Absent'
+    LATE = 'LATE', 'En retard'
+
+# teachers/models.py
+
+class Attendance(models.Model):
+    """
+    Modèle pour suivre la présence des élèves lors des cours
+    """
+    textbook_entry = models.ForeignKey(Textbook, on_delete=models.CASCADE, related_name='attendances')
+    student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='attendances')
+    status = models.CharField(
+        max_length=10, 
+        choices=AttendanceStatus.choices
+        # SUPPRIMEZ LA LIGNE : default=AttendanceStatus.PRESENT
+    )
+    comments = models.TextField(blank=True, verbose_name="Commentaires")
+    
+    class Meta:
+        verbose_name = "Présence"
+        verbose_name_plural = "Présences"
+        unique_together = ('textbook_entry', 'student')
+    
+    def __str__(self):
+        return f"{self.student.get_full_name() or self.student.username} - {self.get_status_display()} - {self.textbook_entry.date}"

@@ -13,9 +13,9 @@
     </div>
 </div>
 
-<div class="card">
+<div class="card mb-4">
     <div class="card-body">
-        <form method="post">
+        <form method="post" id="textbookForm">
             {% csrf_token %}
             <div class="mb-3">
                 <label for="class_subject" class="form-label">Classe et matière</label>
@@ -43,6 +43,68 @@
                 </button>
             </div>
         </form>
+    </div>
+</div>
+
+<!-- Section pour la gestion des présences -->
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Modifier les présences</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Élève</th>
+                        <th>Présent</th>
+                        <th>Absent</th>
+                        <th>En retard</th>
+                        <th>Commentaires</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for attendance in attendances %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ attendance.student.get_full_name|default:attendance.student.username }}</td>
+                        <td class="text-center">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="attendance_{{ attendance.student.id }}" id="attendance_present_{{ attendance.student.id }}" value="PRESENT" {% if attendance.status == 'PRESENT' %}checked{% endif %}>
+                                <label class="form-check-label" for="attendance_present_{{ attendance.student.id }}">
+                                    <i class="fas fa-check-circle text-success"></i>
+                                </label>
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="attendance_{{ attendance.student.id }}" id="attendance_absent_{{ attendance.student.id }}" value="ABSENT" {% if attendance.status == 'ABSENT' %}checked{% endif %}>
+                                <label class="form-check-label" for="attendance_absent_{{ attendance.student.id }}">
+                                    <i class="fas fa-times-circle text-danger"></i>
+                                </label>
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="attendance_{{ attendance.student.id }}" id="attendance_late_{{ attendance.student.id }}" value="LATE" {% if attendance.status == 'LATE' %}checked{% endif %}>
+                                <label class="form-check-label" for="attendance_late_{{ attendance.student.id }}">
+                                    <i class="fas fa-clock text-warning"></i>
+                                </label>
+                            </div>
+                        </td>
+                        <td>
+                            <input type="text" class="form-control form-control-sm" name="attendance_comments_{{ attendance.student.id }}" value="{{ attendance.comments }}" placeholder="Commentaires...">
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center">Aucune information de présence trouvée</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 {% endblock %}

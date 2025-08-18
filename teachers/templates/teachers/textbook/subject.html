@@ -1,28 +1,39 @@
 {% extends 'teachers/base.html' %}
 {% load static %}
+{% load attendance_filters %} {# <-- IMPORTANT : Charge votre filtre personnalisé #}
+
 {% block title %}Cahier de texte - {{ class_subject.subject.name }} - {{ class_subject.class_obj.name }}{% endblock %}
+
 {% block content %}
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+<!-- En-tête de page avec fil d'Ariane et actions -->
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom">
     <div>
-        <h1 class="h2">Cahier de texte</h1>
-        <p class="text-muted mb-0">
-            {{ class_subject.subject.name }} - {{ class_subject.class_obj.name }}
-        </p>
+        <h1 class="h2 mb-1">
+            <i class="fas fa-book-open me-2 text-primary"></i>Cahier de texte
+        </h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'teachers:classes_list' %}">Mes Classes</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'teachers:class_detail' class_subject.class_obj.pk %}">{{ class_subject.class_obj.name }}</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ class_subject.subject.name }}</li>
+            </ol>
+        </nav>
     </div>
     <div class="btn-toolbar mb-2 mb-md-0">
         <div class="btn-group me-2">
-            <a href="{% url 'teachers:textbook_create' %}?class_subject={{ class_subject.pk }}" class="btn btn-sm btn-primary">
+            <a href="{% url 'teachers:textbook_create' %}?class_subject={{ class_subject.pk }}" class="btn btn-primary">
                 <i class="fas fa-plus me-1"></i> Nouvelle entrée
             </a>
         </div>
         <div class="btn-group">
-            <a href="{% url 'teachers:class_detail' class_subject.class_obj.pk %}" class="btn btn-sm btn-outline-secondary">
+            <a href="{% url 'teachers:class_detail' class_subject.class_obj.pk %}" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left me-1"></i> Retour à la classe
             </a>
         </div>
     </div>
 </div>
 
+<!-- Affichage des messages Django (succès, erreur, etc.) -->
 {% if messages %}
     {% for message in messages %}
         <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
@@ -32,36 +43,87 @@
     {% endfor %}
 {% endif %}
 
-
-
-<!-- Liste des entrées du cahier de texte -->
-<div class="card">
-    <div class="card-body">
+<!-- Carte principale contenant la liste des entrées -->
+<div class="card shadow-sm">
+    <div class="card-header bg-light">
+        <h5 class="mb-0"><i class="fas fa-history me-2"></i>Historique des cours</h5>
+    </div>
+    <div class="card-body p-0">
         {% if entries %}
-            <div class="list-group list-group-flush">
-                {% for entry in entries %}
-                    <div class="list-group-item px-0">
-                        <div class="d-flex w-100 justify-content-between">
-                            <h6 class="mb-1">{{ entry.date|date:"d/m/Y" }}</h6>
-                            <div class="btn-group">
-                                <a href="{% url 'teachers:textbook_detail' entry.pk %}" class="btn btn-sm btn-outline-primary">
-                                    <i class="fas fa-eye"></i>
-                                </a>
-                                <a href="{% url 'teachers:textbook_edit' entry.pk %}" class="btn btn-sm btn-outline-warning">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                            </div>
-                        </div>
-                        <p class="mb-1">{{ entry.content|linebreaks }}</p>
-                        <small class="text-muted">Créé le {{ entry.created_at|date:"d/m/Y H:i" }}{% if entry.updated_at != entry.created_at %}, modifié le {{ entry.updated_at|date:"d/m/Y H:i" }}{% endif %}</small>
-                    </div>
-                {% endfor %}
+            <!-- Tableau pour un affichage structuré des données -->
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col" style="width: 120px;">Date</th>
+                            <th scope="col">Contenu du cours</th>
+                            <th scope="col" style="width: 180px;">Présences</th>
+                            <th scope="col" style="width: 150px;">Dernière modif.</th>
+                            <th scope="col" style="width: 100px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {# Boucle sur les entrées de la page actuelle #}
+                        {% for entry in entries %}
+                            <tr>
+                                <td class="text-nowrap">
+                                    <strong>{{ entry.date|date:"d/m/Y" }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ entry.created_at|date:"H:i" }}</small>
+                                </td>
+                                <td>
+                                    <div>
+                                        {# Tronque le contenu pour un affichage concis dans la liste #}
+                                        {{ entry.content|truncatewords_html:30|safe }}
+                                        {% if entry.content|wordcount > 30 %}
+                                            <a href="{% url 'teachers:textbook_detail' entry.pk %}" class="text-decoration-none"> ...voir plus</a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    {# Affichage des statistiques de présence avec le filtre personnalisé #}
+                                    {% with present_count=entry.attendances.all|filter_status:'PRESENT'|length absent_count=entry.attendances.all|filter_status:'ABSENT'|length late_count=entry.attendances.all|filter_status:'LATE'|length total=entry.attendances.all|length %}
+                                        {% if total > 0 %}
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span class="badge bg-success me-1" title="Présents">{{ present_count }}</span>
+                                                <span class="badge bg-danger me-1" title="Absents">{{ absent_count }}</span>
+                                                <span class="badge bg-warning text-dark" title="En retard">{{ late_count }}</span>
+                                            </div>
+                                            <small class="text-muted">Total : {{ total }}</small>
+                                        {% else %}
+                                            <span class="text-muted">Non renseigné</span>
+                                        {% endif %}
+                                    {% endwith %}
+                                </td>
+                                <td class="text-nowrap">
+                                    <small>
+                                        {% if entry.updated_at != entry.created_at %}
+                                            Modifié<br>
+                                        {% endif %}
+                                        {{ entry.updated_at|date:"d/m/Y H:i" }}
+                                    </small>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a href="{% url 'teachers:textbook_detail' entry.pk %}" class="btn btn-outline-primary" title="Voir les détails">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'teachers:textbook_edit' entry.pk %}" class="btn btn-outline-warning" title="Modifier l'entrée">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
-            
-            <!-- Pagination -->
+
+            {# Bloc de pagination - n'apparaît que s'il y a plusieurs pages #}
             {% if entries.has_other_pages %}
-                <nav aria-label="Page navigation">
-                    <ul class="pagination justify-content-center">
+                <nav aria-label="Pagination du cahier de texte" class="p-3 border-top">
+                    <ul class="pagination justify-content-center mb-0">
+                        {# Lien "Précédent" #}
                         {% if entries.has_previous %}
                             <li class="page-item">
                                 <a class="page-link" href="?page={{ entries.previous_page_number }}" aria-label="Précédent">
@@ -70,24 +132,22 @@
                             </li>
                         {% else %}
                             <li class="page-item disabled">
-                                <a class="page-link" href="#" aria-label="Précédent">
-                                    <span aria-hidden="true">&laquo;</span>
-                                </a>
+                                <span class="page-link" aria-hidden="true">&laquo;</span>
                             </li>
                         {% endif %}
                         
-                        {% for num in entries.paginator.page_range %}
+                        {# Numéros de page avec la méthode 'elided_page_range' pour un affichage condensé #}
+                        {% for num in entries.paginator.elided_page_range %}
                             {% if entries.number == num %}
-                                <li class="page-item active">
-                                    <span class="page-link">{{ num }}</span>
-                                </li>
+                                <li class="page-item active" aria-current="page"><span class="page-link">{{ num }}</span></li>
+                            {% elif num == '...' %}
+                                <li class="page-item disabled"><span class="page-link">...</span></li>
                             {% else %}
-                                <li class="page-item">
-                                    <a class="page-link" href="?page={{ num }}">{{ num }}</a>
-                                </li>
+                                <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
                             {% endif %}
                         {% endfor %}
                         
+                        {# Lien "Suivant" #}
                         {% if entries.has_next %}
                             <li class="page-item">
                                 <a class="page-link" href="?page={{ entries.next_page_number }}" aria-label="Suivant">
@@ -96,106 +156,27 @@
                             </li>
                         {% else %}
                             <li class="page-item disabled">
-                                <a class="page-link" href="#" aria-label="Suivant">
-                                    <span aria-hidden="true">&raquo;</span>
-                                </a>
+                                <span class="page-link" aria-hidden="true">&raquo;</span>
                             </li>
                         {% endif %}
                     </ul>
                 </nav>
             {% endif %}
         {% else %}
+            {# Message à afficher si le cahier de texte est vide #}
             <div class="text-center py-5">
-                <i class="fas fa-book fa-3x text-muted mb-3"></i>
-                <h5 class="text-muted">Aucune entrée dans le cahier de texte</h5>
-                <p class="text-muted">Commencez par ajouter une nouvelle entrée à votre cahier de texte.</p>
-                <a href="{% url 'teachers:textbook_create' %}?class_subject={{ class_subject.pk }}" class="btn btn-primary">
-                    <i class="fas fa-plus me-1"></i> Nouvelle entrée
+                <i class="fas fa-book-open fa-4x text-muted mb-3"></i>
+                <h4 class="text-muted">Aucune entrée dans le cahier de texte</h4>
+                <p class="text-muted">Commencez par ajouter le contenu de votre premier cours.</p>
+                <a href="{% url 'teachers:textbook_create' %}?class_subject={{ class_subject.pk }}" class="btn btn-primary mt-2">
+                    <i class="fas fa-plus me-1"></i> Ajouter une entrée
                 </a>
             </div>
         {% endif %}
     </div>
 </div>
 {% endblock %}
+
+{# Pas de JavaScript supplémentaire nécessaire pour cette page, le bloc est vide #}
 {% block extra_js %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Logique pour le formulaire rapide du cahier de texte
-    const quickTextbookForm = document.getElementById('quickTextbookForm');
-    if (quickTextbookForm) {
-        quickTextbookForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            // Récupérer les données du formulaire
-            const formData = new FormData(this);
-            
-            // Envoyer les données via AJAX
-            fetch(this.action, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Afficher un message de succès
-                    const alertDiv = document.createElement('div');
-                    alertDiv.className = 'alert alert-success alert-dismissible fade show';
-                    alertDiv.innerHTML = `
-                        ${data.message}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    `;
-                    
-                    // Insérer l'alerte avant le formulaire
-                    this.parentNode.insertBefore(alertDiv, this);
-                    
-                    // Réinitialiser le formulaire
-                    this.reset();
-                    
-                    // Faire défiler jusqu'à l'alerte
-                    alertDiv.scrollIntoView({ behavior: 'smooth' });
-                    
-                    // Actualiser la page après un court délai pour voir la nouvelle entrée
-                    setTimeout(() => {
-                        location.reload();
-                    }, 2000);
-                } else {
-                    // Afficher un message d'erreur
-                    const alertDiv = document.createElement('div');
-                    alertDiv.className = 'alert alert-danger alert-dismissible fade show';
-                    alertDiv.innerHTML = `
-                        ${data.message}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    `;
-                    
-                    // Insérer l'alerte avant le formulaire
-                    this.parentNode.insertBefore(alertDiv, this);
-                    
-                    // Faire défiler jusqu'à l'alerte
-                    alertDiv.scrollIntoView({ behavior: 'smooth' });
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                
-                // Afficher un message d'erreur générique
-                const alertDiv = document.createElement('div');
-                alertDiv.className = 'alert alert-danger alert-dismissible fade show';
-                alertDiv.innerHTML = `
-                    Une erreur s'est produite lors de l'enregistrement. Veuillez réessayer.
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                `;
-                
-                // Insérer l'alerte avant le formulaire
-                this.parentNode.insertBefore(alertDiv, this);
-                
-                // Faire défiler jusqu'à l'alerte
-                alertDiv.scrollIntoView({ behavior: 'smooth' });
-            });
-        });
-    }
-});
-</script>
 {% endblock %}
