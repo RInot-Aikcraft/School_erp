@@ -19,7 +19,12 @@ SECRET_KEY = 'django-insecure-_x+jr(9dn44t+7!qun#x7n!_xmt&3zpht+2_u(1r$0@aqz5z9g
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["school.aikcraft.com", "207.180.217.169", "localhost", "127.0.0.1"]
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://school.aikcraft.com",
+]
+
 
 # Application definition
 INSTALLED_APPS = [
@@ -87,9 +92,9 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'school_db',
-        'USER': 'school_user',  
-        'PASSWORD': 'f5i4LM4XGYzf6ylL',
-        'HOST': '207.180.217.169',
+        'USER': 'odoo',  
+        'PASSWORD': '1234',
+        'HOST': 'localhost',
         'PORT': '5432',
     }
 }

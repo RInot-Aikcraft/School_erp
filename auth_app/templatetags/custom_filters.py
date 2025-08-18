@@ -8,13 +8,12 @@ register = template.Library()
 def lookup(dictionary, key):
     """
     Filtre de template pour accéder à un élément d'un dictionnaire par sa clé.
-    Exemple : {{ my_dict|lookup:my_key }}
+    Retourne une liste vide par défaut si la clé n'existe pas.
     """
-    # Vérifie si l'objet est un dictionnaire et si la clé existe
+    # Vérifie si l'objet est un dictionnaire
     if isinstance(dictionary, dict):
-        return dictionary.get(key, None)
-    return None
-
+        return dictionary.get(key, [])  # Retourne une liste vide par défaut
+    return []  # Retourne une liste vide si ce n'est pas un dictionnaire
 
 @register.filter
 def pprint(value):

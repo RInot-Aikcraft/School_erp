@@ -326,28 +326,34 @@ def teacher_edit(request, pk):
         messages.success(request, 'Enseignant mis à jour avec succès!')
         return redirect('auth_app:teacher_list')
     
-    # Prétraitement des données pour le template
+    # Récupérer les relations matière-niveau pour cet enseignant
     teacher_subjects = TeacherSubject.objects.filter(teacher=teacher)
-    teacher_subject_ids = [ts.subject.pk for ts in teacher_subjects]
     
-    # Préparation des niveaux par matière
-    subjects_levels = {}
+    # Préparation des données pour le template
+    subjects_levels = {}  # Dictionnaire pour stocker les niveaux par matière
+    teacher_subject_ids = []  # Liste des IDs des matières enseignées
+    
     for teacher_subject in teacher_subjects:
+        subject_id = teacher_subject.subject.pk
+        teacher_subject_ids.append(subject_id)
+        
+        # Récupérer les niveaux pour cette matière
         levels = TeacherSubjectLevel.objects.filter(teacher_subject=teacher_subject)
-        subjects_levels[teacher_subject.subject.pk] = [level.class_level.pk for level in levels]
+        subjects_levels[subject_id] = [level.class_level.pk for level in levels]
     
-    subjects = Subject.objects.all()
-    class_levels = ClassLevel.objects.all()
+    # Créer une liste de tuples pour faciliter l'accès dans le template
+    subject_level_pairs = []
+    for subject in Subject.objects.all():
+        selected_levels = subjects_levels.get(subject.pk, [])
+        subject_level_pairs.append((subject, selected_levels))
     
     context = {
         'teacher': teacher,
         'profile': profile,
         'title': 'Modifier un enseignant',
-        'teacher_subjects': teacher_subjects,
+        'subject_level_pairs': subject_level_pairs,
         'teacher_subject_ids': teacher_subject_ids,
-        'subjects': subjects,
-        'class_levels': class_levels,
-        'subjects_levels': subjects_levels
+        'class_levels': ClassLevel.objects.all(),
     }
     return render(request, 'auth_app/admin/teacher_form.html', context)
 
