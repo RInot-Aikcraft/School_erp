@@ -14,16 +14,12 @@
             <a href="{% url 'teachers:textbook_edit' textbook.pk %}" class="btn btn-sm btn-warning">
                 <i class="fas fa-edit me-1"></i> Modifier
             </a>
-            <a href="{% url 'teachers:textbook_delete' textbook.pk %}" class="btn btn-sm btn-danger">
-                <i class="fas fa-trash me-1"></i> Supprimer
-            </a>
-            <a href="{% url 'teachers:textbook_list' %}" class="btn btn-sm btn-outline-secondary">
-                <i class="fas fa-arrow-left me-1"></i> Retour à la liste
+            <a href="{% url 'teachers:textbook_subject' textbook.class_subject.pk %}" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Retour au cahier
             </a>
         </div>
     </div>
 </div>
-
 <div class="card">
     <div class="card-body">
         <div class="row mb-4">

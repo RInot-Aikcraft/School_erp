@@ -1470,7 +1470,7 @@ def teacher_textbook_edit(request, pk):
     # Vérifier que le professeur est bien l'auteur de cette entrée
     if textbook.teacher != teacher:
         messages.error(request, "Vous n'êtes pas autorisé à modifier cette entrée.")
-        return redirect('teachers:textbook_list')
+        return redirect('teachers:textbook_subject', class_subject_pk=textbook.class_subject.pk)
     
     # Récupérer les classes où le professeur enseigne
     teacher_classes = ClassSubject.objects.filter(
@@ -1486,7 +1486,7 @@ def teacher_textbook_edit(request, pk):
         # Vérifier que le professeur enseigne bien dans cette classe
         if class_subject.teacher != teacher:
             messages.error(request, "Vous n'êtes pas autorisé à modifier cette entrée pour cette classe.")
-            return redirect('teachers:textbook_edit', pk=textbook.pk)
+            return redirect('teachers:textbook_subject', class_subject_pk=textbook.class_subject.pk)
         
         # Mettre à jour l'entrée du cahier de texte
         textbook.class_subject = class_subject
@@ -1494,7 +1494,7 @@ def teacher_textbook_edit(request, pk):
         textbook.save()
         
         messages.success(request, 'Entrée du cahier de texte mise à jour avec succès!')
-        return redirect('teachers:textbook_detail', pk=textbook.pk)
+        return redirect('teachers:textbook_subject', class_subject_pk=textbook.class_subject.pk)
     
     context = {
         'textbook': textbook,
@@ -1503,29 +1503,6 @@ def teacher_textbook_edit(request, pk):
     
     return render(request, 'teachers/textbook/edit.html', context)
 
-@login_required
-def teacher_textbook_delete(request, pk):
-    """
-    Vue pour supprimer une entrée du cahier de texte
-    """
-    teacher = request.user
-    textbook = get_object_or_404(Textbook, pk=pk)
-    
-    # Vérifier que le professeur est bien l'auteur de cette entrée
-    if textbook.teacher != teacher:
-        messages.error(request, "Vous n'êtes pas autorisé à supprimer cette entrée.")
-        return redirect('teachers:textbook_list')
-    
-    if request.method == 'POST':
-        textbook.delete()
-        messages.success(request, 'Entrée du cahier de texte supprimée avec succès!')
-        return redirect('teachers:textbook_list')
-    
-    context = {
-        'textbook': textbook,
-    }
-    
-    return render(request, 'teachers/textbook/delete.html', context)
 
 
 @login_required

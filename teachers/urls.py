@@ -36,8 +36,6 @@ urlpatterns = [
     path('textbook/create/', views.teacher_textbook_create, name='textbook_create'),
     path('textbook/<int:pk>/', views.teacher_textbook_detail, name='textbook_detail'),
     path('textbook/<int:pk>/edit/', views.teacher_textbook_edit, name='textbook_edit'),
-    path('textbook/<int:pk>/delete/', views.teacher_textbook_delete, name='textbook_delete'),
-
     # URLs pour le cahier de texte par matière
     path('textbook/subject/<int:class_subject_pk>/', views.teacher_textbook_subject, name='textbook_subject'),
 ]

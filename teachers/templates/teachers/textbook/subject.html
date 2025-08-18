@@ -50,9 +50,6 @@
                                 <a href="{% url 'teachers:textbook_edit' entry.pk %}" class="btn btn-sm btn-outline-warning">
                                     <i class="fas fa-edit"></i>
                                 </a>
-                                <a href="{% url 'teachers:textbook_delete' entry.pk %}" class="btn btn-sm btn-outline-danger">
-                                    <i class="fas fa-trash"></i>
-                                </a>
                             </div>
                         </div>
                         <p class="mb-1">{{ entry.content|linebreaks }}</p>
