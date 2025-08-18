@@ -87,9 +87,9 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'school_db',
-        'USER': 'odoo',  
-        'PASSWORD': '1234',
-        'HOST': 'localhost',
+        'USER': 'school_user',  
+        'PASSWORD': 'f5i4LM4XGYzf6ylL',
+        'HOST': '207.180.217.169',
         'PORT': '5432',
     }
 }
