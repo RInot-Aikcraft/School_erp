@@ -40,4 +40,7 @@ urlpatterns = [
     path('textbook/subject/<int:class_subject_pk>/', views.teacher_textbook_subject, name='textbook_subject'),
 
     path('api/students-by-class/', views.get_students_by_class, name='api_students_by_class'),
+
+
+    path('api/textbook-detail/<int:pk>/', views.api_textbook_detail, name='api_textbook_detail'),
 ]

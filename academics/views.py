@@ -1,6 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
+
+from teachers.models import Textbook
 from .models import Subject, ClassLevel, Class, Enrollment, Assignment, Grade
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -11,6 +13,7 @@ from .models import Subject, ClassLevel, Class, Enrollment, Assignment, Grade, C
 from django.db.models import Prefetch
 from django.http import JsonResponse
 from finance.models import Inscription
+from django.core.paginator import Paginator
 
 def is_admin(user):
     return user.is_authenticated and user.userprofile.user_type == 'admin'
@@ -718,3 +721,39 @@ def add_schedule_entry(request, schedule_pk):
     # Si ce n'est pas POST, rediriger vers la page de l'emploi du temps
     return redirect('academics:class_schedule', class_pk=schedule.class_obj.pk)  # Correction ici
 
+@login_required
+@user_passes_test(is_admin)
+def class_textbooks(request, pk):
+    """
+    Vue pour lister tous les cahiers de texte pour une classe spécifique
+    """
+    class_obj = get_object_or_404(Class, pk=pk)
+    
+    # Récupérer toutes les matières enseignées dans cette classe
+    class_subjects = ClassSubject.objects.filter(
+        class_obj=class_obj,
+        school_year=class_obj.school_year
+    ).select_related('subject', 'teacher')
+    
+    # Récupérer tous les cahiers de texte pour cette classe
+    textbooks = Textbook.objects.filter(
+        class_subject__in=class_subjects
+    ).select_related(
+        'teacher', 
+        'class_subject__subject'
+    ).prefetch_related(
+        'attendances__student'
+    ).order_by('-date')
+    
+    # Pagination
+    paginator = Paginator(textbooks, 10)  # 10 entrées par page
+    page_number = request.GET.get('page')
+    textbooks_page = paginator.get_page(page_number)
+    
+    context = {
+        'class_obj': class_obj,
+        'textbooks': textbooks_page,
+        'class_subjects': class_subjects,
+    }
+    
+    return render(request, 'academics/class_textbooks.html', context)

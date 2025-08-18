@@ -1649,3 +1649,35 @@ def get_students_by_class(request):
         })
     
     return JsonResponse({'students': students})
+
+
+
+@login_required
+def api_textbook_detail(request, pk):
+    """
+    Vue API pour récupérer les détails d'un cahier de texte au format JSON
+    """
+    textbook = get_object_or_404(Textbook, pk=pk)
+    
+    # Récupérer les présences pour ce cahier de texte
+    attendances = textbook.attendances.select_related('student')
+    
+    attendance_data = []
+    for attendance in attendances:
+        attendance_data.append({
+            'student_name': attendance.student.get_full_name() or attendance.student.username,
+            'status': attendance.status,
+            'comments': attendance.comments
+        })
+    
+    data = {
+        'success': True,
+        'id': textbook.id,
+        'date': textbook.date.isoformat(),
+        'content': textbook.content,
+        'subject': textbook.class_subject.subject.name,
+        'teacher': textbook.teacher.get_full_name() or textbook.teacher.username,
+        'attendances': attendance_data
+    }
+    
+    return JsonResponse(data)

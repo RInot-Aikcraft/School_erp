@@ -22,7 +22,7 @@ urlpatterns = [
 
     path('classes/<int:class_pk>/schedule/', views.class_schedule, name='class_schedule'),
     path('schedules/<int:schedule_pk>/add-entry/', views.add_schedule_entry, name='add_schedule_entry'),
-
+    path('class/<int:pk>/textbooks/', views.class_textbooks, name='class_textbooks'),
 
     
     path('assignments/', views.assignment_list, name='assignment_list'),
