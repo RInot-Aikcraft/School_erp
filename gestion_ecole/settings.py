@@ -18,8 +18,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-_x+jr(9dn44t+7!qun#x7n!_xmt&3zpht+2_u(1r$0@aqz5z9g'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-ALLOWED_HOSTS = ["school.aikcraft.com", "207.180.217.169", "localhost", "127.0.0.1"]
+DEBUG = False
+
+ALLOWED_HOSTS = ["school.aikcraft.com", "207.180.217.169"]
+
 
 CSRF_TRUSTED_ORIGINS = [
     "https://school.aikcraft.com",
@@ -60,7 +62,7 @@ ROOT_URLCONF = 'gestion_ecole.urls'
 AUTH_USER_MODEL = 'auth.User'  # Utilisation du modèle User par défaut
 
 # Redirections après connexion/déconnexion
-LOGIN_REDIRECT_URL = 'auth_app:admin_dashboard'  # Par défaut, redirige vers le dashboard admin
+LOGIN_REDIRECT_URL = 'auth_app:admin_dashboard'  
 LOGOUT_REDIRECT_URL = 'auth_app:login'
 LOGIN_URL = 'auth_app:login'
 
@@ -92,12 +94,13 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'school_db',
-        'USER': 'school_user',  
-        'PASSWORD': 'f5i4LM4XGYzf6ylL',
+        'USER': 'school_user',
+        'PASSWORD': 'Aina@014324',
         'HOST': '207.180.217.169',
         'PORT': '5432',
     }
 }
+
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -117,12 +120,17 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Internationalization
 LANGUAGE_CODE = 'fr-FR'
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Indian/Antananarivo'
 USE_I18N = True
 USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = 'static/'
+
+STATIC_ROOT = BASE_DIR / 'static'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

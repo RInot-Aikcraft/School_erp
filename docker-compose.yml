@@ -1,0 +1,22 @@
+version: "3.9"
+
+services:
+  django:
+    build: .
+    restart: always
+    expose:
+      - "8000"  # uniquement pour Traefik, pas exposé publiquement
+    environment:
+      - DJANGO_SETTINGS_MODULE=gestion_ecole.settings
+      - DEBUG=0
+      - TZ=Indian/Antananarivo
+      - DATABASE_URL=postgres://school_user:Aina@014324@207.180.217.169:5432/school_db
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.django.rule=Host(`school.aikcraft.com`)
+      - traefik.http.routers.django.entrypoints=web,websecure
+      - traefik.http.routers.django.tls=true
+      - traefik.http.routers.django.tls.certresolver=mytlschallenge
+    volumes:
+      - ./static:/app/static
+      - ./media:/app/media
